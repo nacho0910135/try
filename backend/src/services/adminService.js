@@ -41,7 +41,6 @@ export const adminService = {
     const filter = {};
 
     if (query.status) filter.status = query.status;
-    if (query.isApproved !== undefined) filter.isApproved = query.isApproved;
     if (query.q) {
       const regex = new RegExp(escapeRegex(query.q), "i");
       filter.$or = [
@@ -79,19 +78,16 @@ export const adminService = {
       throw new ApiError(404, "Property not found");
     }
 
-    if (payload.isApproved !== undefined) {
-      property.isApproved = payload.isApproved;
-      property.approvedBy = payload.isApproved ? adminUser._id : undefined;
-      property.approvedAt = payload.isApproved ? new Date() : undefined;
-
-      if (payload.isApproved && property.status === "published" && !property.publishedAt) {
-        property.publishedAt = new Date();
-      }
-    }
-
     if (payload.featured !== undefined) property.featured = payload.featured;
     if (payload.status) property.status = payload.status;
     if (payload.moderationNote !== undefined) property.moderationNote = payload.moderationNote;
+
+    property.isApproved = property.status === "published";
+    property.approvedAt = property.isApproved ? property.approvedAt || new Date() : undefined;
+    property.approvedBy = property.isApproved ? property.approvedBy || adminUser._id : undefined;
+    if (property.isApproved && !property.publishedAt) {
+      property.publishedAt = new Date();
+    }
 
     await property.save();
 
@@ -149,7 +145,6 @@ export const adminService = {
       users,
       properties,
       published,
-      pendingApproval,
       featured,
       leads,
       favorites,
@@ -160,8 +155,7 @@ export const adminService = {
       await Promise.all([
         User.countDocuments(),
         Property.countDocuments(),
-        Property.countDocuments({ status: "published", isApproved: true }),
-        Property.countDocuments({ isApproved: false, status: { $in: ["draft", "published", "paused"] } }),
+        Property.countDocuments({ status: "published" }),
         Property.countDocuments({ featured: true }),
         Lead.countDocuments(),
         Favorite.countDocuments(),
@@ -174,7 +168,7 @@ export const adminService = {
       users,
       properties,
       published,
-      pendingApproval,
+      pendingApproval: 0,
       featured,
       leads,
       favorites,

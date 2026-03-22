@@ -81,15 +81,6 @@ const buildTrustProfile = (property) => {
   const badges = [];
   let score = 0;
 
-  if (property?.isApproved) {
-    badges.push({
-      key: "verified-listing",
-      label: "Publicacion verificada",
-      tone: "success"
-    });
-    score += 28;
-  }
-
   if (sellerVerified) {
     badges.push({
       key: "verified-seller",

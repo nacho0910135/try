@@ -108,9 +108,9 @@ const buildTrustCoverage = (properties) => {
 
   return [
     {
-      label: "Verificadas",
-      value: Number(((count((item) => item.isApproved) / total) * 100).toFixed(1)),
-      subtitle: `${count((item) => item.isApproved)} de ${properties.length} con aprobacion`
+      label: "Publicadas",
+      value: Number(((count((item) => item.status === "published") / total) * 100).toFixed(1)),
+      subtitle: `${count((item) => item.status === "published")} de ${properties.length} visibles en el marketplace`
     },
     {
       label: "Galeria completa",

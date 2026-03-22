@@ -123,7 +123,6 @@ export const buildSavedSearchFilter = (savedSearch) => {
   const boundsSource = savedSearch.bounds || filters.bounds;
   const filter = {
     status: "published",
-    isApproved: true,
     marketStatus: { $in: ["available", "reserved"] }
   };
 

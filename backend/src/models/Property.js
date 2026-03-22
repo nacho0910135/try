@@ -550,7 +550,7 @@ propertySchema.pre("save", function syncDerivedFields(next) {
     this.roommateDetails = undefined;
   }
 
-  if (this.status === "published" && this.isApproved && !this.publishedAt) {
+  if (this.status === "published" && !this.publishedAt) {
     this.publishedAt = new Date();
   }
 

@@ -7,7 +7,7 @@ export const offerService = {
   async create(payload, user) {
     const property = await Property.findById(payload.propertyId).populate("owner", "name email phone");
 
-    if (!property || property.status !== "published" || !property.isApproved) {
+    if (!property || property.status !== "published") {
       throw new ApiError(404, "Propiedad no encontrada");
     }
 

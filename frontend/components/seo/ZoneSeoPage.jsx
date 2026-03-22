@@ -101,7 +101,7 @@ export function ZoneSeoPage({ zone, summary, items, childrenZones = [] }) {
         <div className="surface p-6">
           <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Publicaciones activas</div>
           <div className="mt-3 text-4xl font-semibold text-ink">{summary.totalListings || 0}</div>
-          <p className="mt-2 text-sm text-ink/60">Disponibles o reservadas con aprobacion publica.</p>
+          <p className="mt-2 text-sm text-ink/60">Disponibles o reservadas visibles en el marketplace.</p>
         </div>
         <div className="surface p-6">
           <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Venta vs renta</div>

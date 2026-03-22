@@ -967,7 +967,7 @@ export const interactiveAnalysisService = {
   async getOverview() {
     const [overview, properties] = await Promise.all([
       marketAnalyticsService.getOverview(),
-      Property.find({ isApproved: true, status: "published" }).lean()
+      Property.find({ status: "published", marketStatus: { $ne: "inactive" } }).lean()
     ]);
 
     return {
@@ -1015,8 +1015,8 @@ export const interactiveAnalysisService = {
 
     const properties = await Property.find({
       _id: { $in: uniqueIds },
-      isApproved: true,
-      status: "published"
+      status: "published",
+      marketStatus: { $ne: "inactive" }
     }).lean();
 
     if (properties.length !== 2) {

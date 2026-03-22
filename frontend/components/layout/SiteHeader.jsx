@@ -41,7 +41,13 @@ export function SiteHeader() {
       <div className="app-shell py-3 sm:py-4">
         <div className="flex items-center justify-between gap-3">
         <Link href="/" className="flex min-w-0 items-center gap-3">
-          <BrandLogo compact showTagline={false} className="max-w-[58vw] sm:max-w-none" />
+          <BrandLogo
+            compact
+            showTagline={false}
+            mobileTextOnly
+            mobileSingleLine
+            className="max-w-[52vw] sm:max-w-none"
+          />
         </Link>
 
         <nav className="hidden items-center gap-2 md:flex">

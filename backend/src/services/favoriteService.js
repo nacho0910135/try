@@ -5,7 +5,6 @@ import { ApiError } from "../utils/apiError.js";
 const isPubliclyVisibleProperty = (property) =>
   Boolean(property) &&
   property.status === "published" &&
-  property.isApproved &&
   (property.marketStatus || "available") !== "inactive";
 
 export const favoriteService = {

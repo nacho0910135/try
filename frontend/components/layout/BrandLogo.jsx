@@ -97,14 +97,31 @@ function FlagHouseMark({ compact = false, className }) {
   );
 }
 
-function BrandWordmark({ compact = false, showTagline = true, className }) {
+function BrandWordmark({
+  compact = false,
+  showTagline = true,
+  className,
+  mobileSingleLine = false
+}) {
   const { t } = useLanguage();
 
   return (
     <div className={cn("min-w-0", className)}>
+      {mobileSingleLine ? (
+        <span
+          className={cn(
+            "font-serif font-semibold leading-none tracking-tight text-[#0d3f96] sm:hidden",
+            compact ? "text-[1.02rem]" : "text-[1.55rem]"
+          )}
+          style={{ textShadow: "0 1px 0 rgba(255,255,255,0.5)" }}
+        >
+          BienesRaices<span className="font-bold text-[#e01e2d]">CR</span>
+        </span>
+      ) : null}
       <div
         className={cn(
-          "flex items-baseline leading-none tracking-tight",
+          "items-baseline leading-none tracking-tight",
+          mobileSingleLine ? "hidden sm:flex" : "flex",
           compact ? "gap-1.5" : "gap-2"
         )}
       >
@@ -147,20 +164,27 @@ export function BrandLogo({
   textClassName,
   titleClassName,
   compact = false,
-  showTagline = true
+  showTagline = true,
+  mobileTextOnly = false,
+  mobileSingleLine = false
 }) {
   return (
     <div
       className={cn(
         "inline-flex max-w-full items-center",
         compact ? "gap-1.5 sm:gap-2.5" : "gap-2.5 sm:gap-4",
+        mobileTextOnly ? "gap-0 sm:gap-2.5" : null,
         className
       )}
     >
-      <FlagHouseMark compact={compact} className={iconClassName} />
+      <FlagHouseMark
+        compact={compact}
+        className={cn(mobileTextOnly ? "hidden sm:block" : null, iconClassName)}
+      />
       <BrandWordmark
         compact={compact}
         showTagline={showTagline}
+        mobileSingleLine={mobileSingleLine}
         className={cn(textClassName, titleClassName)}
       />
     </div>

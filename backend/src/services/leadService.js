@@ -7,7 +7,6 @@ import { notificationService } from "./notificationService.js";
 const canReceiveLeads = (property) =>
   Boolean(property) &&
   property.status === "published" &&
-  property.isApproved &&
   ["available", "reserved"].includes(property.marketStatus || "available");
 
 const startOfToday = () => {

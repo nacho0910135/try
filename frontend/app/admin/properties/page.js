@@ -99,16 +99,6 @@ export default function AdminPropertiesPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button
-                    variant={property.isApproved ? "secondary" : "accent"}
-                    onClick={() =>
-                      handleModeration(property._id, {
-                        isApproved: !property.isApproved
-                      })
-                    }
-                  >
-                    {property.isApproved ? "Desaprobar" : "Aprobar"}
-                  </Button>
-                  <Button
                     variant={property.featured ? "secondary" : "ghost"}
                     onClick={() =>
                       handleModeration(property._id, {
@@ -134,6 +124,11 @@ export default function AdminPropertiesPage() {
                       </option>
                     ))}
                   </select>
+                  {property.status === "published" ? (
+                    <span className="inline-flex items-center rounded-full bg-pine/10 px-3 py-2 text-xs font-semibold text-pine">
+                      Publicada automaticamente
+                    </span>
+                  ) : null}
                   <Link href={`/properties/${property.slug}`}>
                     <Button variant="ghost">Ver</Button>
                   </Link>

@@ -29,14 +29,12 @@ const makePrimaryPhotoSet = (photos = []) => {
 
 const buildPublicFilter = () => ({
   status: "published",
-  isApproved: true,
   marketStatus: { $in: ["available", "reserved"] }
 });
 
 const getPublicMarketStatuses = () => ["available", "reserved"];
 
 const isPubliclyVisibleProperty = (property) =>
-  Boolean(property?.isApproved) &&
   property?.status === "published" &&
   (property?.marketStatus || "available") !== "inactive";
 
@@ -425,7 +423,6 @@ const pushPriceHistorySnapshot = (property, user, note) => {
 const syncPublicationMetadata = (property) => {
   if (
     property.status !== "published" ||
-    !property.isApproved ||
     (property.marketStatus || "available") === "inactive"
   ) {
     return;
@@ -613,12 +610,16 @@ export const propertyService = {
       }
     ];
 
-    if (user.role === "admin") {
-      normalized.isApproved = true;
+    const shouldBePublicImmediately = normalized.status === "published";
+
+    normalized.isApproved = shouldBePublicImmediately;
+    normalized.approvedAt = shouldBePublicImmediately ? new Date() : undefined;
+
+    if (user.role === "admin" && shouldBePublicImmediately) {
       normalized.approvedBy = user._id;
-      normalized.approvedAt = new Date();
     } else {
       normalized.featured = false;
+      normalized.approvedBy = undefined;
     }
 
     normalized.moderationSignals = await buildModerationSignalsForPayload(normalized, user._id);
@@ -671,8 +672,13 @@ export const propertyService = {
       );
     }
 
-    if (property.status === "published" && property.isApproved && !property.publishedAt) {
-      property.publishedAt = new Date();
+    if (property.status === "published") {
+      property.isApproved = true;
+      property.approvedAt = property.approvedAt || new Date();
+
+      if (user.role === "admin") {
+        property.approvedBy = property.approvedBy || user._id;
+      }
     }
 
     if (
@@ -711,8 +717,13 @@ export const propertyService = {
 
     syncPublicationMetadata(property);
 
-    if (status === "published" && property.isApproved && !property.publishedAt) {
-      property.publishedAt = new Date();
+    if (status === "published") {
+      property.isApproved = true;
+      property.approvedAt = property.approvedAt || new Date();
+
+      if (user.role === "admin") {
+        property.approvedBy = property.approvedBy || user._id;
+      }
     }
 
     await property.save();
@@ -734,12 +745,11 @@ export const propertyService = {
 
     if (
       property.status !== "published" ||
-      !property.isApproved ||
       !["available", "reserved"].includes(property.marketStatus || "available")
     ) {
       throw new ApiError(
         400,
-        "Solo puedes destacar publicaciones aprobadas, publicadas y disponibles o reservadas."
+        "Solo puedes impulsar publicaciones publicadas y disponibles o reservadas."
       );
     }
 

@@ -90,7 +90,10 @@ const scoreProperty = (currentPpsm, comparableAveragePpsm) => {
 
 export const marketAnalyticsService = {
   async getOverview() {
-    const properties = await Property.find({ isApproved: true }).lean();
+    const properties = await Property.find({
+      status: "published",
+      marketStatus: { $ne: "inactive" }
+    }).lean();
     const activeListings = properties.filter(
       (property) =>
         property.status === "published" &&
