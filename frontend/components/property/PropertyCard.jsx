@@ -228,7 +228,7 @@ export function PropertyCard({
                 }}
               >
                 <MapPin className="h-3.5 w-3.5" />
-                {match.name} · {match.distanceKm.toFixed(1)} km
+                {match.name} - {match.distanceKm.toFixed(1)} km
               </span>
             ))}
           </div>

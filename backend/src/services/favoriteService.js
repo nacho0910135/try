@@ -2,6 +2,12 @@ import { Favorite } from "../models/Favorite.js";
 import { Property } from "../models/Property.js";
 import { ApiError } from "../utils/apiError.js";
 
+const isPubliclyVisibleProperty = (property) =>
+  Boolean(property) &&
+  property.status === "published" &&
+  property.isApproved &&
+  (property.marketStatus || "available") !== "inactive";
+
 export const favoriteService = {
   async list(user) {
     const favorites = await Favorite.find({ user: user._id })
@@ -14,13 +20,13 @@ export const favoriteService = {
       })
       .sort({ createdAt: -1 });
 
-    return favorites.filter((favorite) => favorite.property);
+    return favorites.filter((favorite) => isPubliclyVisibleProperty(favorite.property));
   },
 
   async add(user, propertyId) {
     const property = await Property.findById(propertyId);
 
-    if (!property || property.status !== "published" || !property.isApproved) {
+    if (!isPubliclyVisibleProperty(property)) {
       throw new ApiError(404, "Property not found");
     }
 

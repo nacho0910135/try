@@ -167,7 +167,7 @@ export default function DashboardPage() {
           <h2 className="mt-4 text-2xl font-semibold">Lo que requiere atencion hoy</h2>
           <p className="mt-3 text-sm leading-7 text-ink/65">
             Tienes <strong>{alertCenter.newSearchMatches || 0}</strong> novedades en busquedas guardadas y{" "}
-            <strong>{alertCenter.dueLeadActions || 0}</strong> leads que conviene mover hoy.
+            <strong>{alertCenter.dueLeadActionsCount || 0}</strong> leads que conviene mover hoy.
           </p>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -187,7 +187,7 @@ export default function DashboardPage() {
                 Leads
               </div>
               <div className="mt-3 text-3xl font-semibold text-ink">
-                {alertCenter.dueLeadActions || 0}
+                {alertCenter.dueLeadActionsCount || 0}
               </div>
               <div className="mt-1 text-sm text-ink/60">acciones comerciales pendientes</div>
             </div>
@@ -254,7 +254,7 @@ export default function DashboardPage() {
                     <div>
                       <div className="font-semibold text-ink">{item.name}</div>
                       <div className="mt-1 text-sm text-ink/55">
-                        {item.newMatches} nuevas · {item.totalMatches} activas
+                        {item.newMatches} nuevas - {item.totalMatches} activas
                       </div>
                     </div>
                     {item.alertsEnabled ? (

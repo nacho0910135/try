@@ -1,23 +1,42 @@
 import axios from "axios";
 import { serializePropertyQuery } from "./utils";
 
+const AUTH_STORAGE_KEYS = ["alquiventascr-auth", "casa-cr-auth"];
+
+const readStoredAuthState = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  for (const key of AUTH_STORAGE_KEYS) {
+    const storedValue = window.localStorage.getItem(key);
+
+    if (!storedValue) {
+      continue;
+    }
+
+    try {
+      return JSON.parse(storedValue);
+    } catch (_error) {
+      AUTH_STORAGE_KEYS.forEach((storageKey) => window.localStorage.removeItem(storageKey));
+      return null;
+    }
+  }
+
+  return null;
+};
+
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 });
 
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const storedAuth =
-      window.localStorage.getItem("alquiventascr-auth") ||
-      window.localStorage.getItem("casa-cr-auth");
+    const parsed = readStoredAuthState();
+    const token = parsed?.state?.token;
 
-    if (storedAuth) {
-      const parsed = JSON.parse(storedAuth);
-      const token = parsed?.state?.token;
-
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
   }
 

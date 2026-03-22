@@ -30,7 +30,7 @@ export const formatCurrency = (value, currency = "USD") =>
 
 const legacyFormatCompactCurrency = (value, currency = "USD") => {
   const amount = Number(value || 0);
-  const symbol = currency === "CRC" ? "₡" : "$";
+  const symbol = currency === "CRC" ? "CRC " : "$";
   const compact = new Intl.NumberFormat("es-CR", {
     notation: "compact",
     maximumFractionDigits: 1
@@ -65,7 +65,7 @@ export const formatRentalArrangement = (value) => rentalArrangementMap[value] ||
 export const formatRoommateGenderPreference = (value) =>
   roommateGenderPreferenceMap[value] || value;
 
-export const formatYesNo = (value) => (value ? "Si" : "No");
+export const formatYesNo = (value) => (value ? "Sí" : "No");
 
 export const getMainPhoto = (property) =>
   property?.photos?.find((photo) => photo.isPrimary) || property?.photos?.[0] || null;

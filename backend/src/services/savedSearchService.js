@@ -44,23 +44,33 @@ const buildSavedSearchUrl = (savedSearch) => {
   const filters = savedSearch.filters || {};
 
   Object.entries(filters).forEach(([key, value]) => {
-    if (
-      value === undefined ||
-      value === null ||
-      value === "" ||
-      typeof value === "object"
-    ) {
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+
+    if (typeof value === "object") {
+      params.set(key, JSON.stringify(value));
       return;
     }
 
     params.set(key, String(value));
   });
 
+  if (savedSearch.bounds) {
+    params.set("bounds", JSON.stringify(savedSearch.bounds));
+  }
+
+  if (savedSearch.mapArea?.coordinates?.[0]?.length) {
+    params.set("polygon", JSON.stringify(savedSearch.mapArea.coordinates[0]));
+  }
+
   return `${baseUrl}/search${params.toString() ? `?${params.toString()}` : ""}`;
 };
 
 export const buildSavedSearchFilter = (savedSearch) => {
   const filters = savedSearch.filters || {};
+  const polygonSource = savedSearch.mapArea?.coordinates?.[0] || filters.polygon;
+  const boundsSource = savedSearch.bounds || filters.bounds;
   const filter = {
     status: "published",
     isApproved: true,
@@ -83,7 +93,9 @@ export const buildSavedSearchFilter = (savedSearch) => {
   if (filters.rentalArrangement) filter.rentalArrangement = filters.rentalArrangement;
   if (filters.propertyType) filter.propertyType = filters.propertyType;
   if (filters.currency) filter.currency = filters.currency;
-  if (filters.marketStatus) filter.marketStatus = filters.marketStatus;
+  if (filters.marketStatus && filters.marketStatus !== "inactive") {
+    filter.marketStatus = filters.marketStatus;
+  }
   if (filters.province) {
     filter["address.province"] = new RegExp(`^${escapeRegex(filters.province)}$`, "i");
   }
@@ -119,9 +131,27 @@ export const buildSavedSearchFilter = (savedSearch) => {
   if (filters.parkingSpaces !== undefined) {
     filter.parkingSpaces = { $gte: Number(filters.parkingSpaces) };
   }
+  if (filters.minConstructionArea !== undefined || filters.maxConstructionArea !== undefined) {
+    filter.constructionArea = {};
+    if (filters.minConstructionArea !== undefined) {
+      filter.constructionArea.$gte = Number(filters.minConstructionArea);
+    }
+    if (filters.maxConstructionArea !== undefined) {
+      filter.constructionArea.$lte = Number(filters.maxConstructionArea);
+    }
+  }
+  if (filters.minLotArea !== undefined || filters.maxLotArea !== undefined) {
+    filter.lotArea = {};
+    if (filters.minLotArea !== undefined) {
+      filter.lotArea.$gte = Number(filters.minLotArea);
+    }
+    if (filters.maxLotArea !== undefined) {
+      filter.lotArea.$lte = Number(filters.maxLotArea);
+    }
+  }
 
-  if (savedSearch.mapArea?.coordinates?.length) {
-    const polygon = normalizePolygonCoordinates(savedSearch.mapArea.coordinates[0]);
+  if (polygonSource?.length) {
+    const polygon = normalizePolygonCoordinates(polygonSource);
     if (polygon) {
       filter.location = {
         $geoWithin: {
@@ -132,10 +162,10 @@ export const buildSavedSearchFilter = (savedSearch) => {
         }
       };
     }
-  } else if (savedSearch.bounds) {
+  } else if (boundsSource) {
     filter.location = {
       $geoWithin: {
-        $geometry: buildBoundsPolygon(savedSearch.bounds)
+        $geometry: buildBoundsPolygon(boundsSource)
       }
     };
   } else if (filters.lat !== undefined && filters.lng !== undefined) {

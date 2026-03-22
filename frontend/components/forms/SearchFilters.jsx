@@ -46,6 +46,15 @@ const MARKET_LABELS = {
   inactive: "options.inactive"
 };
 
+const PUBLIC_MARKET_STATUSES = marketStatuses.filter((item) => item.value !== "inactive");
+
+const SORT_OPTIONS = [
+  { value: "recent", label: "filters.sortRecent" },
+  { value: "price-asc", label: "filters.sortPriceAsc" },
+  { value: "price-desc", label: "filters.sortPriceDesc" },
+  { value: "distance", label: "filters.sortDistance" }
+];
+
 export function SearchFilters({
   values,
   onChange,
@@ -234,7 +243,7 @@ export function SearchFilters({
         <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/68">
           {t("filters.priceAndFeatures")}
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <div>
             <label className="field-label">{t("filters.minPrice")}</label>
             <Input
@@ -274,13 +283,33 @@ export function SearchFilters({
               onChange={(event) => update("marketStatus", event.target.value)}
             >
               <option value="">{t("common.active")}</option>
-              {marketStatuses.map((item) => (
+              {PUBLIC_MARKET_STATUSES.map((item) => (
                 <option key={item.value} value={item.value}>
                   {t(MARKET_LABELS[item.value])}
                 </option>
               ))}
             </Select>
           </div>
+          <div>
+            <label className="field-label">{t("filters.sortBy")}</label>
+            <Select
+              value={values.sort || ""}
+              onChange={(event) => update("sort", event.target.value || undefined)}
+            >
+              <option value="">{t("filters.sortDefault")}</option>
+              {SORT_OPTIONS.map((item) => (
+                <option
+                  key={item.value}
+                  value={item.value}
+                  disabled={item.value === "distance" && !(values.lat && values.lng)}
+                >
+                  {t(item.label)}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           <div>
             <label className="field-label">{t("filters.bedrooms")}</label>
             <Input
@@ -306,6 +335,42 @@ export function SearchFilters({
               value={values.parkingSpaces || ""}
               onChange={(event) => update("parkingSpaces", event.target.value)}
               placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="field-label">{t("filters.minConstructionArea")}</label>
+            <Input
+              type="number"
+              value={values.minConstructionArea || ""}
+              onChange={(event) => update("minConstructionArea", event.target.value)}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="field-label">{t("filters.maxConstructionArea")}</label>
+            <Input
+              type="number"
+              value={values.maxConstructionArea || ""}
+              onChange={(event) => update("maxConstructionArea", event.target.value)}
+              placeholder="400"
+            />
+          </div>
+          <div>
+            <label className="field-label">{t("filters.minLotArea")}</label>
+            <Input
+              type="number"
+              value={values.minLotArea || ""}
+              onChange={(event) => update("minLotArea", event.target.value)}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="field-label">{t("filters.maxLotArea")}</label>
+            <Input
+              type="number"
+              value={values.maxLotArea || ""}
+              onChange={(event) => update("maxLotArea", event.target.value)}
+              placeholder="1000"
             />
           </div>
         </div>

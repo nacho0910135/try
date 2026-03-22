@@ -71,8 +71,8 @@ export default function AdminPropertiesPage() {
                 <div>
                   <div className="font-semibold">{property.title}</div>
                   <div className="text-sm text-ink/55">
-                    {property.owner?.name} • {formatCurrency(property.price, property.currency)} •{" "}
-                    {formatPropertyStatus(property.status)} • {formatMarketStatus(property.marketStatus)}
+                    {property.owner?.name} - {formatCurrency(property.price, property.currency)} -{" "}
+                    {formatPropertyStatus(property.status)} - {formatMarketStatus(property.marketStatus)}
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
                     <span
@@ -155,8 +155,8 @@ export default function AdminPropertiesPage() {
                   {scoreLabels[intelligence.valuation.marketScore] || intelligence.valuation.marketScore}
                 </div>
                 <div className="mt-2 text-sm text-ink/60">
-                  {intelligence.valuation.pricePerSquareMeter} / m² vs comps{" "}
-                  {intelligence.valuation.comparableAveragePpsm} / m²
+                  {intelligence.valuation.pricePerSquareMeter} / m2 vs comps{" "}
+                  {intelligence.valuation.comparableAveragePpsm} / m2
                 </div>
                 <div className="mt-2 text-sm text-ink/60">
                   Rango sugerido:{" "}
@@ -181,7 +181,7 @@ export default function AdminPropertiesPage() {
                     <div key={item._id} className="rounded-2xl bg-white p-4">
                       <div className="font-medium">{item.title}</div>
                       <div className="mt-2 text-sm text-ink/60">
-                        {item.distanceKm} km • {item.pricePerSquareMeter} / m²
+                        {item.distanceKm} km - {item.pricePerSquareMeter} / m2
                       </div>
                     </div>
                   ))}
@@ -197,7 +197,7 @@ export default function AdminPropertiesPage() {
                     <div key={item._id} className="rounded-2xl bg-white p-4">
                       <div className="font-medium">{item.title}</div>
                       <div className="mt-2 text-sm text-ink/60">
-                        score: {item.similarityScore} • {item.distanceKm} km • {item.pricePerSquareMeter} / m²
+                        score: {item.similarityScore} - {item.distanceKm} km - {item.pricePerSquareMeter} / m2
                       </div>
                     </div>
                   ))}

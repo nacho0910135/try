@@ -5,10 +5,31 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 const legacyAuthKey = "casa-cr-auth";
 
+const readValidPersistedAuth = (...keys) => {
+  if (typeof window === "undefined") return null;
+
+  for (const key of keys) {
+    const storedValue = window.localStorage.getItem(key);
+
+    if (!storedValue) {
+      continue;
+    }
+
+    try {
+      JSON.parse(storedValue);
+      return storedValue;
+    } catch (_error) {
+      window.localStorage.removeItem(key);
+    }
+  }
+
+  return null;
+};
+
 const authStorage = {
   getItem: (name) => {
     if (typeof window === "undefined") return null;
-    return window.localStorage.getItem(name) || window.localStorage.getItem(legacyAuthKey);
+    return readValidPersistedAuth(name, legacyAuthKey);
   },
   setItem: (name, value) => {
     if (typeof window === "undefined") return;

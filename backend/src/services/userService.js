@@ -341,7 +341,7 @@ export const userService = {
       alertCenter: {
         newSearchMatches: sumBy(highlightedSearches, (item) => item.newMatches),
         searchesWithAlerts: highlightedSearches.length,
-        dueLeadActions: dueLeadActions.length,
+        dueLeadActionsCount: dueLeadActions.length,
         highlightedSearches,
         dueLeadActions
       },

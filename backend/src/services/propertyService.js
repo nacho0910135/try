@@ -36,6 +36,11 @@ const buildPublicFilter = () => ({
 
 const getPublicMarketStatuses = () => ["available", "reserved"];
 
+const isPubliclyVisibleProperty = (property) =>
+  Boolean(property?.isApproved) &&
+  property?.status === "published" &&
+  (property?.marketStatus || "available") !== "inactive";
+
 const buildSort = (sort, query = {}) => {
   if (!sort && query.lat !== undefined && query.lng !== undefined) {
     return {};
@@ -49,7 +54,9 @@ const buildSort = (sort, query = {}) => {
     case "recent":
       return { featured: -1, publishedAt: -1, createdAt: -1 };
     case "distance":
-      return {};
+      return query.lat !== undefined && query.lng !== undefined
+        ? {}
+        : { featured: -1, publishedAt: -1, createdAt: -1 };
     default:
       return { featured: -1, publishedAt: -1, createdAt: -1 };
   }
@@ -122,7 +129,7 @@ const buildFilterQuery = (query) => {
   if (query.rentalArrangement) filter.rentalArrangement = query.rentalArrangement;
   if (query.propertyType) filter.propertyType = query.propertyType;
   if (query.currency) filter.currency = query.currency;
-  if (query.marketStatus) {
+  if (query.marketStatus && query.marketStatus !== "inactive") {
     filter.marketStatus = query.marketStatus;
   }
   if (query.province) filter["address.province"] = new RegExp(`^${escapeRegex(query.province)}$`, "i");
@@ -377,6 +384,7 @@ const countPromotedListings = (ownerId, excludePropertyId) =>
     owner: ownerId,
     featured: true,
     status: "published",
+    isApproved: true,
     marketStatus: { $in: getPublicMarketStatuses() },
     ...(excludePropertyId ? { _id: { $ne: excludePropertyId } } : {})
   });
@@ -425,14 +433,15 @@ const pushPriceHistorySnapshot = (property, user, note) => {
   });
 };
 
-const makePropertyPublicWhenPublished = (property, user) => {
-  if (property.status !== "published") {
+const syncPublicationMetadata = (property) => {
+  if (
+    property.status !== "published" ||
+    !property.isApproved ||
+    (property.marketStatus || "available") === "inactive"
+  ) {
     return;
   }
 
-  property.isApproved = true;
-  property.approvedAt = property.approvedAt || new Date();
-  property.approvedBy = property.approvedBy || user._id;
   property.publishedAt = property.publishedAt || new Date();
 };
 
@@ -549,8 +558,7 @@ export const propertyService = {
       throw new ApiError(404, "Property not found");
     }
 
-    const canView =
-      property.isApproved && ["published", "sold", "rented"].includes(property.status);
+    const canView = isPubliclyVisibleProperty(property);
 
     if (!canView && !isOwnerOrAdmin(property, user)) {
       throw new ApiError(404, "Property not found");
@@ -640,7 +648,7 @@ export const propertyService = {
 
     normalized.moderationSignals = await buildModerationSignalsForPayload(normalized, user._id);
 
-    makePropertyPublicWhenPublished(normalized, user);
+    syncPublicationMetadata(normalized);
 
     const property = await Property.create(normalized);
     const created = await Property.findById(property._id).populate(
@@ -678,7 +686,7 @@ export const propertyService = {
       property._id
     );
 
-    makePropertyPublicWhenPublished(property, user);
+    syncPublicationMetadata(property);
 
     if (payload.title || payload.address?.canton) {
       property.slug = await ensureUniqueSlug(
@@ -726,7 +734,7 @@ export const propertyService = {
       property.status = status;
     }
 
-    makePropertyPublicWhenPublished(property, user);
+    syncPublicationMetadata(property);
 
     if (status === "published" && property.isApproved && !property.publishedAt) {
       property.publishedAt = new Date();
@@ -749,6 +757,17 @@ export const propertyService = {
       return enrichPropertyForClient(property);
     }
 
+    if (
+      property.status !== "published" ||
+      !property.isApproved ||
+      !["available", "reserved"].includes(property.marketStatus || "available")
+    ) {
+      throw new ApiError(
+        400,
+        "Solo puedes destacar publicaciones aprobadas, publicadas y disponibles o reservadas."
+      );
+    }
+
     if (user.role !== "admin") {
       const subscription = resolveEffectiveSubscription(user);
 
@@ -756,16 +775,6 @@ export const propertyService = {
         throw new ApiError(
           403,
           "Tu plan actual no incluye espacios destacados. Cambia de plan para activar esta mejora."
-        );
-      }
-
-      if (
-        property.status !== "published" ||
-        !["available", "reserved"].includes(property.marketStatus || "available")
-      ) {
-        throw new ApiError(
-          400,
-          "Solo puedes destacar publicaciones publicadas y disponibles o reservadas."
         );
       }
 

@@ -4,6 +4,12 @@ import { ApiError } from "../utils/apiError.js";
 import { buildPagination } from "../utils/pagination.js";
 import { notificationService } from "./notificationService.js";
 
+const canReceiveLeads = (property) =>
+  Boolean(property) &&
+  property.status === "published" &&
+  property.isApproved &&
+  ["available", "reserved"].includes(property.marketStatus || "available");
+
 const startOfToday = () => {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
@@ -42,8 +48,12 @@ export const leadService = {
   async create(payload, user) {
     const property = await Property.findById(payload.propertyId).populate("owner", "name email phone");
 
-    if (!property || property.status !== "published" || !property.isApproved) {
+    if (!property) {
       throw new ApiError(404, "Property not found");
+    }
+
+    if (!canReceiveLeads(property)) {
+      throw new ApiError(400, "This property is not receiving leads right now");
     }
 
     const lead = await Lead.create({
