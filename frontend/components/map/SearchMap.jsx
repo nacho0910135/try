@@ -242,7 +242,7 @@ export function SearchMap({
             north: bounds.getNorth()
           });
         }}
-        style={{ width: "100%", minHeight: 680 }}
+        style={{ width: "100%", minHeight: 740 }}
       >
         <NavigationControl position="top-right" />
         <GeolocateControl position="top-right" trackUserLocation={false} showUserHeading />

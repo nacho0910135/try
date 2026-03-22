@@ -23,6 +23,17 @@ const SearchMap = dynamic(
   }
 );
 
+const CostaRicaProvinceExplorer = dynamic(
+  () =>
+    import("@/components/map/CostaRicaProvinceExplorer").then(
+      (module) => module.CostaRicaProvinceExplorer
+    ),
+  {
+    ssr: false,
+    loading: () => <LoadingState label="..." />
+  }
+);
+
 const parseFilterValue = (value) => {
   if (value === "true") return true;
   if (value === "false") return false;
@@ -58,7 +69,7 @@ export default function SearchPage() {
   const searchParams = useSearchParams();
   const initializedRef = useRef(false);
   const { token } = useAuthStore();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const { filters, replaceFilters, setFilters, selectedPropertyId, setSelectedPropertyId } =
     useSearchStore();
   const [properties, setProperties] = useState([]);
@@ -156,6 +167,19 @@ export default function SearchPage() {
     }
   };
 
+  const handleProvinceAtlasSelection = (provinceName) => {
+    setSelectedPropertyId(null);
+    setPage(1);
+    setFilters({
+      province: provinceName,
+      canton: undefined,
+      district: undefined,
+      bounds: undefined,
+      polygon: undefined
+    });
+    setMessage("");
+  };
+
   return (
     <div className="app-shell section-pad space-y-6">
       <div>
@@ -197,61 +221,37 @@ export default function SearchPage() {
 
       {message ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{message}</p> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
-        <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-ink/55">
-              {loading
-                ? t("searchPage.searching")
-                : t("searchPage.resultsFound", { count: pagination.total })}
-            </p>
-            <Link
-              href={token ? "/dashboard/properties/new" : "/login"}
-              className="text-sm font-semibold text-pine"
-            >
-              {token
-                ? t("searchPage.publishLinkLoggedIn")
-                : t("searchPage.publishLinkLoggedOut")}
-            </Link>
-          </div>
-
-          {loading && page === 1 ? (
-            <LoadingState label={t("searchPage.loadingProperties")} />
-          ) : properties.length ? (
-            <div className="space-y-5">
-              {properties.map((property) => (
-                <PropertyCard
-                  key={property._id}
-                  property={property}
-                  selected={selectedPropertyId === property._id}
-                  isFavorite={favoriteIds.includes(property._id)}
-                  onSelected={setSelectedPropertyId}
-                  onFavoriteChange={(propertyId, nextState) => {
-                    setFavoriteIds((current) =>
-                      nextState
-                        ? [...new Set([...current, propertyId])]
-                        : current.filter((item) => item !== propertyId)
-                    );
-                  }}
-                />
-              ))}
-              {page < pagination.totalPages ? (
-                <Button variant="secondary" onClick={() => setPage((current) => current + 1)}>
-                  {t("searchPage.loadMore")}
-                </Button>
-              ) : null}
-            </div>
-          ) : (
-            <EmptyState
-              title={t("searchPage.noResultsTitle")}
-              description={t("searchPage.noResultsDescription")}
-              actionLabel={t("searchPage.clearFilters")}
-              onAction={handleReset}
-            />
-          )}
+      <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="xl:sticky xl:top-24 xl:h-fit xl:self-start">
+          <CostaRicaProvinceExplorer
+            selectedProvince={filters.province}
+            onSelectProvince={handleProvinceAtlasSelection}
+            compact
+            navigateOnSelect={false}
+          />
         </div>
 
-        <div className="xl:sticky xl:top-24 xl:h-fit xl:self-start">
+        <div>
+          <div className="mb-4 rounded-[30px] border border-white/80 bg-white/82 p-4 shadow-soft backdrop-blur">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pine/70">
+                  {language === "en" ? "Main view" : "Vista principal"}
+                </div>
+                <h2 className="mt-2 text-lg font-semibold text-ink sm:text-xl">
+                  {language === "en" ? "Price map" : "Mapa de precios"}
+                </h2>
+                <p className="mt-1 text-sm text-ink/60">
+                  {language === "en"
+                    ? "The live price map stays front and center. Tap a price bubble to open the listing."
+                    : "El mapa de precios se mantiene como protagonista. Toca una nube de precio para abrir la publicación."}
+                </p>
+              </div>
+              <div className="rounded-full bg-pine/10 px-3 py-1.5 text-xs font-semibold text-pine">
+                {language === "en" ? "Live listings" : "Propiedades en vivo"}
+              </div>
+            </div>
+          </div>
           <SearchMap
             properties={properties}
             selectedPropertyId={selectedPropertyId}
@@ -271,6 +271,63 @@ export default function SearchPage() {
             onPolygonChange={(polygon) => updateFilters({ polygon, bounds: undefined })}
           />
         </div>
+      </div>
+
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-ink/55">
+            {loading
+              ? t("searchPage.searching")
+              : t("searchPage.resultsFound", { count: pagination.total })}
+          </p>
+          <Link
+            href={token ? "/dashboard/properties/new" : "/login"}
+            className="text-sm font-semibold text-pine"
+          >
+            {token
+              ? t("searchPage.publishLinkLoggedIn")
+              : t("searchPage.publishLinkLoggedOut")}
+          </Link>
+        </div>
+
+        {loading && page === 1 ? (
+          <LoadingState label={t("searchPage.loadingProperties")} />
+        ) : properties.length ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {properties.map((property) => (
+              <PropertyCard
+                key={property._id}
+                property={property}
+                selected={selectedPropertyId === property._id}
+                isFavorite={favoriteIds.includes(property._id)}
+                compact
+                onSelected={setSelectedPropertyId}
+                onFavoriteChange={(propertyId, nextState) => {
+                  setFavoriteIds((current) =>
+                    nextState
+                      ? [...new Set([...current, propertyId])]
+                      : current.filter((item) => item !== propertyId)
+                  );
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title={t("searchPage.noResultsTitle")}
+            description={t("searchPage.noResultsDescription")}
+            actionLabel={t("searchPage.clearFilters")}
+            onAction={handleReset}
+          />
+        )}
+
+        {!loading && properties.length && page < pagination.totalPages ? (
+          <div className="flex justify-center">
+            <Button variant="secondary" onClick={() => setPage((current) => current + 1)}>
+              {t("searchPage.loadMore")}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

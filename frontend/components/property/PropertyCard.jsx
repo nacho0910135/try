@@ -46,7 +46,8 @@ export function PropertyCard({
   isFavorite = false,
   selected = false,
   onSelected,
-  onFavoriteChange
+  onFavoriteChange,
+  compact = false
 }) {
   const { token } = useAuthStore();
   const { language, t } = useLanguage();
@@ -103,7 +104,7 @@ export function PropertyCard({
         selected ? "ring-2 ring-terracotta/40" : "hover:-translate-y-1"
       }`}
     >
-      <div className="relative aspect-[16/10] overflow-hidden">
+      <div className={`relative overflow-hidden ${compact ? "aspect-[16/9]" : "aspect-[16/10]"}`}>
         <img
           src={mainPhoto?.url || fallbackSrc}
           alt={mainPhoto?.alt || property.title}
@@ -127,36 +128,40 @@ export function PropertyCard({
           type="button"
           onClick={toggleFavorite}
           disabled={favoriteBusy}
-          className={`absolute right-3 top-3 rounded-full p-2.5 shadow-soft transition ${
+          className={`absolute right-3 top-3 rounded-full shadow-soft transition ${
             favoriteState
               ? "bg-rose-50 text-rose-500 ring-2 ring-rose-200"
               : "bg-white/90 text-ink hover:bg-white"
-          }`}
+          } ${compact ? "p-2" : "p-2.5"}`}
           aria-label={t("propertyCard.favoriteAria")}
         >
           <Heart
-            className={`h-4 w-4 transition ${
+            className={`transition ${
               favoriteState ? "fill-rose-500 text-rose-500 scale-110" : ""
-            }`}
+            } ${compact ? "h-3.5 w-3.5" : "h-4 w-4"}`}
           />
         </button>
       </div>
 
-      <div className="space-y-3 p-4">
+      <div className={`${compact ? "space-y-2.5 p-3" : "space-y-3 p-4"}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-xl font-semibold">{formatCurrency(property.price, property.currency)}</div>
-            <h3 className="mt-1.5 text-base font-semibold leading-snug">{property.title}</h3>
+            <div className={compact ? "text-lg font-semibold" : "text-xl font-semibold"}>
+              {formatCurrency(property.price, property.currency)}
+            </div>
+            <h3 className={`font-semibold leading-snug ${compact ? "mt-1 text-sm" : "mt-1.5 text-base"}`}>
+              {property.title}
+            </h3>
           </div>
-          <span className="text-sm text-ink/45">{typeLabel}</span>
+          <span className={compact ? "text-xs text-ink/45" : "text-sm text-ink/45"}>{typeLabel}</span>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-ink/60">
-          <MapPin className="h-4 w-4" />
+        <div className={`flex items-center gap-2 text-ink/60 ${compact ? "text-xs" : "text-sm"}`}>
+          <MapPin className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           <span>{formatLocation(property)}</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-xs text-ink/70 sm:grid-cols-4">
+        <div className={`grid grid-cols-2 text-xs text-ink/70 sm:grid-cols-4 ${compact ? "gap-1.5" : "gap-2"}`}>
           <span className="data-pill">
             <BedDouble className="h-4 w-4" />
             {property.rentalArrangement === "roommate"
@@ -180,7 +185,7 @@ export function PropertyCard({
         </div>
 
         {property.businessType === "rent" ? (
-          <div className="flex flex-wrap gap-2 text-xs text-ink/60">
+          <div className={`flex flex-wrap text-xs text-ink/60 ${compact ? "gap-1.5" : "gap-2"}`}>
             <span className="data-pill">
               {t("propertyCard.pets")}: {boolLabel(property.petsAllowed)}
             </span>
