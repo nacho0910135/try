@@ -1,4 +1,5 @@
 import { DM_Sans, Fraunces } from "next/font/google";
+import { LanguageProvider } from "@/components/layout/LanguageProvider";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import "./globals.css";
@@ -22,9 +23,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body className={`${sans.variable} ${serif.variable} font-sans`}>
-        <SiteHeader />
-        <main className="min-h-[calc(100vh-160px)]">{children}</main>
-        <SiteFooter />
+        <LanguageProvider>
+          <SiteHeader />
+          <main className="min-h-[calc(100vh-160px)]">{children}</main>
+          <SiteFooter />
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -7,18 +7,20 @@ import { logoutUser } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { BrandLogo } from "./BrandLogo";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLanguage } from "./LanguageProvider";
 import { Button } from "../ui/Button";
-
-const navItems = [
-  { href: "/", label: "Inicio" },
-  { href: "/search", label: "Explorar" },
-  { href: "/favorites", label: "Favoritos" }
-];
 
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { t } = useLanguage();
+  const navItems = [
+    { href: "/", label: t("home") },
+    { href: "/search", label: t("explore") },
+    { href: "/favorites", label: t("favorites") }
+  ];
 
   const handleLogout = async () => {
     try {
@@ -55,25 +57,26 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher className="mr-1" />
           {user ? (
             <>
               <Link href="/dashboard">
                 <Button variant="secondary" className="hidden sm:inline-flex">
                   <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Dashboard
+                  {t("dashboard")}
                 </Button>
               </Link>
               {user.role === "admin" ? (
                 <Link href="/admin">
                   <Button variant="ghost" className="hidden sm:inline-flex">
                     <Shield className="mr-2 h-4 w-4" />
-                    Admin
+                    {t("admin")}
                   </Button>
                 </Link>
               ) : null}
               <Button variant="ghost" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Salir
+                {t("logout")}
               </Button>
             </>
           ) : (
@@ -81,11 +84,11 @@ export function SiteHeader() {
               <Link href="/search">
                 <Button variant="secondary" className="hidden sm:inline-flex">
                   <Search className="mr-2 h-4 w-4" />
-                  Buscar
+                  {t("search")}
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="primary">Entrar</Button>
+                <Button variant="primary">{t("login")}</Button>
               </Link>
             </>
           )}

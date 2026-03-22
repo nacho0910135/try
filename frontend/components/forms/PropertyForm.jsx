@@ -34,7 +34,7 @@ const propertyFormSchema = z.object({
   title: z.string().min(10, "Minimo 10 caracteres"),
   description: z.string().min(40, "Describe mejor la propiedad"),
   businessType: z.string().min(1),
-  rentalArrangement: z.string().min(1),
+  rentalArrangement: z.string().optional(),
   propertyType: z.string().min(1),
   price: z.coerce.number().nonnegative(),
   finalPrice: z.union([z.coerce.number().nonnegative(), z.literal("")]).optional(),
@@ -74,6 +74,42 @@ const propertyFormSchema = z.object({
   lat: z.coerce.number(),
   lng: z.coerce.number()
 });
+
+const findFirstMessage = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const message = findFirstMessage(item);
+
+      if (message) {
+        return message;
+      }
+    }
+
+    return null;
+  }
+
+  if (typeof value === "object") {
+    if (typeof value.message === "string" && value.message.trim()) {
+      return value.message;
+    }
+
+    for (const item of Object.values(value)) {
+      const message = findFirstMessage(item);
+
+      if (message) {
+        return message;
+      }
+    }
+
+    return null;
+  }
+
+  return typeof value === "string" && value.trim() ? value : null;
+};
 
 const toDefaultValues = (property) => ({
   title: property?.title || "",
@@ -120,7 +156,7 @@ const toDefaultValues = (property) => ({
   maxRoommates: property?.roommateDetails?.maxRoommates || 0,
   genderPreference: property?.roommateDetails?.genderPreference || "any",
   sharedAreas: property?.roommateDetails?.sharedAreas?.join(", ") || "",
-  hideExactLocation: property?.address?.hideExactLocation ?? true,
+  hideExactLocation: property?.address?.hideExactLocation ?? false,
   lat: property?.location?.coordinates?.[1] || 9.9281,
   lng: property?.location?.coordinates?.[0] || -84.0907
 });
@@ -129,6 +165,7 @@ export function PropertyForm({ property, propertyId }) {
   const router = useRouter();
   const [photos, setPhotos] = useState(property?.photos || []);
   const [feedback, setFeedback] = useState("");
+  const [feedbackTone, setFeedbackTone] = useState("info");
   const [isUploading, setIsUploading] = useState(false);
   const fallbackSrc = "/property-placeholder.svg";
   const {
@@ -180,6 +217,23 @@ export function PropertyForm({ property, propertyId }) {
     }
   }, [districtValue, rawDistrictOptions, setValue]);
 
+  useEffect(() => {
+    if (businessTypeValue !== "rent") {
+      setValue("rentalArrangement", "full-property", {
+        shouldValidate: true,
+        shouldDirty: false
+      });
+      return;
+    }
+
+    if (propertyTypeValue === "room" && rentalArrangementValue !== "roommate") {
+      setValue("rentalArrangement", "roommate", {
+        shouldValidate: true,
+        shouldDirty: false
+      });
+    }
+  }, [businessTypeValue, propertyTypeValue, rentalArrangementValue, setValue]);
+
   const handleImageUpload = async (event) => {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
@@ -196,9 +250,12 @@ export function PropertyForm({ property, propertyId }) {
       ];
 
       setPhotos(nextPhotos);
+      setFeedbackTone("info");
       setFeedback("Fotos cargadas correctamente. Ahora pulsa Guardar propiedad para guardar los cambios.");
     } catch (error) {
-      setFeedback(error.response?.data?.message || "No fue posible subir las imagenes");
+      const firstDetail = findFirstMessage(error.response?.data?.details);
+      setFeedbackTone("error");
+      setFeedback(firstDetail || error.response?.data?.message || "No fue posible subir las imagenes");
     } finally {
       setIsUploading(false);
       event.target.value = "";
@@ -231,8 +288,11 @@ export function PropertyForm({ property, propertyId }) {
       (position) => {
         setValue("lat", Number(position.coords.latitude.toFixed(6)));
         setValue("lng", Number(position.coords.longitude.toFixed(6)));
+        setFeedbackTone("success");
+        setFeedback("Ubicacion detectada correctamente. Ya puedes guardar tu propiedad.");
       },
       () => {
+        setFeedbackTone("error");
         setFeedback("No se pudo obtener tu ubicacion actual.");
       }
     );
@@ -241,6 +301,7 @@ export function PropertyForm({ property, propertyId }) {
   const onSubmit = async (values) => {
     try {
       setFeedback("");
+      setFeedbackTone("info");
       const videoUrls = values.videoUrls
         .split(/\n|,/)
         .map((item) => item.trim())
@@ -267,16 +328,44 @@ export function PropertyForm({ property, propertyId }) {
           ? "Publicacion actualizada correctamente. Redirigiendo..."
           : "Publicacion creada correctamente. Redirigiendo..."
       );
+      setFeedbackTone("success");
 
-      router.push("/dashboard/properties?saved=1");
-      router.refresh();
+      window.setTimeout(() => {
+        router.push("/dashboard/properties?saved=1");
+        router.refresh();
+      }, 700);
     } catch (error) {
-      setFeedback(error.response?.data?.message || "No se pudo guardar la propiedad");
+      const firstDetail = findFirstMessage(error.response?.data?.details);
+      const permissionMessage =
+        error.response?.status === 403
+          ? "Tu cuenta debe tener permiso para publicar. Si entraste con otro perfil, vuelve a iniciar sesion como propietario, agente o admin."
+          : null;
+
+      setFeedbackTone("error");
+      setFeedback(
+        firstDetail ||
+          permissionMessage ||
+          error.response?.data?.message ||
+          "No se pudo guardar la propiedad"
+      );
     }
   };
 
+  const onInvalid = (formErrors) => {
+    const firstMessage = findFirstMessage(formErrors);
+    setFeedbackTone("error");
+    setFeedback(firstMessage || "Revisa los campos obligatorios antes de guardar.");
+  };
+
+  const feedbackClassName =
+    feedbackTone === "success"
+      ? "border border-pine/20 bg-pine/10 text-pine"
+      : feedbackTone === "error"
+        ? "border border-red-200 bg-red-50 text-red-600"
+        : "border border-transparent bg-mist text-ink/70";
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
       <section className="surface space-y-5 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -290,7 +379,9 @@ export function PropertyForm({ property, propertyId }) {
           </Button>
         </div>
 
-        {feedback ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{feedback}</p> : null}
+        {feedback ? (
+          <p className={`rounded-2xl px-4 py-3 text-sm ${feedbackClassName}`}>{feedback}</p>
+        ) : null}
 
         <div className="grid gap-5 lg:grid-cols-2">
           <div>

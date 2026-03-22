@@ -1,8 +1,12 @@
 import { BrandLogo } from "@/components/layout/BrandLogo";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 export default function AuthLayout({ children }) {
   return (
     <div className="app-shell section-pad">
+      <div className="mb-6 flex justify-end">
+        <LanguageSwitcher />
+      </div>
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <section className="surface bg-hero-grid p-8 sm:p-12">
           <BrandLogo />
