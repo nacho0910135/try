@@ -13,6 +13,7 @@ export const RENTAL_ARRANGEMENTS = ["full-property", "roommate"];
 export const ROOMMATE_GENDER_PREFERENCES = ["any", "female-only", "male-only"];
 export const LEAD_SOURCES = ["property-page", "search", "whatsapp", "direct"];
 export const LEAD_STATUSES = ["new", "contacted", "qualified", "closed"];
+export const LEAD_PRIORITIES = ["low", "medium", "high"];
 export const OFFER_SOURCES = ["property-page", "dashboard", "analysis", "direct"];
 export const OFFER_STATUSES = [
   "new",

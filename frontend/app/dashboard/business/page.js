@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BarChart3, BriefcaseBusiness, Megaphone, TrendingUp } from "lucide-react";
-import { getCommercialOverview } from "@/lib/api";
+import { getCommercialOverview, updateMySubscription } from "@/lib/api";
 import { MiniLineChart, HorizontalBarList, VerticalBarChart } from "@/components/analysis/VisualCharts";
 import { Button } from "@/components/ui/Button";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -13,15 +13,34 @@ const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
 
 export default function DashboardBusinessPage() {
   const [overview, setOverview] = useState(null);
+  const [flashMessage, setFlashMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [updatingPlanId, setUpdatingPlanId] = useState("");
 
   useEffect(() => {
-    const loadOverview = async () => {
-      const data = await getCommercialOverview();
-      setOverview(data.overview);
-    };
-
     loadOverview();
   }, []);
+
+  const loadOverview = async () => {
+    const data = await getCommercialOverview();
+    setOverview(data.overview);
+  };
+
+  const handlePlanChange = async (planId) => {
+    try {
+      setUpdatingPlanId(planId);
+      setErrorMessage("");
+      await updateMySubscription({ plan: planId, billingCycle: "monthly" });
+      await loadOverview();
+      setFlashMessage("Tu plan comercial se actualizo correctamente.");
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "No se pudo actualizar el plan en este momento."
+      );
+    } finally {
+      setUpdatingPlanId("");
+    }
+  };
 
   if (!overview) {
     return <LoadingState label="Cargando rendimiento comercial..." />;
@@ -41,7 +60,8 @@ export default function DashboardBusinessPage() {
     actionableInsights,
     recentLeads,
     recentOffers,
-    availablePlans
+    availablePlans,
+    planUsage
   } =
     overview;
 
@@ -49,7 +69,7 @@ export default function DashboardBusinessPage() {
     {
       label: "Propiedades activas",
       value: summary.activeListings,
-      helper: `${summary.totalListings} totales`
+      helper: `${planUsage.remainingPropertySlots} cupos restantes`
     },
     {
       label: "Visualizaciones",
@@ -65,6 +85,11 @@ export default function DashboardBusinessPage() {
       label: "Ofertas recibidas",
       value: summary.totalOffers,
       helper: `conversion ${formatPercent(summary.offerConversionRate)}`
+    },
+    {
+      label: "Destacadas activas",
+      value: planUsage.promotedListings,
+      helper: `${planUsage.remainingPromotedSlots} espacios premium libres`
     }
   ];
 
@@ -96,7 +121,19 @@ export default function DashboardBusinessPage() {
         </div>
       </section>
 
-      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      {flashMessage ? (
+        <div className="rounded-2xl border border-pine/20 bg-pine/10 px-4 py-3 text-sm font-medium text-pine">
+          {flashMessage}
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
           <div key={card.label} className="surface p-6">
             <div className="text-sm uppercase tracking-[0.18em] text-ink/40">{card.label}</div>
@@ -311,7 +348,23 @@ export default function DashboardBusinessPage() {
                       <span className="rounded-full bg-pine px-3 py-1 text-xs font-semibold text-white">
                         Activo
                       </span>
-                    ) : null}
+                    ) : (
+                      <Button
+                        variant={item.promotedSlots > plan.promotedSlots ? "success" : "secondary"}
+                        onClick={() => handlePlanChange(item.id)}
+                        disabled={Boolean(updatingPlanId)}
+                        className="px-3 py-2 text-xs"
+                      >
+                        {updatingPlanId === item.id ? "Actualizando..." : "Activar plan"}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-ink/60">
+                    {item.features.map((feature) => (
+                      <span key={feature} className="rounded-full bg-mist px-3 py-1">
+                        {feature}
+                      </span>
+                    ))}
                   </div>
                 </div>
               );

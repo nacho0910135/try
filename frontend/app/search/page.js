@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSavedSearch, getFavorites, getProperties } from "@/lib/api";
 import { serializePropertyQuery } from "@/lib/utils";
@@ -10,10 +10,17 @@ import { useAuthStore } from "@/store/auth-store";
 import { useSearchStore } from "@/store/search-store";
 import { SearchFilters } from "@/components/forms/SearchFilters";
 import { useLanguage } from "@/components/layout/LanguageProvider";
+import { MapContextInsights } from "@/components/map/MapContextInsights";
+import { MapContextPanel } from "@/components/map/MapContextPanel";
 import { PropertyCard } from "@/components/property/PropertyCard";
+import { ConversationalSearchPanel } from "@/components/search/ConversationalSearchPanel";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import {
+  buildContextResultsSummary,
+  getPropertyContextMatches
+} from "@/lib/map-context-insights";
 
 const SearchMap = dynamic(
   () => import("@/components/map/SearchMap").then((module) => module.SearchMap),
@@ -78,6 +85,23 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [favoriteIds, setFavoriteIds] = useState([]);
+  const [activeContextLayers, setActiveContextLayers] = useState(["universities", "business"]);
+  const [focusedContextPoint, setFocusedContextPoint] = useState(null);
+  const contextRadiusKm = Number(filters.radiusKm || 8);
+
+  const contextualProperties = useMemo(
+    () =>
+      properties.map((property) => ({
+        ...property,
+        contextMatches: getPropertyContextMatches(property, activeContextLayers, contextRadiusKm)
+      })),
+    [properties, activeContextLayers, contextRadiusKm]
+  );
+
+  const contextSummary = useMemo(
+    () => buildContextResultsSummary(properties, activeContextLayers, contextRadiusKm),
+    [properties, activeContextLayers, contextRadiusKm]
+  );
 
   useEffect(() => {
     if (initializedRef.current) return;
@@ -133,13 +157,38 @@ export default function SearchPage() {
 
   const handleReset = () => {
     setPage(1);
+    setFocusedContextPoint(null);
+    setActiveContextLayers(["universities", "business"]);
     replaceFilters({});
     setMessage("");
+  };
+
+  const handleConversationalSearch = (result) => {
+    const hasFilters = Object.keys(result.filters || {}).length > 0;
+    const hasContextLayers = Boolean(result.contextLayerIds?.length);
+
+    if (!hasFilters && !result.focusedPoint && !hasContextLayers) {
+      handleReset();
+      return;
+    }
+
+    setSelectedPropertyId(null);
+    setPage(1);
+    setFocusedContextPoint(result.focusedPoint || null);
+    setActiveContextLayers(
+      hasContextLayers ? result.contextLayerIds : ["universities", "business"]
+    );
+
+    replaceFilters({
+      ...result.filters
+    });
+    setMessage(result.message || "");
   };
 
   const handleUseCurrentLocation = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        setFocusedContextPoint(null);
         updateFilters({
           lat: Number(position.coords.latitude.toFixed(6)),
           lng: Number(position.coords.longitude.toFixed(6)),
@@ -170,6 +219,7 @@ export default function SearchPage() {
   const handleProvinceAtlasSelection = (provinceName) => {
     setSelectedPropertyId(null);
     setPage(1);
+    setFocusedContextPoint(null);
     setFilters({
       province: provinceName,
       canton: undefined,
@@ -178,6 +228,35 @@ export default function SearchPage() {
       polygon: undefined
     });
     setMessage("");
+  };
+
+  const toggleContextLayer = (layerId) => {
+    setActiveContextLayers((current) =>
+      current.includes(layerId)
+        ? current.filter((item) => item !== layerId)
+        : [...current, layerId]
+    );
+  };
+
+  const handleFocusContextPoint = (point) => {
+    setFocusedContextPoint(point);
+    setSelectedPropertyId(null);
+    setPage(1);
+    setFilters({
+      province: point.province,
+      canton: point.canton,
+      district: point.district,
+      lat: point.lat,
+      lng: point.lng,
+      radiusKm: filters.radiusKm || 8,
+      bounds: undefined,
+      polygon: undefined
+    });
+    setMessage(
+      language === "en"
+        ? `Showing listings near ${point.name}.`
+        : `Mostrando propiedades cerca de ${point.name}.`
+    );
   };
 
   return (
@@ -210,6 +289,8 @@ export default function SearchPage() {
         </div>
       </div>
 
+      <ConversationalSearchPanel onApply={handleConversationalSearch} />
+
       <SearchFilters
         values={filters}
         onChange={updateFilters}
@@ -217,6 +298,23 @@ export default function SearchPage() {
         onUseCurrentLocation={handleUseCurrentLocation}
         onSaveSearch={handleSaveSearch}
         canSave={Boolean(token)}
+      />
+
+      <MapContextPanel
+        activeLayerIds={activeContextLayers}
+        focusedPointId={focusedContextPoint?.id}
+        radiusKm={filters.radiusKm}
+        onToggleLayer={toggleContextLayer}
+        onFocusPoint={handleFocusContextPoint}
+        onClearFocus={() => {
+          setFocusedContextPoint(null);
+          updateFilters({
+            lat: undefined,
+            lng: undefined,
+            bounds: undefined
+          });
+          setMessage("");
+        }}
       />
 
       {message ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{message}</p> : null}
@@ -257,23 +355,51 @@ export default function SearchPage() {
             selectedPropertyId={selectedPropertyId}
             selectedProvince={filters.province}
             selectedDistrict={filters.district}
+            activeContextLayers={activeContextLayers}
+            focusedContextPoint={focusedContextPoint}
             onSelectProperty={setSelectedPropertyId}
-            onSelectDistrict={({ province, canton, district }) =>
+            onSelectContextPoint={handleFocusContextPoint}
+            onSelectDistrict={({ province, canton, district }) => {
+              setFocusedContextPoint(null);
               updateFilters({
                 province,
                 canton,
                 district,
+                lat: undefined,
+                lng: undefined,
                 bounds: undefined,
                 polygon: undefined
-              })
-            }
-            onBoundsChange={(bounds) => updateFilters({ bounds, polygon: undefined })}
-            onPolygonChange={(polygon) => updateFilters({ polygon, bounds: undefined })}
+              });
+            }}
+            onBoundsChange={(bounds) => {
+              setFocusedContextPoint(null);
+              updateFilters({
+                lat: undefined,
+                lng: undefined,
+                bounds,
+                polygon: undefined
+              });
+            }}
+            onPolygonChange={(polygon) => {
+              setFocusedContextPoint(null);
+              updateFilters({
+                lat: undefined,
+                lng: undefined,
+                polygon,
+                bounds: undefined
+              });
+            }}
           />
         </div>
       </div>
 
       <div className="space-y-5">
+        <MapContextInsights
+          summary={contextSummary}
+          radiusKm={contextRadiusKm}
+          focusedPoint={focusedContextPoint}
+        />
+
         <div className="flex items-center justify-between">
           <p className="text-sm text-ink/55">
             {loading
@@ -292,14 +418,15 @@ export default function SearchPage() {
 
         {loading && page === 1 ? (
           <LoadingState label={t("searchPage.loadingProperties")} />
-        ) : properties.length ? (
+        ) : contextualProperties.length ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {properties.map((property) => (
+            {contextualProperties.map((property) => (
               <PropertyCard
                 key={property._id}
                 property={property}
                 selected={selectedPropertyId === property._id}
                 isFavorite={favoriteIds.includes(property._id)}
+                contextMatches={property.contextMatches}
                 compact
                 onSelected={setSelectedPropertyId}
                 onFavoriteChange={(propertyId, nextState) => {

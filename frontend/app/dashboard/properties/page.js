@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { deleteProperty, getMyProperties, updateProperty } from "@/lib/api";
+import {
+  deleteProperty,
+  getCommercialOverview,
+  getMyProperties,
+  updateProperty,
+  updatePropertyFeatured
+} from "@/lib/api";
 import {
   formatCurrency,
   formatLocation,
@@ -23,6 +29,7 @@ export default function DashboardPropertiesPage() {
   const [flashMessage, setFlashMessage] = useState("");
   const [savingPropertyId, setSavingPropertyId] = useState("");
   const [rowFeedback, setRowFeedback] = useState({});
+  const [commercialOverview, setCommercialOverview] = useState(null);
 
   const loadProperties = async () => {
     try {
@@ -55,8 +62,18 @@ export default function DashboardPropertiesPage() {
     }
   };
 
+  const loadCommercialOverview = async () => {
+    try {
+      const data = await getCommercialOverview();
+      setCommercialOverview(data.overview);
+    } catch (_error) {
+      setCommercialOverview(null);
+    }
+  };
+
   useEffect(() => {
     loadProperties();
+    loadCommercialOverview();
   }, []);
 
   useEffect(() => {
@@ -114,6 +131,7 @@ export default function DashboardPropertiesPage() {
         }
       }));
       await loadProperties();
+      await loadCommercialOverview();
     } catch (error) {
       setFlashMessage(
         error.response?.data?.message || "No se pudo actualizar el estado de la propiedad."
@@ -131,11 +149,47 @@ export default function DashboardPropertiesPage() {
     }
   };
 
+  const handleToggleFeatured = async (item) => {
+    try {
+      setSavingPropertyId(item._id);
+      await updatePropertyFeatured(item._id, !item.featured);
+      setRowFeedback((current) => ({
+        ...current,
+        [item._id]: {
+          tone: "success",
+          message: item.featured
+            ? "La publicacion ya no esta destacada."
+            : "La publicacion quedo destacada correctamente."
+        }
+      }));
+      setFlashMessage(
+        item.featured
+          ? "Quitaste una propiedad del bloque destacado."
+          : "Activaste una propiedad en tus espacios destacados."
+      );
+      await Promise.all([loadProperties(), loadCommercialOverview()]);
+    } catch (error) {
+      setRowFeedback((current) => ({
+        ...current,
+        [item._id]: {
+          tone: "error",
+          message:
+            error.response?.data?.message || "No se pudo actualizar el destacado de la propiedad."
+        }
+      }));
+      setFlashMessage(
+        error.response?.data?.message || "No se pudo actualizar el destacado de la propiedad."
+      );
+    } finally {
+      setSavingPropertyId("");
+    }
+  };
+
   const handleDelete = async (propertyId) => {
     const confirmed = window.confirm("Deseas eliminar esta propiedad?");
     if (!confirmed) return;
     await deleteProperty(propertyId);
-    await loadProperties();
+    await Promise.all([loadProperties(), loadCommercialOverview()]);
   };
 
   const getAttentionCopy = (level) => {
@@ -188,6 +242,51 @@ export default function DashboardPropertiesPage() {
           <Button>Nueva propiedad</Button>
         </Link>
       </div>
+
+      {commercialOverview?.planUsage ? (
+        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-[24px] border border-pine/15 bg-pine/8 p-4">
+            <div className="text-xs uppercase tracking-[0.18em] text-pine/75">Plan activo</div>
+            <div className="mt-2 text-lg font-semibold text-ink">{commercialOverview.plan.label}</div>
+            <div className="mt-1 text-sm text-ink/60">
+              {commercialOverview.plan.status === "trial" ? "Prueba activa" : "Activo"}
+            </div>
+          </div>
+          <div className="rounded-[24px] border border-ink/10 bg-white p-4">
+            <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Propiedades activas</div>
+            <div className="mt-2 text-2xl font-semibold text-ink">
+              {commercialOverview.planUsage.activeListings}/{commercialOverview.planUsage.propertyLimit}
+            </div>
+            <div className="mt-1 text-sm text-ink/60">
+              {commercialOverview.planUsage.remainingPropertySlots} cupos disponibles
+            </div>
+          </div>
+          <div className="rounded-[24px] border border-ink/10 bg-white p-4">
+            <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Espacios destacados</div>
+            <div className="mt-2 text-2xl font-semibold text-ink">
+              {commercialOverview.planUsage.promotedListings}/{commercialOverview.planUsage.promotedSlots}
+            </div>
+            <div className="mt-1 text-sm text-ink/60">
+              {commercialOverview.planUsage.remainingPromotedSlots} espacios premium libres
+            </div>
+          </div>
+          <div className="rounded-[24px] border border-ink/10 bg-white p-4">
+            <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Siguiente mejora</div>
+            <div className="mt-2 text-sm font-semibold text-ink">
+              {commercialOverview.planUsage.canPromoteMore
+                ? "Ya puedes destacar otra propiedad"
+                : "Te conviene liberar un destacado o mejorar el plan"}
+            </div>
+            <div className="mt-3">
+              <Link href="/dashboard/business">
+                <Button variant="secondary" className="w-full">
+                  Ver negocio y planes
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {flashMessage ? (
         <div className="mb-6 rounded-2xl border border-pine/20 bg-pine/10 px-4 py-3 text-sm font-medium text-pine">
@@ -287,6 +386,23 @@ export default function DashboardPropertiesPage() {
                     >
                       {savingPropertyId === item._id ? "Guardando..." : "Guardar estado"}
                     </Button>
+                    <Button
+                      variant={item.featured ? "success" : "secondary"}
+                      onClick={() => handleToggleFeatured(item)}
+                      disabled={
+                        savingPropertyId === item._id ||
+                        (!item.featured &&
+                          (!commercialOverview?.planUsage?.canPromoteMore ||
+                            item.status !== "published" ||
+                            !["available", "reserved"].includes(item.marketStatus || "available")))
+                      }
+                    >
+                      {savingPropertyId === item._id
+                        ? "Actualizando..."
+                        : item.featured
+                          ? "Quitar destacado"
+                          : "Destacar"}
+                    </Button>
                     <Link href={`/dashboard/properties/${item._id}/edit`}>
                       <Button variant="secondary">Editar</Button>
                     </Link>
@@ -303,6 +419,13 @@ export default function DashboardPropertiesPage() {
                       }`}
                     >
                       {rowFeedback[item._id].message}
+                    </p>
+                  ) : null}
+                  {!item.featured &&
+                  (item.status !== "published" ||
+                    !["available", "reserved"].includes(item.marketStatus || "available")) ? (
+                    <p className="mt-2 text-xs text-ink/50">
+                      Solo publicaciones publicadas y disponibles o reservadas pueden destacarse.
                     </p>
                   ) : null}
                 </td>

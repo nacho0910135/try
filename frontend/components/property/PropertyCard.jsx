@@ -47,7 +47,8 @@ export function PropertyCard({
   selected = false,
   onSelected,
   onFavoriteChange,
-  compact = false
+  compact = false,
+  contextMatches = []
 }) {
   const { token } = useAuthStore();
   const { language, t } = useLanguage();
@@ -204,6 +205,25 @@ export function PropertyCard({
                 {property.pricingInsight.marketScoreLabel}
               </span>
             ) : null}
+          </div>
+        ) : null}
+
+        {contextMatches.length ? (
+          <div className={`flex flex-wrap text-ink/65 ${compact ? "gap-1.5 text-[11px]" : "gap-2 text-xs"}`}>
+            {contextMatches.slice(0, compact ? 1 : 2).map((match) => (
+              <span
+                key={`${property._id}-${match.id}`}
+                className="data-pill"
+                style={{
+                  borderColor: `${match.color}33`,
+                  backgroundColor: `${match.color}12`,
+                  color: match.color
+                }}
+              >
+                <MapPin className="h-3.5 w-3.5" />
+                {match.name} · {match.distanceKm.toFixed(1)} km
+              </span>
+            ))}
           </div>
         ) : null}
 

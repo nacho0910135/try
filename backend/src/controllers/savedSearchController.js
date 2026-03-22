@@ -16,8 +16,12 @@ export const updateSavedSearch = asyncHandler(async (req, res) => {
   res.json({ success: true, item });
 });
 
+export const sendSavedSearchAlert = asyncHandler(async (req, res) => {
+  const result = await savedSearchService.sendAlertEmail(req.user, req.params.searchId);
+  res.json({ success: true, result });
+});
+
 export const deleteSavedSearch = asyncHandler(async (req, res) => {
   await savedSearchService.remove(req.user, req.params.searchId);
   res.json({ success: true, message: "Saved search removed" });
 });
-

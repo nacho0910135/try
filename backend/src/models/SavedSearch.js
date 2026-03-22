@@ -36,10 +36,15 @@ const savedSearchSchema = new mongoose.Schema(
     alertsEnabled: {
       type: Boolean,
       default: false
+    },
+    lastViewedAt: {
+      type: Date
+    },
+    lastAlertSentAt: {
+      type: Date
     }
   },
   { timestamps: true }
 );
 
 export const SavedSearch = mongoose.model("SavedSearch", savedSearchSchema);
-

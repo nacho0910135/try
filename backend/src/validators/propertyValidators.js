@@ -146,6 +146,15 @@ export const propertyStatusSchema = z.object({
   })
 });
 
+export const propertyFeaturedSchema = z.object({
+  params: z.object({
+    propertyId: objectIdSchema
+  }),
+  body: z.object({
+    featured: z.boolean()
+  })
+});
+
 export const listPropertiesSchema = z.object({
   query: z.object({
     q: z.string().optional(),

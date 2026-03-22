@@ -445,6 +445,83 @@ const fallbackBattleNarrative = (first, second, winner, language) => {
     : `${selected.title} toma ventaja por un mejor balance entre ajuste al mercado, caracteristicas practicas y valor general frente a ${other.title}.${mixedCurrencies ? " Los precios se revisaron como monedas separadas en vez de forzar una ganadora solo por precio." : ""}`;
 };
 
+const normalizeQuestion = (value = "") =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const resolvePersonaIntent = (normalizedQuestion) => {
+  if (/\b(familia|family|ninos|children|hogar)\b/.test(normalizedQuestion)) {
+    return "family";
+  }
+
+  if (/\b(roomies|roommate|shared|estudiant|student|universitari|cuarto)\b/.test(normalizedQuestion)) {
+    return "roomies";
+  }
+
+  if (/\b(ejecutiv|executive|corporativ|office|oficina|reubic)\b/.test(normalizedQuestion)) {
+    return "executive";
+  }
+
+  if (/\b(inversion|investment|plusvalia|coast|coastal|playa|beach|airbnb|turis)\b/.test(normalizedQuestion)) {
+    return "coastal";
+  }
+
+  return null;
+};
+
+const buildPersonaFallback = ({ overview, personaId, language }) => {
+  const board = overview?.personaBoards?.find((item) => item.id === personaId);
+
+  if (!board?.items?.length) {
+    return null;
+  }
+
+  const [first, second] = board.items;
+
+  if (language === "en") {
+    return second
+      ? `${board.title} currently points first to ${first.label}, with ${first.subtitle}. A second strong zone is ${second.label}, which also shows solid fit for that profile.`
+      : `${board.title} currently points first to ${first.label}, with ${first.subtitle}.`;
+  }
+
+  return second
+    ? `${board.title} apunta primero a ${first.label}, con ${first.subtitle}. Otra zona fuerte para ese perfil es ${second.label}, que tambien viene mostrando buena afinidad.`
+    : `${board.title} apunta primero a ${first.label}, con ${first.subtitle}.`;
+};
+
+const buildMomentumFallback = ({ overview, language }) => {
+  const positiveMomentum = overview?.zoneMomentum?.find((item) => item.projectedDeltaPct > 0);
+  const coolingMomentum = overview?.zoneMomentum?.find((item) => item.projectedDeltaPct < 0);
+
+  if (!positiveMomentum && !coolingMomentum) {
+    return null;
+  }
+
+  if (language === "en") {
+    if (positiveMomentum && coolingMomentum) {
+      return `${positiveMomentum.label} shows the strongest positive momentum right now at ${positiveMomentum.projectedDeltaPct}% projected change, while ${coolingMomentum.label} is the clearest cooling signal at ${coolingMomentum.projectedDeltaPct}%.`;
+    }
+
+    if (positiveMomentum) {
+      return `${positiveMomentum.label} shows the strongest positive momentum right now, with a projected ${positiveMomentum.projectedDeltaPct}% move.`;
+    }
+
+    return `${coolingMomentum.label} is the clearest cooling signal right now, with a projected ${coolingMomentum.projectedDeltaPct}% move.`;
+  }
+
+  if (positiveMomentum && coolingMomentum) {
+    return `${positiveMomentum.label} muestra el momentum positivo mas fuerte ahora mismo con una variacion proyectada de ${positiveMomentum.projectedDeltaPct}%, mientras ${coolingMomentum.label} es la senal mas clara de enfriamiento con ${coolingMomentum.projectedDeltaPct}%.`;
+  }
+
+  if (positiveMomentum) {
+    return `${positiveMomentum.label} muestra el momentum positivo mas fuerte ahora mismo, con una variacion proyectada de ${positiveMomentum.projectedDeltaPct}%.`;
+  }
+
+  return `${coolingMomentum.label} es la senal mas clara de enfriamiento ahora mismo, con una variacion proyectada de ${coolingMomentum.projectedDeltaPct}%.`;
+};
+
 const buildFallbackChat = ({ question, overview, comparison, language }) => {
   const topZone = overview?.opportunityZones?.[0];
 
@@ -470,7 +547,27 @@ const buildFallbackChat = ({ question, overview, comparison, language }) => {
 };
 
 const buildFallbackChatSafe = ({ question, overview, comparison, language }) => {
+  const normalizedQuestion = normalizeQuestion(question);
   const topZone = overview?.opportunityZones?.[0];
+  const personaIntent = resolvePersonaIntent(normalizedQuestion);
+
+  if (
+    /\b(momentum|tendencia|trend|zona|zone|district|distrito|plusvalia|appreciation)\b/.test(
+      normalizedQuestion
+    )
+  ) {
+    const momentumAnswer = buildMomentumFallback({ overview, language });
+    if (momentumAnswer) {
+      return momentumAnswer;
+    }
+  }
+
+  if (personaIntent) {
+    const personaAnswer = buildPersonaFallback({ overview, personaId: personaIntent, language });
+    if (personaAnswer) {
+      return personaAnswer;
+    }
+  }
 
   if (comparison?.winner && /\b(cual|cu\u00e1l|which|better|mejor)\b/i.test(question)) {
     if (comparison.winner === "tie") {
@@ -496,8 +593,8 @@ const buildFallbackChatSafe = ({ question, overview, comparison, language }) => 
   }
 
   return language === "en"
-    ? "I can help with prices, comparables, market momentum, and property trade-offs using sanitized listing data."
-    : "Puedo ayudarte con precios, comparables, momentum de mercado y trade-offs entre propiedades usando datos sanitizados del inventario.";
+    ? "I can help with prices, comparables, market momentum, best zones by buyer profile, and property trade-offs using sanitized listing data."
+    : "Puedo ayudarte con precios, comparables, momentum de mercado, mejores zonas por perfil y trade-offs entre propiedades usando datos sanitizados del inventario.";
 };
 
 const buildOpportunityZones = (overview = {}) => {
@@ -650,6 +747,196 @@ const buildDecisionSignals = (properties = []) => {
   };
 };
 
+const buildZoneMomentum = (properties = []) => {
+  const grouped = new Map();
+
+  properties
+    .filter((property) => CLOSED_STATUSES.includes(property.marketStatus))
+    .forEach((property) => {
+      const zone = `${property.address?.district || ""}, ${property.address?.canton || ""}`;
+      const currency = property.currency || "USD";
+      const closedAt = property.soldAt || property.rentedAt || property.publishedAt || property.createdAt;
+
+      if (!zone.trim() || !closedAt) {
+        return;
+      }
+
+      const key = `${zone}|${currency}`;
+      const current = grouped.get(key) || [];
+      current.push({
+        month: slugMonth(closedAt),
+        ppsm: pricePerSquareMeter(property)
+      });
+      grouped.set(key, current);
+    });
+
+  return Array.from(grouped.entries())
+    .map(([compoundKey, rows]) => {
+      const [zone, currency] = compoundKey.split("|");
+      const monthMap = new Map();
+
+      rows.forEach((row) => {
+        const current = monthMap.get(row.month) || [];
+        current.push(row.ppsm);
+        monthMap.set(row.month, current);
+      });
+
+      const series = Array.from(monthMap.entries())
+        .map(([month, values]) => ({
+          month,
+          averagePpsm: round(average(values))
+        }))
+        .sort((first, second) => first.month.localeCompare(second.month))
+        .slice(-6);
+
+      const points = toSeriesPoints(series);
+      const regression = linearRegression(points);
+
+      if (!regression || points.length < 3) {
+        return null;
+      }
+
+      const currentAveragePpsm = points[points.length - 1].y;
+      const projectedNextQuarter = regression.predict(points.length + 3);
+      const projectedDeltaPct = currentAveragePpsm
+        ? ((projectedNextQuarter - currentAveragePpsm) / currentAveragePpsm) * 100
+        : 0;
+
+      return {
+        label: zone,
+        currency,
+        currentAveragePpsm: round(currentAveragePpsm),
+        projectedNextQuarterPpsm: round(projectedNextQuarter),
+        projectedDeltaPct: round(projectedDeltaPct, 1),
+        trend: buildTrendDirection(projectedDeltaPct),
+        sampleSize: rows.length,
+        series
+      };
+    })
+    .filter(Boolean)
+    .sort((first, second) => Math.abs(second.projectedDeltaPct) - Math.abs(first.projectedDeltaPct))
+    .slice(0, 8);
+};
+
+const buildPersonaZoneBoard = ({
+  id,
+  title,
+  description,
+  properties,
+  scoreProperty,
+  subtitleBuilder
+}) => {
+  const grouped = new Map();
+
+  properties.forEach((property) => {
+    const zone = `${property.address?.district || ""}, ${property.address?.canton || ""}`;
+    if (!zone.trim()) {
+      return;
+    }
+
+    const score = scoreProperty(property);
+    if (!score) {
+      return;
+    }
+
+    const current = grouped.get(zone) || [];
+    current.push({ property, score });
+    grouped.set(zone, current);
+  });
+
+  const items = Array.from(grouped.entries())
+    .map(([label, entries]) => ({
+      label,
+      value: round(entries.reduce((sum, item) => sum + item.score, 0)),
+      subtitle: subtitleBuilder(entries.map((item) => item.property))
+    }))
+    .sort((first, second) => second.value - first.value)
+    .slice(0, 5);
+
+  return {
+    id,
+    title,
+    description,
+    items
+  };
+};
+
+const buildPersonaBoards = (properties = []) => {
+  const active = properties.filter((property) => ACTIVE_STATUSES.includes(property.marketStatus));
+
+  return [
+    buildPersonaZoneBoard({
+      id: "family",
+      title: "Family-ready zones",
+      description: "Large homes, multiple baths, and family fit.",
+      properties: active,
+      scoreProperty: (property) => {
+        if ((property.bedrooms || 0) < 3 || (property.bathrooms || 0) < 2) {
+          return 0;
+        }
+        return 12 + (property.parkingSpaces || 0) * 2 + safeArea(property) / 90;
+      },
+      subtitleBuilder: (items) =>
+        `${items.length} listings · ${round(average(items.map((item) => safeArea(item))))} m2 avg`
+    }),
+    buildPersonaZoneBoard({
+      id: "roomies",
+      title: "Roomies and student zones",
+      description: "Shared living, student-friendly, and flexible rental setup.",
+      properties: active,
+      scoreProperty: (property) => {
+        const sharedLiving =
+          property.rentalArrangement === "roommate" || property.propertyType === "room";
+        if (!sharedLiving && !property.roommateDetails?.studentFriendly) {
+          return 0;
+        }
+        return (
+          14 +
+          (property.roommateDetails?.studentFriendly ? 4 : 0) +
+          (property.roommateDetails?.privateRoom ? 3 : 0) +
+          (!property.depositRequired ? 2 : 0)
+        );
+      },
+      subtitleBuilder: (items) =>
+        `${items.length} listings · ${items.filter((item) => item.petsAllowed).length} pet-friendly`
+    }),
+    buildPersonaZoneBoard({
+      id: "executive",
+      title: "Executive relocation zones",
+      description: "Furnished inventory, condos, and practical work-oriented fit.",
+      properties: active,
+      scoreProperty: (property) => {
+        const executiveFriendly =
+          property.furnished ||
+          ["apartment", "condominium", "commercial"].includes(property.propertyType);
+        if (!executiveFriendly) {
+          return 0;
+        }
+        return 10 + (property.furnished ? 5 : 0) + ((property.parkingSpaces || 0) > 0 ? 2 : 0);
+      },
+      subtitleBuilder: (items) =>
+        `${items.length} listings · ${items.filter((item) => item.furnished).length} furnished`
+    }),
+    buildPersonaZoneBoard({
+      id: "coastal",
+      title: "Coastal investment zones",
+      description: "Beach-facing supply and lifestyle-driven momentum.",
+      properties: active,
+      scoreProperty: (property) => {
+        const coastal = ["Guanacaste", "Puntarenas", "Limon"].includes(
+          property.address?.province
+        );
+        if (!coastal) {
+          return 0;
+        }
+        return 9 + (property.featured ? 3 : 0) + (property.businessType === "rent" ? 2 : 0);
+      },
+      subtitleBuilder: (items) =>
+        `${items.length} listings · ${items.filter((item) => item.featured).length} featured`
+    })
+  ].filter((board) => board.items.length);
+};
+
 const buildPrivacySafeContext = ({ overview, comparison, question, language }) => ({
   language,
   userQuestion: question,
@@ -657,6 +944,8 @@ const buildPrivacySafeContext = ({ overview, comparison, question, language }) =
   businessMix: overview.businessMix,
   decisionSignals: overview.decisionSignals,
   opportunityZones: overview.opportunityZones.slice(0, 5),
+  zoneMomentum: overview.zoneMomentum.slice(0, 5),
+  personaBoards: overview.personaBoards.slice(0, 4),
   forecasts: overview.forecasts.slice(0, 5).map((item) => ({
     zone: item.zone,
     currency: item.currency,
@@ -688,6 +977,8 @@ export const interactiveAnalysisService = {
       forecasts: buildForecasts(
         properties.filter((property) => CLOSED_STATUSES.includes(property.marketStatus))
       ),
+      zoneMomentum: buildZoneMomentum(properties),
+      personaBoards: buildPersonaBoards(properties),
       opportunityZones: buildOpportunityZones(overview),
       modelNotes: [
         "Linear regression over monthly price-per-square-meter history by zone and currency.",
@@ -764,8 +1055,8 @@ export const interactiveAnalysisService = {
               role: "system",
               content:
                 language === "en"
-                  ? "You are a neutral real estate comparison analyst for AlquiVentasCR. Use only the sanitized data provided. Never invent owner details, private contact data, or legal/financial guarantees. Answer with a concise verdict, strongest pros, strongest cons, and what kind of buyer or renter each property fits best."
-                  : "Eres un analista neutral de comparacion inmobiliaria para AlquiVentasCR. Usa solo los datos sanitizados entregados. Nunca inventes datos de propietarios, datos privados ni garantias legales o financieras. Responde con un veredicto breve, mejores pros, principales contras y el tipo de comprador o inquilino al que mejor le conviene cada propiedad."
+                  ? "You are a neutral real estate comparison analyst for AlquiVentasCR. Use only the sanitized data provided. Never invent owner details, private contact data, or legal/financial guarantees. Answer with a concise verdict, strongest pros, strongest cons, and what kind of buyer or renter each property fits best. If the question or context touches demand, appreciation, family fit, roommates, executive relocation, or coastal investment, ground the answer in zone momentum and buyer-profile signals when they are available in the provided context."
+                  : "Eres un analista neutral de comparacion inmobiliaria para AlquiVentasCR. Usa solo los datos sanitizados entregados. Nunca inventes datos de propietarios, datos privados ni garantias legales o financieras. Responde con un veredicto breve, mejores pros, principales contras y el tipo de comprador o inquilino al que mejor le conviene cada propiedad. Si la pregunta o el contexto toca demanda, plusvalia, ajuste familiar, roomies, reubicacion ejecutiva o inversion costera, apoya la respuesta en momentum de zona y senales por perfil cuando esten disponibles en el contexto entregado."
             },
             {
               role: "user",
@@ -853,8 +1144,8 @@ export const interactiveAnalysisService = {
             role: "system",
             content:
               language === "en"
-                ? "You are the AlquiVentasCR interactive analysis assistant. Use only the sanitized property and market context provided. Never reveal owner identities, emails, phone numbers, exact hidden addresses, or any personal data. Be direct, useful, and transparent when data is missing."
-                : "Eres el asistente de analisis interactivo de AlquiVentasCR. Usa solo el contexto sanitizado de mercado y propiedades entregado. Nunca reveles identidades de propietarios, correos, telefonos, direcciones exactas ocultas ni datos personales. Se directo, util y transparente cuando falte informacion."
+                ? "You are the AlquiVentasCR interactive analysis assistant. Use only the sanitized property and market context provided. Never reveal owner identities, emails, phone numbers, exact hidden addresses, or any personal data. Be direct, useful, and transparent when data is missing. When the user asks about where to buy, rent, invest, relocate, or share a home, actively use the available zone momentum and buyer-profile boards to explain which districts fit best and why."
+                : "Eres el asistente de analisis interactivo de AlquiVentasCR. Usa solo el contexto sanitizado de mercado y propiedades entregado. Nunca reveles identidades de propietarios, correos, telefonos, direcciones exactas ocultas ni datos personales. Se directo, util y transparente cuando falte informacion. Cuando el usuario pregunte donde comprar, rentar, invertir, reubicarse o vivir con roomies, usa activamente el momentum de zona y los tableros por perfil disponibles para explicar que distritos encajan mejor y por que."
           },
           ...history.map((item) => ({
             role: item.role,

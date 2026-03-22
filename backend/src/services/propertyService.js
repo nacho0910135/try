@@ -33,7 +33,11 @@ const buildPublicFilter = () => ({
   marketStatus: { $in: ["available", "reserved"] }
 });
 
-const buildSort = (sort) => {
+const buildSort = (sort, query = {}) => {
+  if (!sort && query.lat !== undefined && query.lng !== undefined) {
+    return {};
+  }
+
   switch (sort) {
     case "price-asc":
       return { price: 1, featured: -1 };
@@ -317,6 +321,15 @@ const getPropertyOrThrow = async (propertyId) => {
   return property;
 };
 
+const countPromotedListings = (ownerId, excludePropertyId) =>
+  Property.countDocuments({
+    owner: ownerId,
+    featured: true,
+    status: "published",
+    marketStatus: { $in: ["available", "reserved"] },
+    ...(excludePropertyId ? { _id: { $ne: excludePropertyId } } : {})
+  });
+
 const pushPriceHistorySnapshot = (property, user, note) => {
   property.priceHistory.push({
     price: property.price,
@@ -342,7 +355,7 @@ export const propertyService = {
   async list(query) {
     const pagination = buildPagination(query.page, query.limit);
     const filter = buildFilterQuery(query);
-    const sort = buildSort(query.sort);
+    const sort = buildSort(query.sort, query);
 
     const [items, total] = await Promise.all([
       Property.find(filter)
@@ -561,6 +574,54 @@ export const propertyService = {
       property.publishedAt = new Date();
     }
 
+    await property.save();
+    return enrichPropertyForClient(property);
+  },
+
+  async updateFeatured(propertyId, user, featured) {
+    const property = await getPropertyOrThrow(propertyId);
+
+    if (!isOwnerOrAdmin(property, user)) {
+      throw new ApiError(403, "You do not have access to this property");
+    }
+
+    if (!featured) {
+      property.featured = false;
+      await property.save();
+      return enrichPropertyForClient(property);
+    }
+
+    if (user.role !== "admin") {
+      const subscription = resolveEffectiveSubscription(user);
+
+      if (!subscription.promotedSlots) {
+        throw new ApiError(
+          403,
+          "Tu plan actual no incluye espacios destacados. Cambia de plan para activar esta mejora."
+        );
+      }
+
+      if (
+        property.status !== "published" ||
+        !["available", "reserved"].includes(property.marketStatus || "available")
+      ) {
+        throw new ApiError(
+          400,
+          "Solo puedes destacar publicaciones publicadas y disponibles o reservadas."
+        );
+      }
+
+      const currentPromoted = await countPromotedListings(user._id, property._id);
+
+      if (currentPromoted >= subscription.promotedSlots) {
+        throw new ApiError(
+          403,
+          `Ya usaste tus ${subscription.promotedSlots} espacios destacados. Quita uno o mejora tu plan.`
+        );
+      }
+    }
+
+    property.featured = true;
     await property.save();
     return enrichPropertyForClient(property);
   },

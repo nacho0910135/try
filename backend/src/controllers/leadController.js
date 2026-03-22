@@ -16,8 +16,7 @@ export const listSentLeads = asyncHandler(async (req, res) => {
   res.json({ success: true, ...data });
 });
 
-export const updateLeadStatus = asyncHandler(async (req, res) => {
-  const lead = await leadService.updateStatus(req.params.leadId, req.user, req.body.status);
+export const updateLead = asyncHandler(async (req, res) => {
+  const lead = await leadService.update(req.params.leadId, req.user, req.body);
   res.json({ success: true, lead });
 });
-

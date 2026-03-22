@@ -11,6 +11,11 @@ export const getCommercialOverview = asyncHandler(async (req, res) => {
   res.json({ success: true, overview });
 });
 
+export const updateSubscription = asyncHandler(async (req, res) => {
+  const subscription = await userService.updateSubscription(req.user, req.body);
+  res.json({ success: true, subscription });
+});
+
 export const requestVerification = asyncHandler(async (req, res) => {
   const user = await userService.requestVerification(req.user, req.body);
   res.json({ success: true, user });

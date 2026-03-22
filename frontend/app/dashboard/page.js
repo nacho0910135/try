@@ -2,13 +2,28 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, BadgeCheck, Sparkles, Target } from "lucide-react";
+import {
+  ArrowUpRight,
+  BadgeCheck,
+  BellRing,
+  CalendarClock,
+  Radar,
+  Sparkles,
+  Target
+} from "lucide-react";
 import { getDashboardSummary, requestUserVerification } from "@/lib/api";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { useAuthStore } from "@/store/auth-store";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
 import { formatCurrency } from "@/lib/utils";
+
+const leadStatusLabels = {
+  new: "Nuevo",
+  contacted: "Contactado",
+  qualified: "Calificado",
+  closed: "Cerrado"
+};
 
 export default function DashboardPage() {
   const { user, setUser } = useAuthStore();
@@ -62,6 +77,7 @@ export default function DashboardPage() {
   ];
 
   const verification = summary.verification || {};
+  const alertCenter = summary.alertCenter || {};
   const verificationToneClass =
     verification.status === "verified"
       ? "border-pine/20 bg-pine/10 text-pine"
@@ -121,7 +137,8 @@ export default function DashboardPage() {
               {formatCurrency(summary.plan?.monthlyPrice || 0, "USD")} / mes
             </div>
             <div className="mt-4 text-sm text-ink/70">
-              {summary.plan?.propertyLimit || 1} propiedades - {summary.plan?.promotedSlots || 0} destacados
+              {summary.planUsage?.activeListings || 0}/{summary.plan?.propertyLimit || 1} propiedades activas -{" "}
+              {summary.planUsage?.promotedListings || 0}/{summary.plan?.promotedSlots || 0} destacados en uso
             </div>
           </div>
         </div>
@@ -143,6 +160,56 @@ export default function DashboardPage() {
 
       <section className="grid gap-5 lg:grid-cols-2">
         <div className="surface p-6">
+          <div className="flex items-center gap-2 text-sm font-semibold text-terracotta">
+            <BellRing className="h-4 w-4" />
+            Alertas visibles
+          </div>
+          <h2 className="mt-4 text-2xl font-semibold">Lo que requiere atencion hoy</h2>
+          <p className="mt-3 text-sm leading-7 text-ink/65">
+            Tienes <strong>{alertCenter.newSearchMatches || 0}</strong> novedades en busquedas guardadas y{" "}
+            <strong>{alertCenter.dueLeadActions || 0}</strong> leads que conviene mover hoy.
+          </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[22px] bg-mist p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-lagoon">
+                <Radar className="h-4 w-4" />
+                Busquedas
+              </div>
+              <div className="mt-3 text-3xl font-semibold text-ink">
+                {alertCenter.newSearchMatches || 0}
+              </div>
+              <div className="mt-1 text-sm text-ink/60">nuevas coincidencias detectadas</div>
+            </div>
+            <div className="rounded-[22px] bg-mist p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-pine">
+                <CalendarClock className="h-4 w-4" />
+                Leads
+              </div>
+              <div className="mt-3 text-3xl font-semibold text-ink">
+                {alertCenter.dueLeadActions || 0}
+              </div>
+              <div className="mt-1 text-sm text-ink/60">acciones comerciales pendientes</div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href="/dashboard/saved-searches">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-lagoon">
+                Abrir alertas de busqueda
+                <ArrowUpRight className="h-4 w-4" />
+              </span>
+            </Link>
+            <Link href="/dashboard/leads">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-lagoon">
+                Abrir CRM de leads
+                <ArrowUpRight className="h-4 w-4" />
+              </span>
+            </Link>
+          </div>
+        </div>
+
+        <div className="surface p-6">
           <Target className="h-5 w-5 text-terracotta" />
           <h2 className="mt-4 text-2xl font-semibold">Embudo comercial</h2>
           <p className="mt-3 text-sm leading-7 text-ink/65">
@@ -157,7 +224,9 @@ export default function DashboardPage() {
           <Sparkles className="h-5 w-5 text-lagoon" />
           <h2 className="mt-4 text-2xl font-semibold">Inventario y visibilidad</h2>
           <p className="mt-3 text-sm leading-7 text-ink/65">
-            Tienes {summary.featuredProperties || 0} publicaciones destacadas. Ese es el bloque que mas valor te conviene potenciar cuando busques mas leads y cierres.
+            Tienes {summary.featuredProperties || 0} publicaciones destacadas y te quedan{" "}
+            {summary.planUsage?.remainingPromotedSlots || 0} espacios premium libres. Ese es el bloque que mas
+            valor te conviene potenciar cuando busques mas leads y cierres.
           </p>
           <div className="mt-4 flex gap-3">
             <Link href="/dashboard/properties">
@@ -166,6 +235,98 @@ export default function DashboardPage() {
                 <ArrowUpRight className="h-4 w-4" />
               </span>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-2">
+        <div className="surface p-6">
+          <div className="flex items-center gap-2 text-sm font-semibold text-lagoon">
+            <Radar className="h-4 w-4" />
+            Radar de busquedas
+          </div>
+          <h2 className="mt-4 text-2xl font-semibold">Alertas destacadas</h2>
+          <div className="mt-5 space-y-3">
+            {alertCenter.highlightedSearches?.length ? (
+              alertCenter.highlightedSearches.map((item) => (
+                <div key={item._id} className="rounded-[22px] border border-ink/10 bg-white p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-ink">{item.name}</div>
+                      <div className="mt-1 text-sm text-ink/55">
+                        {item.newMatches} nuevas · {item.totalMatches} activas
+                      </div>
+                    </div>
+                    {item.alertsEnabled ? (
+                      <span className="rounded-full bg-pine px-3 py-1 text-xs font-semibold text-white">
+                        Activa
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-mist px-3 py-1 text-xs font-semibold text-ink/65">
+                        Seguimiento manual
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-ink/55">
+                Todavia no hay busquedas con novedades visibles en este momento.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="surface p-6">
+          <div className="flex items-center gap-2 text-sm font-semibold text-pine">
+            <CalendarClock className="h-4 w-4" />
+            Seguimiento comercial
+          </div>
+          <h2 className="mt-4 text-2xl font-semibold">Leads que conviene mover ya</h2>
+          <div className="mt-5 space-y-3">
+            {alertCenter.dueLeadActions?.length ? (
+              alertCenter.dueLeadActions.map((lead) => (
+                <div key={lead._id} className="rounded-[22px] border border-ink/10 bg-white p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-ink">{lead.name}</div>
+                      <div className="mt-1 text-sm text-ink/55">{lead.propertyTitle}</div>
+                      <div className="mt-2 text-xs text-ink/55">
+                        {lead.nextFollowUpAt
+                          ? `Seguimiento: ${new Date(lead.nextFollowUpAt).toLocaleDateString("es-CR")}`
+                          : lead.lastContactedAt
+                            ? `Ultimo contacto: ${new Date(lead.lastContactedAt).toLocaleDateString("es-CR")}`
+                            : `Ingreso: ${new Date(lead.createdAt).toLocaleDateString("es-CR")}`}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          lead.priority === "high"
+                            ? "bg-red-50 text-red-600"
+                            : lead.priority === "low"
+                              ? "bg-mist text-ink/65"
+                              : "bg-lagoon/10 text-lagoon"
+                        }`}
+                      >
+                        {lead.priority === "high"
+                          ? "Alta"
+                          : lead.priority === "low"
+                            ? "Baja"
+                            : "Media"}
+                      </span>
+                      <span className="rounded-full bg-mist px-3 py-1 text-xs font-semibold text-ink/65">
+                        {leadStatusLabels[lead.status] || lead.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-ink/55">
+                No hay leads vencidos o de alta prioridad por ahora.
+              </p>
+            )}
           </div>
         </div>
       </section>

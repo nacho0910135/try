@@ -4,7 +4,12 @@ import { Offer } from "../models/Offer.js";
 import { Property } from "../models/Property.js";
 import { SavedSearch } from "../models/SavedSearch.js";
 import { User } from "../models/User.js";
-import { getCommercialPlanCatalog, resolveEffectiveSubscription } from "../constants/plans.js";
+import {
+  COMMERCIAL_PLAN_CONFIG,
+  getCommercialPlanCatalog,
+  resolveEffectiveSubscription
+} from "../constants/plans.js";
+import { buildAlertPreview } from "./savedSearchService.js";
 import { enrichPropertyCollection } from "../utils/propertyInsights.js";
 import { ApiError } from "../utils/apiError.js";
 
@@ -186,10 +191,49 @@ const buildOptimizationBoard = (properties) =>
     })
     .slice(0, 6);
 
+const buildPlanUsage = ({ subscription, ownedProperties = [] }) => {
+  const activeListings = ownedProperties.filter(
+    (item) =>
+      item.status === "published" && ["available", "reserved"].includes(item.marketStatus || "available")
+  ).length;
+  const promotedListings = ownedProperties.filter(
+    (item) =>
+      item.featured &&
+      item.status === "published" &&
+      ["available", "reserved"].includes(item.marketStatus || "available")
+  ).length;
+
+  return {
+    activeListings,
+    propertyLimit: subscription.propertyLimit,
+    remainingPropertySlots: Math.max(subscription.propertyLimit - activeListings, 0),
+    promotedListings,
+    promotedSlots: subscription.promotedSlots,
+    remainingPromotedSlots: Math.max(subscription.promotedSlots - promotedListings, 0),
+    canPromoteMore: promotedListings < subscription.promotedSlots
+  };
+};
+
 export const userService = {
   async getDashboardSummary(user) {
     const subscription = resolveEffectiveSubscription(user);
-    const [properties, leadsReceived, leadsSent, favorites, savedSearches, offersReceived, offersSent, ownedProperties] = await Promise.all([
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const staleLeadThreshold = new Date();
+    staleLeadThreshold.setDate(staleLeadThreshold.getDate() - 5);
+
+    const [
+      properties,
+      leadsReceived,
+      leadsSent,
+      favorites,
+      savedSearches,
+      offersReceived,
+      offersSent,
+      ownedProperties,
+      savedSearchItems,
+      receivedLeadItems
+    ] = await Promise.all([
       Property.countDocuments({ owner: user._id }),
       Lead.countDocuments({ toUser: user._id }),
       Lead.countDocuments({ fromUser: user._id }),
@@ -197,7 +241,13 @@ export const userService = {
       SavedSearch.countDocuments({ user: user._id }),
       Offer.countDocuments({ toUser: user._id }),
       Offer.countDocuments({ fromUser: user._id }),
-      Property.find({ owner: user._id }).select("status marketStatus featured views engagement").lean()
+      Property.find({ owner: user._id }).select("status marketStatus featured views engagement").lean(),
+      SavedSearch.find({ user: user._id }).sort({ updatedAt: -1, createdAt: -1 }).limit(6).lean(),
+      Lead.find({ toUser: user._id })
+        .sort({ createdAt: -1 })
+        .limit(12)
+        .populate("property", "title slug")
+        .lean()
     ]);
 
     const activeProperties = ownedProperties.filter(
@@ -209,6 +259,66 @@ export const userService = {
     const totalViews = sumBy(ownedProperties, (item) => item.views || item.engagement?.views);
     const totalLeadsOnListings = sumBy(ownedProperties, (item) => item.engagement?.leads);
     const totalOffersOnListings = sumBy(ownedProperties, (item) => item.engagement?.offers);
+    const planUsage = buildPlanUsage({
+      subscription,
+      ownedProperties
+    });
+    const savedSearchAlerts = await Promise.all(
+      savedSearchItems.map(async (item) => ({
+        ...item,
+        alertPreview: await buildAlertPreview(item)
+      }))
+    );
+
+    const highlightedSearches = savedSearchAlerts
+      .filter(
+        (item) => Number(item.alertPreview?.newMatches || 0) > 0 || Boolean(item.alertsEnabled)
+      )
+      .sort(
+        (first, second) =>
+          Number(second.alertPreview?.newMatches || 0) -
+          Number(first.alertPreview?.newMatches || 0)
+      )
+      .slice(0, 3)
+      .map((item) => ({
+        _id: item._id,
+        name: item.name,
+        alertsEnabled: item.alertsEnabled,
+        newMatches: item.alertPreview?.newMatches || 0,
+        totalMatches: item.alertPreview?.totalMatches || 0
+      }));
+
+    const dueLeadActions = receivedLeadItems
+      .filter(
+        (lead) =>
+          lead.status !== "closed" &&
+          ((lead.nextFollowUpAt && new Date(lead.nextFollowUpAt) <= today) ||
+            lead.priority === "high" ||
+            new Date(lead.lastContactedAt || lead.createdAt) < staleLeadThreshold)
+      )
+      .sort((first, second) => {
+        const priorityWeight = { high: 0, medium: 1, low: 2 };
+        const firstWeight = priorityWeight[first.priority || "medium"] ?? 1;
+        const secondWeight = priorityWeight[second.priority || "medium"] ?? 1;
+
+        if (firstWeight !== secondWeight) {
+          return firstWeight - secondWeight;
+        }
+
+        return new Date(first.nextFollowUpAt || first.createdAt) - new Date(second.nextFollowUpAt || second.createdAt);
+      })
+      .slice(0, 4)
+      .map((lead) => ({
+        _id: lead._id,
+        name: lead.name,
+        status: lead.status,
+        priority: lead.priority || "medium",
+        propertyTitle: lead.property?.title || "Propiedad",
+        propertySlug: lead.property?.slug || null,
+        nextFollowUpAt: lead.nextFollowUpAt,
+        lastContactedAt: lead.lastContactedAt,
+        createdAt: lead.createdAt
+      }));
 
     return {
       properties,
@@ -225,6 +335,14 @@ export const userService = {
       totalOffersOnListings,
       conversionRate: percent(totalLeadsOnListings + totalOffersOnListings, totalViews),
       plan: subscription,
+      planUsage,
+      alertCenter: {
+        newSearchMatches: sumBy(highlightedSearches, (item) => item.newMatches),
+        searchesWithAlerts: highlightedSearches.length,
+        dueLeadActions: dueLeadActions.length,
+        highlightedSearches,
+        dueLeadActions
+      },
       verification: {
         ...(user.verification || {}),
         requestedBadge:
@@ -358,6 +476,10 @@ export const userService = {
       (item) =>
         item.status === "published" && ["available", "reserved"].includes(item.marketStatus || "available")
     ).length;
+    const planUsage = buildPlanUsage({
+      subscription,
+      ownedProperties
+    });
 
     const timeline = months.map((month) => ({
       label: month.label,
@@ -420,6 +542,7 @@ export const userService = {
 
     return {
       plan: subscription,
+      planUsage,
       availablePlans: getCommercialPlanCatalog(),
       summary: {
         activeListings,
@@ -454,6 +577,36 @@ export const userService = {
       recentOffers: offersReceived,
       actionableInsights
     };
+  },
+
+  async updateSubscription(user, payload) {
+    const currentUser = await User.findById(user._id);
+
+    if (!currentUser) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const plan = COMMERCIAL_PLAN_CONFIG[payload.plan];
+
+    if (!plan) {
+      throw new ApiError(400, "Selected plan is not available");
+    }
+
+    currentUser.subscription = {
+      ...(currentUser.subscription || {}),
+      plan: plan.id,
+      status: "active",
+      billingCycle: payload.billingCycle || "monthly",
+      monthlyPrice: plan.monthlyPrice,
+      propertyLimit: plan.propertyLimit,
+      promotedSlots: plan.promotedSlots,
+      startedAt: new Date(),
+      trialEndsAt: undefined
+    };
+
+    await currentUser.save();
+
+    return resolveEffectiveSubscription(currentUser);
   },
 
   async requestVerification(user, payload) {

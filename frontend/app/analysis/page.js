@@ -79,6 +79,25 @@ const getBusinessTypeLabel = (value, language) =>
 const getPropertyTypeLabel = (value, language) =>
   propertyTypeLabels[value]?.[language] || value;
 
+const personaBoardLabels = {
+  family: {
+    es: "Zonas familiares",
+    en: "Family-ready zones"
+  },
+  roomies: {
+    es: "Zonas para roomies",
+    en: "Roomies and student zones"
+  },
+  executive: {
+    es: "Zonas ejecutivas",
+    en: "Executive relocation zones"
+  },
+  coastal: {
+    es: "Zonas costeras de inversion",
+    en: "Coastal investment zones"
+  }
+};
+
 export default function AnalysisPage() {
   const { language } = useLanguage();
   const { token } = useAuthStore();
@@ -126,7 +145,7 @@ export default function AnalysisPage() {
             askDescription:
               "Ask about value, zone momentum, rent flexibility, or which property fits a certain buyer profile.",
             askPlaceholder:
-              "Example: Which one looks better for long-term appreciation?",
+              "Example: Which zone has the strongest momentum for families right now?",
             askButton: "Ask the assistant",
             asking: "Thinking...",
             dashboardOnly:
@@ -177,7 +196,13 @@ export default function AnalysisPage() {
             averageBathrooms: "Average bathrooms",
             topDemandChart: "Demand by zone",
             inventoryChart: "Inventory by type",
-            trendChart: "Recent PPSM trend"
+            trendChart: "Recent PPSM trend",
+            zoneMomentumTitle: "Zone momentum",
+            zoneMomentumDescription:
+              "Districts where closing prices are accelerating or cooling off faster.",
+            personaBoardsTitle: "Best zones by buyer profile",
+            personaBoardsDescription:
+              "A practical lens for the needs people actually bring to the search."
           }
         : {
             eyebrow: "Analisis Interactivo",
@@ -210,7 +235,7 @@ export default function AnalysisPage() {
             askDescription:
               "Pregunta sobre valor, momentum de zona, flexibilidad de renta o que propiedad se ajusta mejor a cierto perfil.",
             askPlaceholder:
-              "Ejemplo: Cual luce mejor para plusvalia a largo plazo?",
+              "Ejemplo: Que zona tiene mejor momentum para familias en este momento?",
             askButton: "Preguntar al asistente",
             asking: "Pensando...",
             dashboardOnly:
@@ -261,7 +286,13 @@ export default function AnalysisPage() {
             averageBathrooms: "Baños promedio",
             topDemandChart: "Demanda por zona",
             inventoryChart: "Inventario por tipo",
-            trendChart: "Tendencia reciente de PPSM"
+            trendChart: "Tendencia reciente de PPSM",
+            zoneMomentumTitle: "Momentum por zona",
+            zoneMomentumDescription:
+              "Distritos donde los cierres se estan acelerando o enfriando mas rapido.",
+            personaBoardsTitle: "Mejores zonas por perfil de cliente",
+            personaBoardsDescription:
+              "Una lectura practica segun necesidades reales que la gente trae al buscador."
           },
     [language]
   );
@@ -419,6 +450,77 @@ export default function AnalysisPage() {
       })),
     [overview]
   );
+
+  const zoneMomentumBars = useMemo(
+    () =>
+      (overview?.zoneMomentum || []).slice(0, 5).map((item) => ({
+        label: item.label,
+        value: Math.abs(item.projectedDeltaPct || 0),
+        subtitle: `${item.projectedDeltaPct > 0 ? "+" : ""}${item.projectedDeltaPct}% · ${
+          item.currency
+        } · ${item.sampleSize} ${language === "en" ? "closings" : "cierres"}`
+      })),
+    [language, overview]
+  );
+
+  const chatPromptSuggestions = useMemo(() => {
+    const familyZone = overview?.personaBoards
+      ?.find((board) => board.id === "family")
+      ?.items?.[0]?.label;
+    const roomiesZone = overview?.personaBoards
+      ?.find((board) => board.id === "roomies")
+      ?.items?.[0]?.label;
+    const executiveZone = overview?.personaBoards
+      ?.find((board) => board.id === "executive")
+      ?.items?.[0]?.label;
+    const coastalZone = overview?.personaBoards
+      ?.find((board) => board.id === "coastal")
+      ?.items?.[0]?.label;
+    const momentumZone = overview?.zoneMomentum?.[0]?.label;
+
+    const overviewSuggestions =
+      language === "en"
+        ? [
+            momentumZone
+              ? `Which district has the strongest momentum right now, and is ${momentumZone} still leading?`
+              : "Which district has the strongest momentum right now?",
+            familyZone
+              ? `Why does ${familyZone} look strong for families right now?`
+              : "Which district looks strongest for a family right now?",
+            roomiesZone
+              ? `Is ${roomiesZone} still one of the best areas for roomies or student rentals?`
+              : "Where do roomies get the best balance between demand and price?",
+            coastalZone
+              ? `Does ${coastalZone} still look attractive for investment or is it getting expensive?`
+              : "Which coastal zone looks strongest for investment right now?",
+            executiveZone
+              ? `Which executive relocation zone looks most stable today, and how does ${executiveZone} compare?`
+              : "Which executive relocation zone looks most stable today?"
+          ]
+        : [
+            momentumZone
+              ? `Que distrito tiene el momentum mas fuerte ahora, y ${momentumZone} sigue liderando?`
+              : "Que distrito tiene el momentum mas fuerte ahora?",
+            familyZone
+              ? `Por que ${familyZone} luce fuerte para familias en este momento?`
+              : "Que distrito luce mas fuerte para una familia ahora mismo?",
+            roomiesZone
+              ? `Sigue ${roomiesZone} entre las mejores zonas para roomies o alquiler estudiantil?`
+              : "Donde encuentran mejor balance los roomies entre demanda y precio?",
+            coastalZone
+              ? `Sigue ${coastalZone} atractivo para inversion o ya se esta encareciendo demasiado?`
+              : "Que zona costera luce mejor para inversion en este momento?",
+            executiveZone
+              ? `Que zona ejecutiva luce mas estable hoy y como se compara ${executiveZone}?`
+              : "Que zona ejecutiva luce mas estable hoy?"
+          ];
+
+    if (comparison?.suggestedQuestions?.length) {
+      return [...new Set([...comparison.suggestedQuestions, ...overviewSuggestions])].slice(0, 5);
+    }
+
+    return overviewSuggestions.slice(0, 4);
+  }, [comparison, language, overview]);
 
   if (loadingOverview) {
     return (
@@ -617,6 +719,60 @@ export default function AnalysisPage() {
         </div>
       </section>
 
+      <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="surface p-6">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-5 w-5 text-terracotta" />
+            <div>
+              <h2 className="text-2xl font-semibold">{copy.zoneMomentumTitle}</h2>
+              <p className="mt-1 text-sm text-ink/60">{copy.zoneMomentumDescription}</p>
+            </div>
+          </div>
+          <div className="mt-5">
+            <HorizontalBarList
+              items={zoneMomentumBars}
+              color="#e45d35"
+              valueFormatter={(value) => `${Number(value || 0).toFixed(1)}%`}
+            />
+          </div>
+        </div>
+
+        <div className="surface p-6">
+          <div className="flex items-center gap-3">
+            <BrainCircuit className="h-5 w-5 text-pine" />
+            <div>
+              <h2 className="text-2xl font-semibold">{copy.personaBoardsTitle}</h2>
+              <p className="mt-1 text-sm text-ink/60">{copy.personaBoardsDescription}</p>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-4">
+            {(overview.personaBoards || []).map((board) => (
+              <div key={board.id} className="rounded-[24px] border border-ink/10 bg-white p-4">
+                <div className="text-lg font-semibold text-ink">
+                  {personaBoardLabels[board.id]?.[language] || board.title}
+                </div>
+                <div className="mt-3 space-y-2">
+                  {board.items.slice(0, 3).map((item) => (
+                    <div
+                      key={`${board.id}-${item.label}`}
+                      className="flex items-center justify-between gap-3 rounded-[18px] bg-mist px-4 py-3 text-sm"
+                    >
+                      <div>
+                        <div className="font-semibold text-ink">{item.label}</div>
+                        <div className="mt-1 text-xs text-ink/55">{item.subtitle}</div>
+                      </div>
+                      <div className="rounded-full bg-white px-3 py-1.5 font-semibold text-pine shadow-soft">
+                        {item.value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="surface p-6">
         <div className="flex items-center gap-3">
           <BarChart3 className="h-5 w-5 text-terracotta" />
@@ -697,7 +853,7 @@ export default function AnalysisPage() {
                 ))
               ) : (
                 <div className="rounded-[24px] bg-mist px-4 py-3 text-sm text-ink/70">
-                  {comparison?.suggestedQuestions?.join(" - ") || copy.askDescription}
+                  {chatPromptSuggestions.join(" - ") || copy.askDescription}
                 </div>
               )}
             </div>
@@ -714,7 +870,7 @@ export default function AnalysisPage() {
                 <Button onClick={handleAsk} disabled={chatLoading || !question.trim()}>
                   {chatLoading ? copy.asking : copy.askButton}
                 </Button>
-                {comparison?.suggestedQuestions?.slice(0, 2).map((item) => (
+                {chatPromptSuggestions.slice(0, 4).map((item) => (
                   <button
                     key={item}
                     type="button"

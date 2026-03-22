@@ -7,6 +7,7 @@ import {
   listFeaturedProperties,
   listMyProperties,
   listProperties,
+  updatePropertyFeatured,
   updateProperty,
   updatePropertyStatus
 } from "../controllers/propertyController.js";
@@ -15,6 +16,7 @@ import { validate } from "../middlewares/validateMiddleware.js";
 import {
   createPropertySchema,
   listPropertiesSchema,
+  propertyFeaturedSchema,
   propertyIdSchema,
   propertySlugSchema,
   propertyStatusSchema,
@@ -55,6 +57,13 @@ propertyRoutes.patch(
   validate(propertyStatusSchema),
   updatePropertyStatus
 );
+propertyRoutes.patch(
+  "/:propertyId/featured",
+  requireAuth,
+  authorize("agent", "owner", "admin"),
+  validate(propertyFeaturedSchema),
+  updatePropertyFeatured
+);
 propertyRoutes.delete(
   "/:propertyId",
   requireAuth,
@@ -62,4 +71,3 @@ propertyRoutes.delete(
   validate(propertyIdSchema),
   deleteProperty
 );
-

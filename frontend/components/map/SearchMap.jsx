@@ -6,6 +6,7 @@ import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import Map, { GeolocateControl, Layer, Marker, NavigationControl, Source } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
 import { useLanguage } from "@/components/layout/LanguageProvider";
+import { getVisibleMapContextPoints, mapContextLayers } from "@/lib/costa-rica-map-context";
 import { formatCompactCurrency, formatCurrency } from "@/lib/utils";
 import { mapDefaultCenter } from "@/lib/constants";
 import { getProvinceCode } from "@/lib/costa-rica-geo";
@@ -58,19 +59,23 @@ export function SearchMap({
   selectedPropertyId,
   selectedProvince,
   selectedDistrict,
+  activeContextLayers = [],
+  focusedContextPoint,
   onSelectProperty,
   onSelectDistrict,
+  onSelectContextPoint,
   onBoundsChange,
   onPolygonChange
 }) {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const mapStyle = resolveMapStyle(process.env.NEXT_PUBLIC_MAPBOX_STYLE);
   const mapRef = useRef(null);
   const drawRef = useRef(null);
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
   const provinceCode = getProvinceCode(selectedProvince);
+  const visibleContextPoints = getVisibleMapContextPoints(activeContextLayers);
 
   useEffect(() => {
     const loadDistricts = async () => {
@@ -122,6 +127,18 @@ export function SearchMap({
         }
       );
   }, [districtGeoJson]);
+
+  useEffect(() => {
+    if (!focusedContextPoint || !mapRef.current) {
+      return;
+    }
+
+    mapRef.current.getMap().flyTo({
+      center: [focusedContextPoint.lng, focusedContextPoint.lat],
+      zoom: 11.6,
+      duration: 1000
+    });
+  }, [focusedContextPoint]);
 
   useEffect(() => {
     if (!token || !mapRef.current || drawRef.current) {
@@ -233,6 +250,10 @@ export function SearchMap({
           });
         }}
         onMoveEnd={(event) => {
+          if (focusedContextPoint) {
+            return;
+          }
+
           const bounds = event.target.getBounds();
 
           onBoundsChange?.({
@@ -288,11 +309,64 @@ export function SearchMap({
             );
           })()
         ))}
+
+        {visibleContextPoints.map((point) => {
+          const selected = focusedContextPoint?.id === point.id;
+
+          return (
+            <Marker
+              key={point.id}
+              longitude={point.lng}
+              latitude={point.lat}
+              anchor="bottom"
+            >
+              <button
+                type="button"
+                onClick={() => onSelectContextPoint?.(point)}
+                className={`rounded-full border px-2.5 py-1.5 text-[10px] font-semibold text-white shadow-soft transition ${
+                  selected ? "ring-4 ring-white/80 scale-105" : "opacity-90 hover:opacity-100"
+                }`}
+                style={{
+                  backgroundColor: point.color,
+                  borderColor: "rgba(255,255,255,0.82)"
+                }}
+                aria-label={point.name}
+              >
+                {point.shortLabel || point.name}
+              </button>
+            </Marker>
+          );
+        })}
       </Map>
 
-      {selectedProvince ? (
-        <div className="border-t border-ink/10 bg-white/88 px-4 py-3 text-xs font-medium text-ink/65">
-          {t("map.districtsHint", { province: selectedProvince })}
+      {selectedProvince || activeContextLayers.length ? (
+        <div className="space-y-2 border-t border-ink/10 bg-white/88 px-4 py-3 text-xs font-medium text-ink/65">
+          {selectedProvince ? <div>{t("map.districtsHint", { province: selectedProvince })}</div> : null}
+          {activeContextLayers.length ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] uppercase tracking-[0.18em] text-ink/45">
+                {visibleContextPoints.length}{" "}
+                {language === "en"
+                  ? visibleContextPoints.length === 1
+                    ? "context point"
+                    : "context points"
+                  : visibleContextPoints.length === 1
+                    ? "punto de contexto"
+                    : "puntos de contexto"}
+              </span>
+              {mapContextLayers
+                .filter((layer) => activeContextLayers.includes(layer.id))
+                .map((layer) => (
+                  <span
+                    key={layer.id}
+                    className="rounded-full px-2.5 py-1 text-[10px] font-semibold text-white"
+                    style={{ backgroundColor: layer.color }}
+                  >
+                    {language === "en" ? layer.labelEn : layer.labelEs}
+                  </span>
+                ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

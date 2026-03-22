@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { LEAD_SOURCES, LEAD_STATUSES } from "../constants/enums.js";
+import { LEAD_PRIORITIES, LEAD_SOURCES, LEAD_STATUSES } from "../constants/enums.js";
 
 const leadSchema = new mongoose.Schema(
   {
@@ -46,6 +46,22 @@ const leadSchema = new mongoose.Schema(
       type: String,
       enum: LEAD_STATUSES,
       default: "new"
+    },
+    priority: {
+      type: String,
+      enum: LEAD_PRIORITIES,
+      default: "medium"
+    },
+    internalNote: {
+      type: String,
+      trim: true,
+      maxlength: 2000
+    },
+    nextFollowUpAt: {
+      type: Date
+    },
+    lastContactedAt: {
+      type: Date
     }
   },
   { timestamps: true }
@@ -55,4 +71,3 @@ leadSchema.index({ toUser: 1, createdAt: -1 });
 leadSchema.index({ fromUser: 1, createdAt: -1 });
 
 export const Lead = mongoose.model("Lead", leadSchema);
-

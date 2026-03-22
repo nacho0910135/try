@@ -50,6 +50,8 @@ export const updateProperty = (propertyId, payload) =>
   unwrap(api.patch(`/properties/${propertyId}`, payload));
 export const updatePropertyStatus = (propertyId, status) =>
   unwrap(api.patch(`/properties/${propertyId}/status`, { status }));
+export const updatePropertyFeatured = (propertyId, featured) =>
+  unwrap(api.patch(`/properties/${propertyId}/featured`, { featured }));
 export const deleteProperty = (propertyId) =>
   unwrap(api.delete(`/properties/${propertyId}`));
 
@@ -73,6 +75,8 @@ export const getSavedSearches = () => unwrap(api.get("/saved-searches"));
 export const createSavedSearch = (payload) => unwrap(api.post("/saved-searches", payload));
 export const updateSavedSearch = (searchId, payload) =>
   unwrap(api.patch(`/saved-searches/${searchId}`, payload));
+export const sendSavedSearchAlert = (searchId) =>
+  unwrap(api.post(`/saved-searches/${searchId}/send-alert`));
 export const deleteSavedSearch = (searchId) =>
   unwrap(api.delete(`/saved-searches/${searchId}`));
 
@@ -81,8 +85,9 @@ export const getReceivedLeads = (filters = {}) =>
   unwrap(api.get(`/leads/received?${serializePropertyQuery(filters)}`));
 export const getSentLeads = (filters = {}) =>
   unwrap(api.get(`/leads/sent?${serializePropertyQuery(filters)}`));
-export const updateLeadStatus = (leadId, status) =>
-  unwrap(api.patch(`/leads/${leadId}/status`, { status }));
+export const updateLead = (leadId, payload) =>
+  unwrap(api.patch(`/leads/${leadId}`, payload));
+export const updateLeadStatus = (leadId, status) => updateLead(leadId, { status });
 export const createOffer = (payload) => unwrap(api.post("/offers", payload));
 export const getReceivedOffers = (filters = {}) =>
   unwrap(api.get(`/offers/received?${serializePropertyQuery(filters)}`));
@@ -93,6 +98,8 @@ export const updateOfferStatus = (offerId, status) =>
 
 export const getDashboardSummary = () => unwrap(api.get("/users/dashboard-summary"));
 export const getCommercialOverview = () => unwrap(api.get("/users/commercial-overview"));
+export const updateMySubscription = (payload) =>
+  unwrap(api.patch("/users/subscription", payload));
 export const requestUserVerification = (payload) =>
   unwrap(api.post("/users/verification-request", payload));
 

@@ -81,6 +81,12 @@ export const leadStatusLabels = {
   closed: "Cerrado"
 };
 
+export const leadPriorityLabels = {
+  low: "Baja",
+  medium: "Media",
+  high: "Alta"
+};
+
 export const offerStatusLabels = {
   new: "Nueva",
   reviewing: "En revision",

@@ -20,7 +20,8 @@ export const createSavedSearchSchema = z.object({
         coordinates: z.array(z.array(z.array(z.number())))
       })
       .optional(),
-    bounds: boundsSchema
+    bounds: boundsSchema,
+    alertsEnabled: z.boolean().optional()
   })
 });
 
@@ -32,7 +33,9 @@ export const updateSavedSearchSchema = z.object({
     name: z.string().min(2).max(120).optional(),
     filters: z.record(z.any()).optional(),
     mapArea: jsonField(),
-    bounds: boundsSchema
+    bounds: boundsSchema,
+    alertsEnabled: z.boolean().optional(),
+    lastViewedAt: z.coerce.date().nullable().optional()
   })
 });
 

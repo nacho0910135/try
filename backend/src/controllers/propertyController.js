@@ -46,8 +46,17 @@ export const updatePropertyStatus = asyncHandler(async (req, res) => {
   res.json({ success: true, property });
 });
 
+export const updatePropertyFeatured = asyncHandler(async (req, res) => {
+  const property = await propertyService.updateFeatured(
+    req.params.propertyId,
+    req.user,
+    req.body.featured
+  );
+
+  res.json({ success: true, property });
+});
+
 export const deleteProperty = asyncHandler(async (req, res) => {
   await propertyService.remove(req.params.propertyId, req.user);
   res.json({ success: true, message: "Property deleted" });
 });
-

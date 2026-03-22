@@ -11,6 +11,7 @@
     "dev:frontend": "npm run dev --workspace frontend",
     "seed": "npm run seed --workspace backend",
     "seed:samples": "npm run seed:samples --workspace backend",
+    "alerts:send": "npm run alerts:send --workspace backend",
     "lint": "npm run lint --workspace backend && npm run lint --workspace frontend"
   },
   "devDependencies": {
