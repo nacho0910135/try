@@ -93,7 +93,7 @@ export default function DashboardSavedSearchesPage() {
       setFeedback(
         mode === "smtp"
           ? "Alerta enviada por correo correctamente."
-          : "Alerta preparada en modo desarrollo. Configura SMTP para enviarla de verdad."
+          : "El servicio de correo no esta configurado en este entorno."
       );
       await loadSavedSearches();
     } catch (error) {

@@ -1,4 +1,4 @@
-# AlquiVentasCR
+# BienesRaicesCR
 
 Plataforma inmobiliaria full stack estilo portal moderno para Costa Rica, enfocada en publicacion, exploracion y contacto de propiedades con mapa interactivo, filtros avanzados y busqueda geoespacial.
 
@@ -7,7 +7,7 @@ Plataforma inmobiliaria full stack estilo portal moderno para Costa Rica, enfoca
 - Backend: Node.js + Express + MongoDB + Mongoose
 - Frontend: Next.js App Router + React + Tailwind CSS
 - Auth: JWT
-- Uploads: Cloudinary con fallback a placeholders cuando no hay credenciales
+- Uploads: Cloudinary o almacenamiento local del backend
 - Mapas: Mapbox
 - Validacion: Zod
 - Estado frontend: Zustand
@@ -19,7 +19,7 @@ Se eligio Next.js sobre React + Vite porque encaja bien con un frontend de produ
 ## Lo que incluye este MVP
 
 - Registro, login, logout y perfil
-- Estructura de recuperacion de contrasena con token temporal en desarrollo
+- Recuperacion de contrasena con enlace por correo y pantalla de restablecimiento
 - Roles: `user`, `agent`, `owner`, `admin`
 - CRUD de propiedades
 - Estados de propiedad: `draft`, `published`, `paused`, `sold`, `rented`
@@ -157,7 +157,7 @@ npm run seed
 npm run alerts:send
 ```
 
-## Credenciales demo del seed
+## Credenciales del seed local
 
 - Admin: `admin@casacr.com` / `Admin12345`
 - Agente: `laura@casacr.com` / `Laura12345`
@@ -182,7 +182,7 @@ Para uploads reales:
 2. Copia `cloud_name`, `api_key` y `api_secret`.
 3. Colocalos en `backend/.env`.
 
-Si no configuras Cloudinary, el backend devuelve URLs placeholder para mantener el flujo del MVP utilizable.
+Si no configuras Cloudinary, el backend guarda las imagenes en `backend/public/uploads/properties`.
 
 ## DeepSeek
 
@@ -247,14 +247,13 @@ Rutas destacadas:
 - `POST /api/analysis/compare`
 - `POST /api/analysis/chat`
 
-## Notas de MVP
+## Notas operativas
 
-- La recuperacion de contrasena esta preparada a nivel de estructura y devuelve un token temporal en desarrollo. Falta conectar un proveedor de email.
+- La recuperacion de contrasena requiere SMTP configurado para enviar el enlace por correo.
 - La aprobacion admin es simple: una propiedad publica solo entra a la exploracion publica si esta `published` e `isApproved`.
 - El frontend esta listo para despliegue separado del backend.
 - No se incluyeron tests automatizados en esta entrega.
-- La carga real de video quedo preparada a nivel de schema/UI; para produccion falta conectar almacenamiento externo.
-- La proximidad a hospital, escuela y colegio usa stubs controlados listos para reemplazar via `backend/src/services/proximityService.js`.
+- Los videos se agregan por URL dentro del formulario de publicacion.
 - El analisis interactivo usa regresion lineal simple sobre cierres historicos por zona/moneda y heuristicas de oportunidad. No es una tasacion oficial ni reemplaza criterio profesional.
 
 ## Siguientes mejoras recomendadas

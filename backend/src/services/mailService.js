@@ -45,15 +45,9 @@ export const mailService = {
     const transporter = await getTransporter();
 
     if (!transporter) {
-      console.log("[mail:preview]", {
-        to,
-        subject,
-        text
-      });
-
       return {
         delivered: false,
-        mode: "preview"
+        mode: "unconfigured"
       };
     }
 

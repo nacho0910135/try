@@ -8,7 +8,7 @@ const formatCurrency = (value, currency = "USD") =>
   }).format(Number(value || 0));
 
 const buildLeadEmail = ({ lead, property, recipientName }) => {
-  const subject = `Nuevo lead para ${property.title} en AlquiVentasCR`;
+  const subject = `Nuevo lead para ${property.title} en BienesRaicesCR`;
   const text = [
     `Hola ${recipientName || "equipo"},`,
     "",
@@ -28,7 +28,7 @@ const buildLeadEmail = ({ lead, property, recipientName }) => {
 
   const html = `
     <div style="font-family:Arial,sans-serif;color:#1f2d3d;line-height:1.6">
-      <h2 style="margin-bottom:8px">Nuevo lead en AlquiVentasCR</h2>
+      <h2 style="margin-bottom:8px">Nuevo lead en BienesRaicesCR</h2>
       <p>Hola ${recipientName || "equipo"}, recibiste un nuevo lead para <strong>${property.title}</strong>.</p>
       <p>
         <strong>Zona:</strong> ${property.address?.district || ""}, ${property.address?.canton || ""}, ${
@@ -50,7 +50,7 @@ const buildLeadEmail = ({ lead, property, recipientName }) => {
 };
 
 const buildSavedSearchAlertEmail = ({ user, savedSearch, alertPreview, searchUrl }) => {
-  const subject = `AlquiVentasCR: ${alertPreview.emailMatches || alertPreview.totalMatches} novedades para ${savedSearch.name}`;
+  const subject = `BienesRaicesCR: ${alertPreview.emailMatches || alertPreview.totalMatches} novedades para ${savedSearch.name}`;
   const matches = alertPreview.recentMatches || [];
   const text = [
     `Hola ${user.name || "cliente"},`,
@@ -103,6 +103,36 @@ const buildSavedSearchAlertEmail = ({ user, savedSearch, alertPreview, searchUrl
   return { subject, text, html };
 };
 
+const buildPasswordResetEmail = ({ user, resetUrl }) => {
+  const subject = "BienesRaicesCR: recupera el acceso a tu cuenta";
+  const text = [
+    `Hola ${user.name || "cliente"},`,
+    "",
+    "Recibimos una solicitud para restablecer tu contrasena en BienesRaicesCR.",
+    "Si fuiste tu, abre este enlace para crear una nueva contrasena:",
+    resetUrl,
+    "",
+    "Este enlace expira en 30 minutos.",
+    "Si no solicitaste este cambio, puedes ignorar este correo."
+  ].join("\n");
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#1f2d3d;line-height:1.6">
+      <h2 style="margin-bottom:8px">Recupera el acceso a tu cuenta</h2>
+      <p>Hola ${user.name || "cliente"}, recibimos una solicitud para restablecer tu contrasena en <strong>BienesRaicesCR</strong>.</p>
+      <p>Si fuiste tu, abre el siguiente enlace para crear una nueva contrasena. El enlace expira en 30 minutos.</p>
+      <a href="${resetUrl}" style="display:inline-block;background:#2c6847;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:14px;font-weight:700">
+        Restablecer contrasena
+      </a>
+      <p style="margin-top:18px">Si el boton no abre, copia y pega este enlace en tu navegador:</p>
+      <p style="word-break:break-all;color:#0f4ea9">${resetUrl}</p>
+      <p style="margin-top:16px">Si no solicitaste este cambio, puedes ignorar este correo.</p>
+    </div>
+  `;
+
+  return { subject, text, html };
+};
+
 export const notificationService = {
   async sendLeadNotification({ lead, property, recipient }) {
     if (!recipient?.email) {
@@ -132,6 +162,19 @@ export const notificationService = {
       alertPreview,
       searchUrl
     });
+
+    return mailService.sendEmail({
+      to: user.email,
+      ...email
+    });
+  },
+
+  async sendPasswordReset({ user, resetUrl }) {
+    if (!user?.email) {
+      return { delivered: false, mode: "skipped" };
+    }
+
+    const email = buildPasswordResetEmail({ user, resetUrl });
 
     return mailService.sendEmail({
       to: user.email,

@@ -37,6 +37,7 @@ export const logoutUser = () => unwrap(api.post("/auth/logout"));
 export const getCurrentUser = () => unwrap(api.get("/auth/me"));
 export const updateCurrentUser = (payload) => unwrap(api.patch("/auth/me", payload));
 export const requestPasswordReset = (payload) => unwrap(api.post("/auth/forgot-password", payload));
+export const resetPasswordUser = (payload) => unwrap(api.post("/auth/reset-password", payload));
 
 export const getFeaturedProperties = () => unwrap(api.get("/properties/featured"));
 export const getProperties = (filters = {}) =>

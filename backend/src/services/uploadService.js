@@ -55,7 +55,7 @@ const uploadBufferToCloudinary = (file, index) => {
       width: result.width,
       height: result.height,
       isPrimary: index === 0,
-      alt: file.originalname?.replace(/\.[^/.]+$/, "") || "Propiedad AlquiVentasCR"
+      alt: file.originalname?.replace(/\.[^/.]+$/, "") || "Propiedad BienesRaicesCR"
     }));
 };
 

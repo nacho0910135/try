@@ -79,7 +79,7 @@ app.use("/uploads", express.static(uploadsDirectory));
 app.get("/api/health", (_req, res) => {
   res.json({
     success: true,
-    message: "AlquiVentasCR API is running"
+    message: "BienesRaicesCR API is running"
   });
 });
 

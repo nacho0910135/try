@@ -79,7 +79,7 @@ export function ZoneSeoPage({ zone, summary, items, childrenZones = [] }) {
         <p className="mt-4 max-w-3xl text-base leading-7 text-ink/65">
           Explora propiedades activas en {zone.label} con enfoque visual, mapa interactivo y filtros
           por tipo, precio y negocio. Esta pagina ayuda a descubrir la zona y tambien alimenta el
-          SEO local de AlquiVentasCR.
+          SEO local de BienesRaicesCR.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link

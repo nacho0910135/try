@@ -1,77 +1,219 @@
 "use client";
 
-import { useLanguage } from "@/components/layout/LanguageProvider";
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
-function ScenicMark({ compact = false, className }) {
+function HeritageLogo({ compact = false, showTagline = true, className }) {
+  const rawId = useId().replace(/:/g, "");
+  const glowId = `${rawId}-glow`;
+  const shieldId = `${rawId}-shield`;
+  const flagBlueId = `${rawId}-flag-blue`;
+  const flagRedId = `${rawId}-flag-red`;
+  const roofBlueId = `${rawId}-roof-blue`;
+  const roofRedId = `${rawId}-roof-red`;
+  const statueId = `${rawId}-statue`;
+  const flareId = `${rawId}-flare`;
+  const shadowId = `${rawId}-shadow`;
+  const viewBox = showTagline ? "0 0 760 360" : "0 12 760 292";
+
   return (
     <svg
-      viewBox="0 0 250 180"
-      aria-hidden="true"
-      className={cn(compact ? "h-14 w-[5.1rem]" : "h-24 w-[8.8rem]", className)}
+      viewBox={viewBox}
+      aria-label="BienesRaicesCR"
+      className={cn(
+        "h-auto",
+        compact
+          ? "w-[13.6rem] min-w-[13.6rem] sm:w-[14.5rem]"
+          : "w-[min(100%,34rem)] min-w-[18rem]",
+        className
+      )}
     >
       <defs>
-        <linearGradient id="markSky" x1="0%" x2="100%" y1="10%" y2="100%">
-          <stop offset="0%" stopColor="#1545a8" />
-          <stop offset="100%" stopColor="#0d2f78" />
+        <radialGradient id={glowId} cx="50%" cy="42%" r="58%">
+          <stop offset="0%" stopColor="#79c3ff" stopOpacity="0.78" />
+          <stop offset="38%" stopColor="#1d5fc7" stopOpacity="0.45" />
+          <stop offset="76%" stopColor="#09152c" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#09152c" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id={shieldId} x1="0%" x2="100%" y1="0%" y2="100%">
+          <stop offset="0%" stopColor="#103d99" />
+          <stop offset="55%" stopColor="#0d2d74" />
+          <stop offset="100%" stopColor="#081b4c" />
         </linearGradient>
-        <linearGradient id="markRoof" x1="0%" x2="100%" y1="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffd23f" />
-          <stop offset="100%" stopColor="#ff960f" />
+        <linearGradient id={flagBlueId} x1="0%" x2="100%" y1="0%" y2="0%">
+          <stop offset="0%" stopColor="#082d8d" />
+          <stop offset="52%" stopColor="#2d8cf1" />
+          <stop offset="100%" stopColor="#07276d" />
         </linearGradient>
-        <linearGradient id="markHouse" x1="0%" x2="100%" y1="10%" y2="100%">
-          <stop offset="0%" stopColor="#184bb0" />
-          <stop offset="100%" stopColor="#0b2d72" />
+        <linearGradient id={flagRedId} x1="0%" x2="100%" y1="0%" y2="0%">
+          <stop offset="0%" stopColor="#d3131f" />
+          <stop offset="50%" stopColor="#ff1f2d" />
+          <stop offset="100%" stopColor="#dd1426" />
         </linearGradient>
-        <linearGradient id="markPalm" x1="0%" x2="100%" y1="10%" y2="100%">
-          <stop offset="0%" stopColor="#9be000" />
-          <stop offset="100%" stopColor="#3d9000" />
+        <linearGradient id={roofBlueId} x1="0%" x2="100%" y1="0%" y2="100%">
+          <stop offset="0%" stopColor="#1b54cb" />
+          <stop offset="100%" stopColor="#0c2a72" />
         </linearGradient>
-        <linearGradient id="markGround" x1="0%" x2="100%" y1="0%" y2="0%">
-          <stop offset="0%" stopColor="#d2ff17" />
-          <stop offset="100%" stopColor="#74c200" />
+        <linearGradient id={roofRedId} x1="0%" x2="100%" y1="0%" y2="100%">
+          <stop offset="0%" stopColor="#ff2230" />
+          <stop offset="100%" stopColor="#c90b1c" />
         </linearGradient>
-        <clipPath id="markOvalClip">
-          <ellipse cx="126" cy="78" rx="93" ry="66" />
-        </clipPath>
+        <linearGradient id={statueId} x1="0%" x2="100%" y1="0%" y2="100%">
+          <stop offset="0%" stopColor="#b8bbc5" />
+          <stop offset="50%" stopColor="#595e68" />
+          <stop offset="100%" stopColor="#212734" />
+        </linearGradient>
+        <radialGradient id={flareId} cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor="#fff5bc" stopOpacity="0.95" />
+          <stop offset="35%" stopColor="#ffcc59" stopOpacity="0.72" />
+          <stop offset="100%" stopColor="#ffcc59" stopOpacity="0" />
+        </radialGradient>
+        <filter id={shadowId} x="-20%" y="-20%" width="140%" height="150%">
+          <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="#04112c" floodOpacity="0.32" />
+        </filter>
       </defs>
 
-      <ellipse cx="126" cy="78" rx="94" ry="67" fill="url(#markSky)" stroke="#0b2b68" strokeWidth="4" />
-      <g clipPath="url(#markOvalClip)">
-        <path d="M18 38c38-11 76-13 130-10 41 2 74 12 102 31v56H0V63c17-8 29-16 18-25Z" fill="#f6f7fb" />
-        <path d="M0 96c48-31 118-43 250-18v29H0V96Z" fill="#133f9e" opacity="0.96" />
-        <path d="M0 95c50-22 100-36 181-34 24 1 48 5 69 13v17H0V95Z" fill="#fdfdfd" />
-        <path d="M0 89c57-31 108-43 169-40 19 1 44 6 81 19v25H0V89Z" fill="#e91418" />
-        <path d="M0 65c54-25 116-37 188-34 18 1 39 5 62 15v18H0V65Z" fill="#fdfdfd" opacity="0.98" />
-        <circle cx="70" cy="58" r="12" fill="#ffffff" stroke="#d7dbe4" strokeWidth="3" />
-        <circle cx="70" cy="58" r="7" fill="#2e8a22" opacity="0.9" />
+      <ellipse cx="404" cy="154" rx="258" ry="142" fill={`url(#${glowId})`} />
+      <ellipse cx="122" cy="80" rx="76" ry="86" fill={`url(#${flareId})`} opacity="0.9" />
+
+      <g filter={`url(#${shadowId})`}>
+        <g transform="translate(30 30)">
+          <path
+            d="M54 230 80 221 79 182 75 133 86 88 98 64 120 56 131 71 126 98 133 131 148 168 158 218 141 226 130 184 114 149 96 166 82 210 81 230 54 230Z"
+            fill={`url(#${statueId})`}
+            stroke="#1d2430"
+            strokeWidth="3"
+          />
+          <path
+            d="M118 58 128 16 141 12 149 29 141 59Z"
+            fill={`url(#${statueId})`}
+            stroke="#1d2430"
+            strokeWidth="3"
+          />
+          <path
+            d="M128 7c9 6 14 15 14 28-11-3-19-9-24-19 4-5 7-8 10-9Z"
+            fill="#ffb13d"
+            stroke="#ffe2ab"
+            strokeWidth="2"
+          />
+          <path d="M35 230h55v41H35Z" fill="#6f7682" stroke="#222a39" strokeWidth="3" />
+          <path d="M35 230c12-9 31-13 49-13l11 13Z" fill="#444c5d" />
+        </g>
+
+        <g transform="translate(182 14)">
+          <path
+            d="M94 84c66-49 144-64 230-50 46 7 96 17 156 7 47-8 93-3 129 20v43c-38-20-78-26-123-19-64 10-120 2-175-7-86-15-155-4-217 35Z"
+            fill={`url(#${flagBlueId})`}
+            stroke="#07215d"
+            strokeWidth="3"
+          />
+          <path
+            d="M70 126c69-44 146-59 232-48 55 7 104 20 168 12 51-6 100 0 142 23v43c-42-18-87-23-137-16-72 10-129 1-185-9-86-15-162-9-220 17Z"
+            fill="#ffffff"
+          />
+          <path
+            d="M44 163c73-44 153-55 240-42 66 10 116 22 187 14 58-7 109 1 145 26v48c-45-21-96-27-156-18-78 11-137 0-201-11-84-14-161-8-215 16Z"
+            fill={`url(#${flagRedId})`}
+          />
+          <path
+            d="M82 203c75-33 157-41 247-29 66 9 120 18 191 10 49-5 87-1 118 10v28H72Z"
+            fill="#ffffff"
+          />
+          <path
+            d="M72 228c69-27 145-33 229-23 73 9 130 18 209 8 46-6 84-4 124 5v24H62Z"
+            fill={`url(#${flagBlueId})`}
+          />
+          <circle cx="244" cy="112" r="36" fill="#ffffff" stroke="#dbdce3" strokeWidth="5" />
+          <circle cx="244" cy="112" r="22" fill="#c9a64a" />
+          <circle cx="244" cy="112" r="15" fill="#2f94ff" />
+        </g>
+
+        <path
+          d="M124 251c114-44 278-55 474-38 57 5 111 13 164 24-64 3-114 8-175 21-174 36-325 30-463-7-5-1-8-1 0 0Z"
+          fill="#ffffff"
+          opacity="0.9"
+        />
+
+        <g transform="translate(292 118)">
+          <path d="M0 119 118 10l117 109v82H0Z" fill="#fefefe" stroke="#e6eef8" strokeWidth="4" />
+          <path d="M-16 123 118 -2l132 125h-44L118 39 27 123H-16Z" fill={`url(#${roofRedId})`} stroke="#ffffff" strokeWidth="8" />
+          <path d="M172 113 254 38l82 75v88h-164Z" fill="#ffffff" stroke="#dfe8f6" strokeWidth="4" />
+          <path d="M152 115 254 20l102 95h-38L254 56l-65 59h-37Z" fill={`url(#${roofBlueId})`} stroke="#ffffff" strokeWidth="8" />
+          <path d="M308 121 382 54l74 68v79H308Z" fill="#ffffff" stroke="#dfe8f6" strokeWidth="4" />
+          <path d="M290 123 382 35l91 88h-33L382 70l-59 53h-33Z" fill={`url(#${roofRedId})`} stroke="#ffffff" strokeWidth="8" />
+
+          <rect x="93" y="83" width="14" height="46" fill={`url(#${roofRedId})`} />
+          <rect x="70" y="104" width="25" height="25" fill="#0c2a72" />
+          <rect x="98" y="104" width="25" height="25" fill="#0c2a72" />
+          <rect x="231" y="74" width="19" height="19" fill="#0c2a72" />
+          <rect x="257" y="74" width="19" height="19" fill="#0c2a72" />
+          <rect x="197" y="154" width="36" height="47" fill={`url(#${roofBlueId})`} />
+          <rect x="360" y="111" width="22" height="22" fill="#0c2a72" />
+          <rect x="388" y="111" width="22" height="22" fill="#0c2a72" />
+        </g>
+
+        <path
+          d="M160 250c144-8 351-14 456-6 72 5 115 10 144 18l-52 6c-57 7-99 13-145 29-132 47-315 51-484 4-36-10-68-17-95-22l176-29Z"
+          fill={`url(#${shieldId})`}
+          stroke="#ffffff"
+          strokeWidth="7"
+        />
+        <path
+          d="M171 243c110-10 274-19 438-8 79 5 123 10 149 17-51-1-97 1-144 8-111 17-197 16-321 6-56-5-105-10-122-23Z"
+          fill="#0f4ec0"
+          opacity="0.75"
+        />
+
+        <text
+          x="185"
+          y="314"
+          fill="#ffffff"
+          stroke="#0a1947"
+          strokeWidth="4"
+          paintOrder="stroke"
+          fontFamily="Georgia, 'Times New Roman', serif"
+          fontSize={compact ? "78" : "92"}
+          fontWeight="700"
+          letterSpacing="-1.4"
+        >
+          BienesRaices
+        </text>
+        <text
+          x={compact ? "574" : "613"}
+          y="314"
+          fill="#ff1026"
+          stroke="#62000d"
+          strokeWidth="3"
+          paintOrder="stroke"
+          fontFamily="Georgia, 'Times New Roman', serif"
+          fontSize={compact ? "86" : "102"}
+          fontWeight="700"
+          letterSpacing="-2"
+        >
+          CR
+        </text>
+
+        {showTagline ? (
+          <>
+            <path d="M236 334c56-11 96-13 142-12" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" opacity="0.95" />
+            <path d="M504 334c59-12 98-14 150-13" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" opacity="0.95" />
+            <text
+              x="378"
+              y="344"
+              textAnchor="middle"
+              fill="#ffffff"
+              stroke="#123777"
+              strokeWidth="1.5"
+              paintOrder="stroke"
+              fontFamily="'Segoe Script', 'Brush Script MT', cursive"
+              fontSize="48"
+              fontWeight="700"
+            >
+              Tu llave al exito
+            </text>
+          </>
+        ) : null}
       </g>
-
-      <path d="M23 135c30-12 61-16 94-10 13 3 30 8 45 10 23 3 47 2 72-3-13 10-31 18-54 24H77c-22-3-39-10-54-21Z" fill="#1f5e0f" opacity="0.9" />
-      <path d="M30 137c29-11 61-14 89-9 15 3 35 9 54 11 18 2 40 0 57-4-17 15-43 25-72 29H90c-24-4-45-12-60-27Z" fill="url(#markGround)" stroke="#428700" strokeWidth="3" />
-      <path d="M56 144c29-8 55-10 83-7 12 2 25 5 40 11" fill="none" stroke="#2d5600" strokeWidth="5" strokeLinecap="round" />
-      <path d="M116 145c22-10 46-14 76-11" fill="none" stroke="#244700" strokeWidth="5" strokeLinecap="round" />
-
-      <path d="M162 52c11 16 17 39 20 72h-10c-4-27-9-49-18-72h8Z" fill="#7d4304" stroke="#5d2f00" strokeWidth="2" />
-      <path d="M191 88c5 8 8 20 9 35h-8c-1-13-4-24-8-34l7-1Z" fill="#844300" stroke="#5d2f00" strokeWidth="2" />
-
-      <g fill="url(#markPalm)" stroke="#2b6f00" strokeWidth="3" strokeLinejoin="round">
-        <path d="M160 51c17-17 42-22 63-16-16 8-29 20-38 34-5-7-12-13-25-18Z" />
-        <path d="M157 53c-2-23 12-39 34-48-5 18-4 34 5 49-13-3-24-4-39-1Z" />
-        <path d="M158 54c-19-11-39-10-57-2 14 3 27 11 37 25 6-9 11-15 20-23Z" />
-        <path d="M161 57c5 20-1 38-16 53-1-18-8-31-22-41 15-2 27-5 38-12Z" />
-        <path d="M191 83c8-9 18-11 28-7-7 4-12 9-16 17-3-4-6-7-12-10Z" />
-        <path d="M189 85c0-12 7-22 18-28-2 11-1 20 4 29-7-1-13-2-22-1Z" />
-        <path d="M188 85c-10-6-21-6-31-1 7 2 14 6 20 14 3-5 6-9 11-13Z" />
-      </g>
-
-      <path d="M74 96 116 66l42 31v36H74V96Z" fill="url(#markHouse)" stroke="#09285e" strokeWidth="4" />
-      <path d="M59 102 116 56l58 42h-19l-39-28-38 28H59Z" fill="url(#markRoof)" stroke="#e67b00" strokeWidth="4" />
-      <path d="M146 82h-18l12-10h33c-7 4-16 7-27 10Z" fill="#ffd960" opacity="0.7" />
-
-      <rect x="91" y="94" width="21" height="24" rx="2.5" fill="#f7f7fb" />
-      <rect x="127" y="95" width="26" height="22" rx="2.5" fill="#f7f7fb" />
-      <path d="M101.5 94v24M91 106h21M140 95v22" stroke="#1f4da7" strokeWidth="3" />
     </svg>
   );
 }
@@ -84,45 +226,16 @@ export function BrandLogo({
   compact = false,
   showTagline = true
 }) {
-  const { t } = useLanguage();
-
   return (
-    <div className={cn("flex items-center gap-3", className)}>
-      <ScenicMark compact={compact} className={iconClassName} />
-
-      <div className={cn("min-w-0", textClassName)}>
-        <div
-          className={cn(
-            compact ? "text-[2rem]" : "text-[2.8rem] sm:text-[3.5rem]",
-            "font-serif font-semibold leading-none tracking-tight",
-            titleClassName
-          )}
-        >
-          <span
-            className="drop-shadow-[0_2px_0_rgba(255,255,255,0.55)]"
-            style={{
-              color: "#0b3f95",
-              WebkitTextStroke: "1px rgba(240,244,255,0.55)"
-            }}
-          >
-            Alquiventas
-          </span>
-          <span
-            className="drop-shadow-[0_2px_0_rgba(255,255,255,0.4)]"
-            style={{
-              color: "#7cc400",
-              WebkitTextStroke: "1px rgba(37,78,10,0.18)"
-            }}
-          >
-            CR
-          </span>
-        </div>
-        {showTagline ? (
-          <div className="mt-1 text-[0.66rem] font-semibold uppercase tracking-[0.24em] text-ink/55 sm:text-[0.78rem]">
-            {t("brand.tagline")}
-          </div>
-        ) : null}
-      </div>
+    <div
+      className={cn(
+        "inline-flex items-center",
+        textClassName,
+        titleClassName,
+        className
+      )}
+    >
+      <HeritageLogo compact={compact} showTagline={showTagline} className={iconClassName} />
     </div>
   );
 }

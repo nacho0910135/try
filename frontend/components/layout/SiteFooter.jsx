@@ -3,16 +3,14 @@
 import Link from "next/link";
 import { useLanguage } from "./LanguageProvider";
 import { BrandLogo } from "./BrandLogo";
-import { buildZonePath, getProvinces } from "@/lib/zone-seo";
 
 export function SiteFooter() {
   const { t } = useLanguage();
-  const provinceLinks = getProvinces().slice(0, 7);
 
   return (
     <footer className="border-t border-ink/10 bg-white/70">
-      <div className="app-shell grid gap-8 py-10 md:grid-cols-4">
-        <div>
+      <div className="app-shell grid gap-8 py-10 md:grid-cols-3 md:gap-10 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)_minmax(0,0.9fr)]">
+        <div className="max-w-xl">
           <BrandLogo />
           <p className="mt-3 text-sm text-ink/65">
             {t("footer.description")}
@@ -22,36 +20,25 @@ export function SiteFooter() {
           <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">
             {t("footer.explore")}
           </h4>
-          <div className="mt-4 space-y-2 text-sm text-ink/70">
-            <Link href="/search">{t("footer.searchProperties")}</Link>
-            <br />
-            <Link href="/analysis">{t("footer.analysis")}</Link>
-            <br />
-            <Link href="/battle">{t("footer.battle")}</Link>
-            <br />
-            <Link href="/favorites">{t("footer.favorites")}</Link>
-            <br />
-            <Link href="/dashboard">{t("footer.publishProperty")}</Link>
+          <div className="mt-4 flex flex-col gap-2 text-sm text-ink/70">
+            <Link href="/search" className="transition hover:text-pine">
+              {t("footer.searchProperties")}
+            </Link>
+            <Link href="/analysis" className="transition hover:text-pine">
+              {t("footer.analysis")}
+            </Link>
+            <Link href="/battle" className="transition hover:text-pine">
+              {t("footer.battle")}
+            </Link>
+            <Link href="/favorites" className="transition hover:text-pine">
+              {t("footer.favorites")}
+            </Link>
+            <Link href="/dashboard" className="transition hover:text-pine">
+              {t("footer.publishProperty")}
+            </Link>
           </div>
         </div>
-        <div>
-          <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">
-            {t("footer.coverage")}
-          </h4>
-          <p className="mt-4 text-sm text-ink/70">{t("footer.coverageText")}</p>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-ink/70">
-            {provinceLinks.map((province) => (
-              <Link
-                key={province}
-                href={buildZonePath({ province })}
-                className="rounded-full bg-mist px-3 py-1.5 font-semibold transition hover:text-pine"
-              >
-                {province}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div>
+        <div className="md:justify-self-start">
           <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">
             {t("footer.contact")}
           </h4>

@@ -82,14 +82,14 @@ export const fetchZoneSeoData = async ({ province, canton, district, limit = 9 }
 
 export const buildZoneTitle = ({ province, canton, district }) => {
   if (district && canton) {
-    return `Propiedades en ${district}, ${canton} | AlquiVentasCR`;
+    return `Propiedades en ${district}, ${canton} | BienesRaicesCR`;
   }
 
   if (canton && province) {
-    return `Casas, apartamentos y lotes en ${canton}, ${province} | AlquiVentasCR`;
+    return `Casas, apartamentos y lotes en ${canton}, ${province} | BienesRaicesCR`;
   }
 
-  return `Propiedades en ${province}, Costa Rica | AlquiVentasCR`;
+  return `Propiedades en ${province}, Costa Rica | BienesRaicesCR`;
 };
 
 export const buildZoneDescription = ({ province, canton, district }, summary = {}) => {
@@ -98,5 +98,5 @@ export const buildZoneDescription = ({ province, canton, district }, summary = {
   const sale = Number(summary.saleListings || 0);
   const rent = Number(summary.rentListings || 0);
 
-  return `Explora ${total} propiedades activas en ${zoneLabel} con mapa, filtros y analisis local. Actualmente hay ${sale} opciones en venta y ${rent} en renta en AlquiVentasCR.`;
+  return `Explora ${total} propiedades activas en ${zoneLabel} con mapa, filtros y analisis local. Actualmente hay ${sale} opciones en venta y ${rent} en renta en BienesRaicesCR.`;
 };

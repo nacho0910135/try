@@ -6,7 +6,7 @@ const escapeXml = (value = "") =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
-export const createPlaceholderImageDataUri = (label = "AlquiVentasCR") => {
+export const createPlaceholderImageDataUri = (label = "BienesRaicesCR") => {
   const safeLabel = escapeXml(label).slice(0, 48);
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="${safeLabel}">
@@ -30,7 +30,7 @@ export const createPlaceholderImageDataUri = (label = "AlquiVentasCR") => {
       <rect x="582" y="448" width="74" height="58" rx="8" fill="#ffffff" />
       <path d="M452 442v64M526 442v64M420 474h138" stroke="#164a8a" stroke-width="8" opacity="0.9" />
       <text x="600" y="632" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700" fill="#17324e">
-        AlquiVentasCR
+        BienesRaicesCR
       </text>
       <text x="600" y="690" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" letter-spacing="6" fill="#58707c">
         ${safeLabel}

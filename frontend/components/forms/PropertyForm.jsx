@@ -344,7 +344,7 @@ export function PropertyForm({ property, propertyId }) {
             remove: "Remove",
             videos: "Videos",
             videosHint:
-              "The schema already supports multimedia. Real video upload only needs external storage.",
+              "Paste one video URL per line to include multimedia in the listing.",
             finalSaveTitle: "Save changes",
             finalSaveDescription:
               "Use this final button to save the property after reviewing photos, location, and details.",
@@ -460,7 +460,7 @@ export function PropertyForm({ property, propertyId }) {
             remove: "Quitar",
             videos: "Videos",
             videosHint:
-              "El schema ya soporta multimedia. Para upload real de video solo faltaria conectar almacenamiento externo.",
+              "Pega una URL de video por linea para incluir multimedia en la publicacion.",
             finalSaveTitle: "Guardar cambios",
             finalSaveDescription:
               "Usa este boton final para guardar la propiedad despues de revisar fotos, ubicacion y detalles.",

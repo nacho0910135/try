@@ -144,7 +144,7 @@ export const billingService = {
             },
             unit_amount: unitAmount,
             product_data: {
-              name: `AlquiVentasCR - ${plan.name}`,
+              name: `BienesRaicesCR - ${plan.name}`,
               description: plan.features.join(" • "),
               metadata
             }

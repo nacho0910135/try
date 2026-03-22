@@ -62,13 +62,9 @@ export function LoginForm() {
 
     try {
       const data = await requestPasswordReset({ email });
-      setResetMessage(
-        data.resetTokenPreview
-          ? t("loginForm.resetReady", { token: data.resetTokenPreview })
-          : data.message
-      );
-    } catch (_error) {
-      setResetMessage(t("loginForm.resetFailed"));
+      setResetMessage(data.message || t("loginForm.resetSent"));
+    } catch (requestError) {
+      setResetMessage(requestError.response?.data?.message || t("loginForm.resetFailed"));
     }
   };
 

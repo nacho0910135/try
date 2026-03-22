@@ -49,7 +49,7 @@ const translations = {
       eyebrow: "Costa Rica",
       title: "Publica, explora y conecta propiedades con una experiencia clara y moderna.",
       description:
-        "AlquiVentasCR concentra compra, renta y lotes con enfoque geoespacial: mapa, GPS, favoritos, leads y panel de publicacion."
+        "BienesRaicesCR concentra compra, renta y lotes con enfoque geoespacial: mapa, GPS, favoritos, leads y panel de publicacion."
     },
     loginForm: {
       eyebrow: "Acceso",
@@ -61,15 +61,30 @@ const translations = {
       passwordPlaceholder: "Tu contrasena",
       submit: "Entrar",
       submitting: "Entrando...",
-      forgotPassword: "Preparar recuperacion",
+      forgotPassword: "Recuperar contrasena",
       noAccount: "No tienes cuenta?",
       register: "Registrate",
       errorEmail: "Ingresa un correo valido",
       errorPassword: "Ingresa tu contrasena",
       resetMissingEmail: "Ingresa tu correo y luego vuelve a intentar.",
-      resetReady: "Flujo preparado. Token temporal de desarrollo: {{token}}",
+      resetSent: "Si el correo existe, enviaremos instrucciones para restablecer la contrasena.",
       resetFailed: "No fue posible iniciar la recuperacion en este momento.",
       submitFailed: "No se pudo iniciar sesion"
+    },
+    resetPasswordForm: {
+      eyebrow: "Recuperacion",
+      title: "Crea una nueva contrasena",
+      description: "Usa el enlace recibido por correo para definir una nueva contrasena segura.",
+      password: "Nueva contrasena",
+      passwordPlaceholder: "Minimo 8 caracteres",
+      confirmPassword: "Confirmar contrasena",
+      confirmPasswordPlaceholder: "Repite tu nueva contrasena",
+      submit: "Restablecer contrasena",
+      submitting: "Guardando...",
+      invalidToken: "El enlace de recuperacion no es valido o ya no esta disponible.",
+      success: "Contrasena actualizada correctamente. Ya puedes iniciar sesion.",
+      mismatch: "Las contrasenas no coinciden",
+      minLength: "Minimo 8 caracteres"
     },
     registerForm: {
       eyebrow: "Registro",
@@ -301,7 +316,7 @@ const translations = {
       eyebrow: "Costa Rica",
       title: "Publish, explore, and connect properties with a clear, modern experience.",
       description:
-        "AlquiVentasCR brings together sales, rentals, and lots with a geospatial focus: map, GPS, favorites, leads, and publishing dashboard."
+        "BienesRaicesCR brings together sales, rentals, and lots with a geospatial focus: map, GPS, favorites, leads, and publishing dashboard."
     },
     loginForm: {
       eyebrow: "Access",
@@ -313,15 +328,30 @@ const translations = {
       passwordPlaceholder: "Your password",
       submit: "Sign in",
       submitting: "Signing in...",
-      forgotPassword: "Prepare password reset",
+      forgotPassword: "Reset password",
       noAccount: "Don't have an account?",
       register: "Create one",
       errorEmail: "Enter a valid email",
       errorPassword: "Enter your password",
       resetMissingEmail: "Enter your email and try again.",
-      resetReady: "Flow ready. Temporary development token: {{token}}",
+      resetSent: "If the email exists, we will send password reset instructions.",
       resetFailed: "We could not start password recovery right now.",
       submitFailed: "Could not sign in"
+    },
+    resetPasswordForm: {
+      eyebrow: "Recovery",
+      title: "Create a new password",
+      description: "Use the link from your email to set a new secure password.",
+      password: "New password",
+      passwordPlaceholder: "Minimum 8 characters",
+      confirmPassword: "Confirm password",
+      confirmPasswordPlaceholder: "Repeat your new password",
+      submit: "Reset password",
+      submitting: "Saving...",
+      invalidToken: "The recovery link is invalid or no longer available.",
+      success: "Password updated successfully. You can sign in now.",
+      mismatch: "Passwords do not match",
+      minLength: "Minimum 8 characters"
     },
     registerForm: {
       eyebrow: "Register",

@@ -311,7 +311,7 @@ export const savedSearchService = {
       results.push({
         savedSearchId: savedSearch._id.toString(),
         name: savedSearch.name,
-        status: emailResult.delivered ? "sent" : "preview",
+        status: emailResult.delivered ? "sent" : "unconfigured",
         matches: alertPreview.emailMatches
       });
     }
@@ -319,7 +319,7 @@ export const savedSearchService = {
     return {
       processed: results.length,
       sent: results.filter((item) => item.status === "sent").length,
-      previewed: results.filter((item) => item.status === "preview").length,
+      unconfigured: results.filter((item) => item.status === "unconfigured").length,
       skipped: results.filter((item) => item.status === "skipped").length,
       results
     };

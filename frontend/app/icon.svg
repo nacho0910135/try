@@ -1,50 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="BienesRaicesCR">
   <defs>
-    <linearGradient id="sky" x1="0%" x2="100%" y1="0%" y2="100%">
-      <stop offset="0%" stop-color="#1545a8" />
-      <stop offset="100%" stop-color="#0d2f78" />
+    <radialGradient id="glow" cx="50%" cy="38%" r="58%">
+      <stop offset="0%" stop-color="#78c5ff" stop-opacity="0.95" />
+      <stop offset="45%" stop-color="#215fc5" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#071527" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="shield" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#103d99" />
+      <stop offset="100%" stop-color="#081b4c" />
     </linearGradient>
-    <linearGradient id="roof" x1="0%" x2="100%" y1="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffd23f" />
-      <stop offset="100%" stop-color="#ff960f" />
+    <linearGradient id="flagBlue" x1="0%" x2="100%" y1="0%" y2="0%">
+      <stop offset="0%" stop-color="#082d8d" />
+      <stop offset="50%" stop-color="#2d8cf1" />
+      <stop offset="100%" stop-color="#07276d" />
     </linearGradient>
-    <linearGradient id="house" x1="0%" x2="100%" y1="10%" y2="100%">
-      <stop offset="0%" stop-color="#184bb0" />
-      <stop offset="100%" stop-color="#0b2d72" />
+    <linearGradient id="flagRed" x1="0%" x2="100%" y1="0%" y2="0%">
+      <stop offset="0%" stop-color="#d3131f" />
+      <stop offset="100%" stop-color="#ff1f2d" />
     </linearGradient>
-    <linearGradient id="ground" x1="0%" x2="100%" y1="0%" y2="0%">
-      <stop offset="0%" stop-color="#d2ff17" />
-      <stop offset="100%" stop-color="#74c200" />
+    <linearGradient id="statue" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#bcc0c8" />
+      <stop offset="100%" stop-color="#1f2532" />
     </linearGradient>
-    <linearGradient id="palm" x1="0%" x2="100%" y1="10%" y2="100%">
-      <stop offset="0%" stop-color="#9be000" />
-      <stop offset="100%" stop-color="#3d9000" />
-    </linearGradient>
-    <clipPath id="oval">
-      <ellipse cx="64" cy="47" rx="43" ry="31" />
-    </clipPath>
   </defs>
 
-  <rect width="128" height="128" rx="28" fill="#202326" />
-  <ellipse cx="64" cy="47" rx="44" ry="32" fill="url(#sky)" stroke="#0b2b68" stroke-width="2.5" />
-  <g clip-path="url(#oval)">
-    <path d="M0 34c26-8 56-10 87-8 17 1 30 4 41 11v31H0V44c10-4 16-7 14-10Z" fill="#f7f8fb" />
-    <path d="M0 56c28-14 58-21 90-19 13 1 25 3 38 8v12H0V56Z" fill="#e91418" />
-    <path d="M0 66c26-8 54-12 85-11 15 1 29 3 43 8v14H0V66Z" fill="#133f9e" />
-    <circle cx="38" cy="43" r="6" fill="#ffffff" stroke="#d7dbe4" stroke-width="1.5" />
-    <circle cx="38" cy="43" r="3.2" fill="#2e8a22" />
+  <rect width="128" height="128" rx="28" fill="#070d17" />
+  <ellipse cx="71" cy="46" rx="47" ry="33" fill="url(#glow)" />
+  <ellipse cx="26" cy="26" rx="16" ry="20" fill="#ffe7a7" opacity="0.42" />
+
+  <g>
+    <path d="M14 85 19 83 19 66 18 53 21 41 25 34 30 32 33 37 32 45 35 56 38 68 41 81 37 84 34 71 29 61 24 66 20 78 20 85 14 85Z" fill="url(#statue)" stroke="#1a2130" stroke-width="1.5" />
+    <path d="M30 33 32 20l4-1 3 5-2 10Z" fill="url(#statue)" stroke="#1a2130" stroke-width="1.4" />
+    <path d="M32 16c4 2 6 6 6 10-5-1-8-4-10-8 1-1 3-2 4-2Z" fill="#ffb13d" stroke="#fff0c3" stroke-width="1" />
+    <rect x="10" y="85" width="12" height="12" fill="#747c89" stroke="#1b2231" stroke-width="1.4" />
+    <rect x="22" y="85" width="12" height="12" fill="#636b79" stroke="#1b2231" stroke-width="1.4" />
   </g>
 
-  <path d="M18 88c18-6 35-8 53-5 11 2 23 7 36 8 9 1 17 1 23-1-9 8-23 13-41 16H47c-12-2-22-7-29-18Z" fill="url(#ground)" stroke="#428700" stroke-width="2" />
-  <path d="M31 91c16-4 31-5 49-3 8 1 16 4 24 7" fill="none" stroke="#264d00" stroke-width="2.5" stroke-linecap="round" />
-  <path d="M84 36c6 10 9 24 11 42h-5c-2-16-5-29-10-42h4Z" fill="#7d4304" />
-  <path d="M83 35c10-10 24-13 36-9-9 5-16 12-22 21-3-4-7-8-14-12Z" fill="url(#palm)" stroke="#2b6f00" stroke-width="1.5" stroke-linejoin="round" />
-  <path d="M82 37c-1-14 7-24 20-30-3 11-3 21 3 31-8-2-14-2-23-1Z" fill="url(#palm)" stroke="#2b6f00" stroke-width="1.5" stroke-linejoin="round" />
-  <path d="M82 38c-12-7-24-6-36-1 9 2 17 7 24 16 3-5 7-10 12-15Z" fill="url(#palm)" stroke="#2b6f00" stroke-width="1.5" stroke-linejoin="round" />
+  <g>
+    <path d="M34 29c12-8 24-11 39-9 10 1 19 4 30 2 9-1 16 0 22 4v9c-7-4-14-4-22-3-13 2-24 1-35-1-14-3-26-1-37 6Z" fill="url(#flagBlue)" />
+    <path d="M30 40c13-8 26-10 40-8 11 2 21 5 34 3 9-1 17 0 23 5v9c-7-3-14-4-24-2-14 2-26 0-38-2-14-3-26-2-37 4Z" fill="#ffffff" />
+    <path d="M27 51c13-8 27-10 42-7 13 2 23 5 37 3 10-1 17 0 23 5v10c-7-4-15-4-25-3-16 2-28 0-42-2-14-3-26-2-38 4Z" fill="url(#flagRed)" />
+    <path d="M31 64c13-4 27-5 43-3 14 2 25 4 40 2 7-1 12-1 16 0v5H30Z" fill="#ffffff" />
+    <circle cx="63" cy="37" r="7" fill="#ffffff" stroke="#dfe5ef" stroke-width="1.3" />
+    <circle cx="63" cy="37" r="4.1" fill="#d3ae4f" />
+    <circle cx="63" cy="37" r="2.4" fill="#2f94ff" />
+  </g>
 
-  <path d="M39 63 61 47l23 16v20H39V63Z" fill="url(#house)" stroke="#09285e" stroke-width="2.4" />
-  <path d="M31 66 61 42l31 22H82L61 49 41 64H31Z" fill="url(#roof)" stroke="#e67b00" stroke-width="2" />
-  <rect x="48" y="62" width="11" height="13" rx="1.5" fill="#f7f7fb" />
-  <rect x="67" y="63" width="13" height="12" rx="1.5" fill="#f7f7fb" />
-  <path d="M53.5 62v13M48 68.5h11M73.5 63v12" stroke="#1f4da7" stroke-width="1.8" />
+  <g>
+    <path d="M45 60 60 47l15 13v14H45Z" fill="#ffffff" stroke="#dfe8f6" stroke-width="1.5" />
+    <path d="M41 61 60 43l18 18h-5L60 49 46 61h-5Z" fill="#ef1523" stroke="#ffffff" stroke-width="1.8" />
+    <path d="M65 59 77 49l12 10v15H65Z" fill="#ffffff" stroke="#dfe8f6" stroke-width="1.5" />
+    <path d="M61 60 77 45l15 15h-5L77 51 66 60h-5Z" fill="#1a4fc3" stroke="#ffffff" stroke-width="1.8" />
+    <path d="M82 61 93 52l11 9v13H82Z" fill="#ffffff" stroke="#dfe8f6" stroke-width="1.5" />
+    <path d="M79 62 93 48l14 14h-5L93 54 84 62h-5Z" fill="#ef1523" stroke="#ffffff" stroke-width="1.8" />
+    <rect x="55" y="56" width="5" height="5" fill="#0c2a72" />
+    <rect x="61" y="56" width="5" height="5" fill="#0c2a72" />
+    <rect x="87" y="58" width="4.5" height="4.5" fill="#0c2a72" />
+    <rect x="92.5" y="58" width="4.5" height="4.5" fill="#0c2a72" />
+  </g>
+
+  <path d="M22 70c18-3 48-5 72-4 16 1 27 2 36 5l-6 1c-14 2-24 4-34 8-21 8-48 9-77 3-8-2-16-4-21-4l30-9Z" fill="url(#shield)" stroke="#ffffff" stroke-width="1.8" />
+  <text x="32" y="87" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-size="20" font-weight="700">BR</text>
+  <text x="74" y="87" fill="#ff1b2e" font-family="Georgia, 'Times New Roman', serif" font-size="20" font-weight="700">CR</text>
 </svg>

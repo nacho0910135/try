@@ -21,7 +21,7 @@ const runSeedSamples = async () => {
   const admin = await ensureUser(
     { email: "admin@casacr.com" },
     {
-      name: "AlquiVentasCR Admin",
+      name: "BienesRaicesCR Admin",
       email: "admin@casacr.com",
       password: "Admin12345",
       phone: "+50670000001",

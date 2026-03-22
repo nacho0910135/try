@@ -281,8 +281,6 @@ function SearchPageContent() {
         </div>
       </div>
 
-      <ConversationalSearchPanel onApply={handleConversationalSearch} />
-
       <SearchFilters
         values={filters}
         onChange={updateFilters}
@@ -290,23 +288,6 @@ function SearchPageContent() {
         onUseCurrentLocation={handleUseCurrentLocation}
         onSaveSearch={handleSaveSearch}
         canSave={Boolean(token)}
-      />
-
-      <MapContextPanel
-        activeLayerIds={activeContextLayers}
-        focusedPointId={focusedContextPoint?.id}
-        radiusKm={filters.radiusKm}
-        onToggleLayer={toggleContextLayer}
-        onFocusPoint={handleFocusContextPoint}
-        onClearFocus={() => {
-          setFocusedContextPoint(null);
-          updateFilters({
-            lat: undefined,
-            lng: undefined,
-            bounds: undefined
-          });
-          setMessage("");
-        }}
       />
 
       {message ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{message}</p> : null}
@@ -335,7 +316,7 @@ function SearchPageContent() {
                 <p className="mt-1 text-sm text-ink/60">
                   {language === "en"
                     ? "The live price map stays front and center. Tap a price bubble to open the listing."
-                    : "El mapa de precios se mantiene como protagonista. Toca una nube de precio para abrir la publicación."}
+                    : "El mapa de precios se mantiene como protagonista. Toca una nube de precio para abrir la publicacion."}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -392,13 +373,32 @@ function SearchPageContent() {
         </div>
       </div>
 
-      <div className="space-y-5">
-        <MapContextInsights
-          summary={contextSummary}
-          radiusKm={contextRadiusKm}
-          focusedPoint={focusedContextPoint}
-        />
+      <MapContextPanel
+        activeLayerIds={activeContextLayers}
+        focusedPointId={focusedContextPoint?.id}
+        radiusKm={filters.radiusKm}
+        onToggleLayer={toggleContextLayer}
+        onFocusPoint={handleFocusContextPoint}
+        onClearFocus={() => {
+          setFocusedContextPoint(null);
+          updateFilters({
+            lat: undefined,
+            lng: undefined,
+            bounds: undefined
+          });
+          setMessage("");
+        }}
+      />
 
+      <ConversationalSearchPanel onApply={handleConversationalSearch} />
+
+      <MapContextInsights
+        summary={contextSummary}
+        radiusKm={contextRadiusKm}
+        focusedPoint={focusedContextPoint}
+      />
+
+      <div className="space-y-5">
         <div className="surface-soft flex items-center justify-between px-4 py-3">
           <p className="text-sm text-ink/55">
             {loading

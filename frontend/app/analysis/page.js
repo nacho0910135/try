@@ -172,7 +172,7 @@ function AnalysisPageContent() {
             viewProperty: "View listing",
             compareInFavorites: "Open battle tab",
             aiUnavailable:
-              "DeepSeek is not configured right now, so responses will use heuristic fallbacks.",
+              "DeepSeek is not available right now, so responses will use internal market analysis.",
             mixedCurrencies:
               "These properties use different currencies. Monetary values are shown side by side, but price-based winners are not forced.",
             heuristic: "Heuristic",

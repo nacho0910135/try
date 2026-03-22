@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="AlquiVentasCR">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="BienesRaicesCR">
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0%" stop-color="#eff7f4" />
@@ -19,7 +19,7 @@
   <rect x="582" y="448" width="74" height="58" rx="8" fill="#ffffff" />
   <path d="M452 442v64M526 442v64M420 474h138" stroke="#164a8a" stroke-width="8" opacity="0.9" />
   <text x="600" y="632" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700" fill="#17324e">
-    AlquiVentasCR
+    BienesRaicesCR
   </text>
   <text x="600" y="690" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" letter-spacing="6" fill="#58707c">
     Propiedad

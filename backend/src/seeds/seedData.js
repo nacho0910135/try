@@ -2,7 +2,7 @@ import { createPlaceholderImageDataUri } from "../utils/placeholderImage.js";
 
 export const seedUsers = [
   {
-    name: "AlquiVentasCR Admin",
+    name: "BienesRaicesCR Admin",
     email: "admin@casacr.com",
     password: "Admin12345",
     phone: "+50670000001",

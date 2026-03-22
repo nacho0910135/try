@@ -87,6 +87,16 @@ export function MapContextPanel({
                     <div className="text-sm text-ink/60">
                       {language === "en" ? layer.descriptionEn : layer.descriptionEs}
                     </div>
+                    <div className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">
+                      {layer.points.length}{" "}
+                      {language === "en"
+                        ? layer.points.length === 1
+                          ? "point"
+                          : "points"
+                        : layer.points.length === 1
+                          ? "punto"
+                          : "puntos"}
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -104,7 +114,7 @@ export function MapContextPanel({
               </div>
 
               {active ? (
-                <div className="mt-4 grid gap-2">
+                <div className="mt-4 grid max-h-[420px] gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
                   {layer.points.map((point) => {
                     const pointActive = point.id === focusedPointId;
 
@@ -113,7 +123,7 @@ export function MapContextPanel({
                         key={point.id}
                         type="button"
                         onClick={() => onFocusPoint({ ...point, layerId: layer.id })}
-                      className={`rounded-[20px] px-4 py-3 text-left transition ${
+                        className={`rounded-[20px] px-4 py-3 text-left transition ${
                           pointActive
                             ? "bg-white shadow-soft ring-2 ring-pine/20"
                             : "bg-mist/[0.85] hover:bg-white"

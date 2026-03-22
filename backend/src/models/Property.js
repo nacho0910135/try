@@ -70,10 +70,6 @@ const nearbyPlaceSchema = new mongoose.Schema(
     distanceKm: Number,
     travelMinutes: Number,
     dataSource: String,
-    isStub: {
-      type: Boolean,
-      default: false
-    },
     location: {
       type: {
         type: String,

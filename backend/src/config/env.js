@@ -53,4 +53,14 @@ if (!parsed.success) {
   process.exit(1);
 }
 
+if (
+  parsed.data.NODE_ENV === "production" &&
+  parsed.data.JWT_SECRET === "change-this-super-secret"
+) {
+  console.error("Invalid environment variables", {
+    JWT_SECRET: ["JWT_SECRET must be changed before running in production"]
+  });
+  process.exit(1);
+}
+
 export const env = parsed.data;

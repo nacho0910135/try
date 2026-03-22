@@ -6,7 +6,7 @@ const startServer = async () => {
   await connectDatabase();
 
   app.listen(env.PORT, () => {
-    console.log(`AlquiVentasCR API listening on http://localhost:${env.PORT}`);
+    console.log(`BienesRaicesCR API listening on http://localhost:${env.PORT}`);
   });
 };
 

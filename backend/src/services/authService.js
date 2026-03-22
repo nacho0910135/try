@@ -3,6 +3,8 @@ import { env } from "../config/env.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/apiError.js";
 import { generateToken } from "../utils/jwt.js";
+import { mailService } from "./mailService.js";
+import { notificationService } from "./notificationService.js";
 
 const buildAuthPayload = (user) => ({
   user,
@@ -72,6 +74,10 @@ export const authService = {
   },
 
   async requestPasswordReset(email) {
+    if (!mailService.isConfigured()) {
+      throw new ApiError(503, "Password recovery is temporarily unavailable");
+    }
+
     const user = await User.findOne({ email: email.toLowerCase() }).select(
       "+passwordResetToken +passwordResetExpires"
     );
@@ -79,17 +85,26 @@ export const authService = {
     if (!user) {
       return {
         message:
-          "If the email exists, a reset token has been generated. Connect your mailer to send it."
+          "If the email exists, we will send password recovery instructions."
       };
     }
 
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
+    const resetUrl = `${env.FRONTEND_URL.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
+    const emailResult = await notificationService.sendPasswordReset({
+      user,
+      resetUrl
+    });
+
+    if (!emailResult.delivered) {
+      throw new ApiError(503, "Password recovery is temporarily unavailable");
+    }
+
     return {
       message:
-        "Password reset flow prepared. Connect a mail provider to send this token to the user.",
-      resetTokenPreview: env.NODE_ENV === "production" ? undefined : resetToken
+        "If the email exists, we will send password recovery instructions."
     };
   },
 
