@@ -349,11 +349,7 @@ export const marketAnalyticsService = {
           )
         ) || 0
       },
-      nearestServices: {
-        hospital: property.nearestHospital,
-        school: property.nearestSchool,
-        highSchool: property.nearestHighSchool
-      }
+      nearestServices: property.serviceDistances || null
     };
   }
 };

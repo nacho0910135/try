@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, MessageCircleMore, PhoneCall } from "lucide-react";
+import { Eye, Heart, MessageCircleMore, PhoneCall } from "lucide-react";
 import { addFavorite, getFavorites, getPropertyBySlug, removeFavorite } from "@/lib/api";
 import { ContactLeadForm } from "@/components/forms/ContactLeadForm";
 import { PropertyMapPreview } from "@/components/map/PropertyMapPreview";
@@ -23,6 +23,15 @@ import {
   formatYesNo
 } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+
+const sellerRoleLabels = {
+  owner: "Propietario",
+  "sales-agent": "Agente de ventas",
+  advisor: "Asesor inmobiliario",
+  broker: "Broker",
+  developer: "Desarrollador",
+  "property-manager": "Administrador de propiedades"
+};
 
 export default function PropertyDetailPage({ params }) {
   const { token } = useAuthStore();
@@ -90,6 +99,7 @@ export default function PropertyDetailPage({ params }) {
   }
 
   const seller = property.sellerInfo || property.owner || {};
+  const sellerRoleLabel = sellerRoleLabels[seller.role] || seller.role;
   const whatsappLink = seller.phone
     ? `https://wa.me/${formatPhoneForWhatsApp(seller.phone)}?text=${encodeURIComponent(
         `Hola, me interesa la propiedad ${property.title}`
@@ -97,6 +107,26 @@ export default function PropertyDetailPage({ params }) {
     : null;
   const videos = property.media?.filter((item) => item.type === "video") || [];
   const isRoommateListing = property.rentalArrangement === "roommate";
+  const serviceDistanceItems = [
+    {
+      label: "Hospital mas cercano",
+      value: property.serviceDistances?.hospitalKm ?? property.nearestHospital?.distanceKm
+    },
+    {
+      label: "Escuela mas cercana",
+      value: property.serviceDistances?.schoolKm ?? property.nearestSchool?.distanceKm
+    },
+    {
+      label: "Colegio mas cercano",
+      value: property.serviceDistances?.highSchoolKm ?? property.nearestHighSchool?.distanceKm
+    }
+  ]
+    .map((item) => ({
+      ...item,
+      value: Number(item.value)
+    }))
+    .filter((item) => Number.isFinite(item.value));
+  const streetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${property.location.coordinates[1]},${property.location.coordinates[0]}`;
 
   return (
     <div className="app-shell section-pad space-y-8">
@@ -123,6 +153,9 @@ export default function PropertyDetailPage({ params }) {
             </div>
           ) : null}
           <div className="mt-2 text-sm text-ink/55">Publicado por {seller.name}</div>
+          {sellerRoleLabel ? (
+            <div className="mt-1 text-sm text-ink/55">{sellerRoleLabel}</div>
+          ) : null}
           <div className="mt-5 flex gap-3">
             <Button variant={favorite ? "accent" : "secondary"} onClick={handleFavorite}>
               <Heart className={`mr-2 h-4 w-4 ${favorite ? "fill-current" : ""}`} />
@@ -257,29 +290,26 @@ export default function PropertyDetailPage({ params }) {
             </div>
           ) : null}
 
-          <div className="surface p-6">
-            <h2 className="text-2xl font-semibold">Servicios cercanos</h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              {[property.nearestHospital, property.nearestSchool, property.nearestHighSchool].map(
-                (service, index) => (
+          {serviceDistanceItems.length ? (
+            <div className="surface p-6">
+              <h2 className="text-2xl font-semibold">Servicios cercanos</h2>
+              <div className="mt-5 grid gap-4 md:grid-cols-3">
+                {serviceDistanceItems.map((service) => (
                   <div
-                    key={`${service?.placeType || "service"}-${index}`}
+                    key={service.label}
                     className="rounded-[24px] bg-mist p-4"
                   >
                     <div className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">
-                      {service?.placeType || "servicio"}
+                      {service.label}
                     </div>
-                    <div className="mt-2 text-sm text-ink/70">
-                      {service?.name || "Pendiente de conectar API externa"}
+                    <div className="mt-2 text-lg font-semibold text-ink">
+                      {service.value} km
                     </div>
-                    {service?.distanceKm ? (
-                      <div className="mt-2 text-xs text-ink/55">{service.distanceKm} km</div>
-                    ) : null}
                   </div>
-                )
-              )}
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <PropertyMapPreview property={property} />
         </div>
@@ -288,6 +318,7 @@ export default function PropertyDetailPage({ params }) {
           <div className="surface space-y-4 p-6">
             <h2 className="text-2xl font-semibold">Anunciante</h2>
             <p className="text-sm text-ink/70">{seller.name}</p>
+            {sellerRoleLabel ? <p className="text-sm text-ink/55">{sellerRoleLabel}</p> : null}
             {seller.phone ? (
               <a
                 href={`tel:${seller.phone}`}
@@ -306,6 +337,17 @@ export default function PropertyDetailPage({ params }) {
               >
                 <MessageCircleMore className="h-4 w-4" />
                 Contactar por WhatsApp
+              </a>
+            ) : null}
+            {!property.address?.hideExactLocation ? (
+              <a
+                href={streetViewUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-2xl bg-lagoon px-4 py-3 text-sm font-semibold text-white"
+              >
+                <Eye className="h-4 w-4" />
+                Ver Street View
               </a>
             ) : null}
           </div>

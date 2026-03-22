@@ -40,6 +40,14 @@ const mediaSchema = z.object({
   durationSeconds: z.number().optional()
 });
 
+const serviceDistancesSchema = z
+  .object({
+    hospitalKm: z.number().int().nonnegative().optional(),
+    schoolKm: z.number().int().nonnegative().optional(),
+    highSchoolKm: z.number().int().nonnegative().optional()
+  })
+  .optional();
+
 const propertyBodySchema = z.object({
   title: z.string().min(10).max(160),
   description: z.string().min(10).max(5000),
@@ -88,6 +96,7 @@ const propertyBodySchema = z.object({
       role: z.string().optional()
     })
     .optional(),
+  serviceDistances: serviceDistancesSchema,
   roommateDetails: z
     .object({
       privateRoom: z.boolean().optional(),

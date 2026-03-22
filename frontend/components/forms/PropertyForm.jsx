@@ -33,21 +33,46 @@ import { Textarea } from "../ui/Textarea";
 
 const sellerRoleChoices = {
   es: [
-    "Propietario",
-    "Agente de ventas",
-    "Asesor inmobiliario",
-    "Broker",
-    "Desarrollador",
-    "Administrador de propiedades"
+    { value: "owner", label: "Propietario" },
+    { value: "sales-agent", label: "Agente de ventas" },
+    { value: "advisor", label: "Asesor inmobiliario" },
+    { value: "broker", label: "Broker" },
+    { value: "developer", label: "Desarrollador" },
+    { value: "property-manager", label: "Administrador de propiedades" }
   ],
   en: [
-    "Owner",
-    "Sales agent",
-    "Real estate advisor",
-    "Broker",
-    "Developer",
-    "Property manager"
+    { value: "owner", label: "Owner" },
+    { value: "sales-agent", label: "Sales agent" },
+    { value: "advisor", label: "Real estate advisor" },
+    { value: "broker", label: "Broker" },
+    { value: "developer", label: "Developer" },
+    { value: "property-manager", label: "Property manager" }
   ]
+};
+
+const serviceDistanceOptions = Array.from({ length: 31 }, (_, index) => ({
+  value: String(index + 1),
+  label: `${index + 1} km`
+}));
+
+const normalizeSellerRoleValue = (value = "") => {
+  const normalized = String(value).trim().toLowerCase();
+  const aliases = {
+    owner: "owner",
+    propietario: "owner",
+    agent: "sales-agent",
+    "agente de ventas": "sales-agent",
+    advisor: "advisor",
+    "asesor inmobiliario": "advisor",
+    broker: "broker",
+    developer: "developer",
+    desarrollador: "developer",
+    admin: "property-manager",
+    "property manager": "property-manager",
+    "administrador de propiedades": "property-manager"
+  };
+
+  return aliases[normalized] || value;
 };
 
 const numberField = (fallback = 0) =>
@@ -105,6 +130,9 @@ const createPropertyFormSchema = (copy) =>
     sellerPhone: z.string(),
     sellerEmail: z.string(),
     sellerRole: z.string(),
+    serviceHospitalKm: optionalNumberField(),
+    serviceSchoolKm: optionalNumberField(),
+    serviceHighSchoolKm: optionalNumberField(),
     videoUrls: z.string(),
     hideExactLocation: z.boolean().optional(),
     privateRoom: z.boolean().optional(),
@@ -192,7 +220,19 @@ const toDefaultValues = (property) => ({
   sellerName: property?.sellerInfo?.name || property?.owner?.name || "",
   sellerPhone: property?.sellerInfo?.phone || property?.owner?.phone || "",
   sellerEmail: property?.sellerInfo?.email || "",
-  sellerRole: property?.sellerInfo?.role || property?.owner?.role || "",
+  sellerRole: normalizeSellerRoleValue(property?.sellerInfo?.role || property?.owner?.role || ""),
+  serviceHospitalKm:
+    property?.serviceDistances?.hospitalKm ??
+    property?.nearestHospital?.distanceKm ??
+    "",
+  serviceSchoolKm:
+    property?.serviceDistances?.schoolKm ??
+    property?.nearestSchool?.distanceKm ??
+    "",
+  serviceHighSchoolKm:
+    property?.serviceDistances?.highSchoolKm ??
+    property?.nearestHighSchool?.distanceKm ??
+    "",
   videoUrls:
     property?.media
       ?.filter((item) => item.type === "video")
@@ -283,6 +323,13 @@ export function PropertyForm({ property, propertyId }) {
             sellerPhone: "Phone",
             sellerEmail: "Email",
             sellerRole: "Visible role",
+            serviceDistances: "Nearby services",
+            serviceDistancesHelp:
+              "Optional. If you select any of these distances, they will be shown on the property page.",
+            hospitalDistance: "Distance to nearest hospital",
+            schoolDistance: "Distance to nearest school",
+            highSchoolDistance: "Distance to nearest high school",
+            serviceDistancePlaceholder: "Do not show",
             photos: "Photos",
             photosHelp:
               "Upload multiple images and choose a primary one for cards and property detail.",
@@ -392,6 +439,13 @@ export function PropertyForm({ property, propertyId }) {
             sellerPhone: "Telefono",
             sellerEmail: "Correo",
             sellerRole: "Rol visible",
+            serviceDistances: "Servicios cercanos",
+            serviceDistancesHelp:
+              "Opcional. Si llenas alguna de estas distancias, se mostraran en la publicacion.",
+            hospitalDistance: "Distancia al hospital mas cercano",
+            schoolDistance: "Distancia a la escuela mas cercana",
+            highSchoolDistance: "Distancia al colegio mas cercano",
+            serviceDistancePlaceholder: "No mostrar",
             photos: "Fotos",
             photosHelp:
               "Sube multiples imagenes y define una principal para cards y detalle.",
@@ -1047,8 +1101,50 @@ export function PropertyForm({ property, propertyId }) {
             <Select {...register("sellerRole")}>
               <option value="">{isEnglish ? "Select role" : "Selecciona rol"}</option>
               {sellerRoleOptions.map((item) => (
-                <option key={item} value={item}>
-                  {item}
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
+      </section>
+
+      <section className="surface space-y-5 p-6">
+        <div>
+          <h2 className="text-2xl font-semibold">{copy.serviceDistances}</h2>
+          <p className="mt-2 text-sm text-ink/60">{copy.serviceDistancesHelp}</p>
+        </div>
+        <div className="grid gap-5 md:grid-cols-3">
+          <div>
+            <label className="field-label">{copy.hospitalDistance}</label>
+            <Select {...register("serviceHospitalKm")}>
+              <option value="">{copy.serviceDistancePlaceholder}</option>
+              {serviceDistanceOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <label className="field-label">{copy.schoolDistance}</label>
+            <Select {...register("serviceSchoolKm")}>
+              <option value="">{copy.serviceDistancePlaceholder}</option>
+              {serviceDistanceOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <label className="field-label">{copy.highSchoolDistance}</label>
+            <Select {...register("serviceHighSchoolKm")}>
+              <option value="">{copy.serviceDistancePlaceholder}</option>
+              {serviceDistanceOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
                 </option>
               ))}
             </Select>

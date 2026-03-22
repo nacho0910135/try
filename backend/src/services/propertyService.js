@@ -1,5 +1,4 @@
 import { Property } from "../models/Property.js";
-import { proximityService } from "./proximityService.js";
 import { ApiError } from "../utils/apiError.js";
 import { buildBoundsPolygon, normalizePolygonCoordinates } from "../utils/geo.js";
 import { buildPagination } from "../utils/pagination.js";
@@ -426,10 +425,6 @@ export const propertyService = {
       email: user.email,
       role: user.role
     };
-    const serviceStubs = proximityService.buildDefaultStubs();
-    normalized.nearestHospital = payload.nearestHospital || serviceStubs.nearestHospital;
-    normalized.nearestSchool = payload.nearestSchool || serviceStubs.nearestSchool;
-    normalized.nearestHighSchool = payload.nearestHighSchool || serviceStubs.nearestHighSchool;
     normalized.priceHistory = [
       {
         price: normalized.price,

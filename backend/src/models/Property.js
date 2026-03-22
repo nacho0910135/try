@@ -195,6 +195,24 @@ const roommateDetailsSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const serviceDistancesSchema = new mongoose.Schema(
+  {
+    hospitalKm: {
+      type: Number,
+      min: 0
+    },
+    schoolKm: {
+      type: Number,
+      min: 0
+    },
+    highSchoolKm: {
+      type: Number,
+      min: 0
+    }
+  },
+  { _id: false }
+);
+
 const propertySchema = new mongoose.Schema(
   {
     title: {
@@ -375,6 +393,7 @@ const propertySchema = new mongoose.Schema(
       required: true
     },
     sellerInfo: sellerInfoSchema,
+    serviceDistances: serviceDistancesSchema,
     nearestHospital: nearbyPlaceSchema,
     nearestSchool: nearbyPlaceSchema,
     nearestHighSchool: nearbyPlaceSchema,
@@ -434,6 +453,14 @@ propertySchema.pre("save", function syncDerivedFields(next) {
 
   if (!this.addressText && this.address?.exactAddress) {
     this.addressText = this.address.exactAddress;
+  }
+
+  if (
+    !this.serviceDistances?.hospitalKm &&
+    !this.serviceDistances?.schoolKm &&
+    !this.serviceDistances?.highSchoolKm
+  ) {
+    this.serviceDistances = undefined;
   }
 
   if (this.businessType !== "rent") {

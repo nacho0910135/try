@@ -73,6 +73,17 @@ export const formatLocation = (property) => {
 };
 
 export const buildPropertyPayload = (values, photos = [], videoUrls = []) => {
+  const serviceDistances = {
+    ...(values.serviceHospitalKm !== undefined && values.serviceHospitalKm !== ""
+      ? { hospitalKm: Number(values.serviceHospitalKm) }
+      : {}),
+    ...(values.serviceSchoolKm !== undefined && values.serviceSchoolKm !== ""
+      ? { schoolKm: Number(values.serviceSchoolKm) }
+      : {}),
+    ...(values.serviceHighSchoolKm !== undefined && values.serviceHighSchoolKm !== ""
+      ? { highSchoolKm: Number(values.serviceHighSchoolKm) }
+      : {})
+  };
   const normalizedPhotos = photos.map((photo) => ({
     url: photo.url,
     publicId: photo.publicId || undefined,
@@ -155,6 +166,7 @@ export const buildPropertyPayload = (values, photos = [], videoUrls = []) => {
       email: values.sellerEmail || undefined,
       role: values.sellerRole || undefined
     },
+    serviceDistances: Object.keys(serviceDistances).length ? serviceDistances : undefined,
     roommateDetails:
       values.businessType === "rent" &&
       (values.rentalArrangement === "roommate" || values.propertyType === "room")
