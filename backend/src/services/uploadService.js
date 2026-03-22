@@ -33,8 +33,8 @@ const saveBufferLocally = async (file, index) => {
     publicId: null,
     isPrimary: index === 0,
     alt: title,
-    width: null,
-    height: null
+    width: undefined,
+    height: undefined
   };
 };
 

@@ -73,8 +73,17 @@ export const formatLocation = (property) => {
 };
 
 export const buildPropertyPayload = (values, photos = [], videoUrls = []) => {
+  const normalizedPhotos = photos.map((photo) => ({
+    url: photo.url,
+    publicId: photo.publicId || undefined,
+    isPrimary: Boolean(photo.isPrimary),
+    alt: photo.alt,
+    ...(typeof photo.width === "number" ? { width: photo.width } : {}),
+    ...(typeof photo.height === "number" ? { height: photo.height } : {})
+  }));
+
   const media = [
-    ...photos.map((photo, index) => ({
+    ...normalizedPhotos.map((photo, index) => ({
       type: "image",
       url: photo.url,
       thumbnailUrl: photo.url,
@@ -82,8 +91,8 @@ export const buildPropertyPayload = (values, photos = [], videoUrls = []) => {
       alt: photo.alt,
       isPrimary: photo.isPrimary,
       order: index,
-      width: photo.width,
-      height: photo.height
+      ...(typeof photo.width === "number" ? { width: photo.width } : {}),
+      ...(typeof photo.height === "number" ? { height: photo.height } : {})
     })),
     ...videoUrls
       .filter(Boolean)
@@ -125,7 +134,7 @@ export const buildPropertyPayload = (values, photos = [], videoUrls = []) => {
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean),
-    photos,
+    photos: normalizedPhotos,
     media,
     location: {
       lng: Number(values.lng),

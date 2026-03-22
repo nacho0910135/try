@@ -55,7 +55,7 @@ export function PropertyCard({
         selected ? "ring-2 ring-terracotta/40" : "hover:-translate-y-1"
       }`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-[16/10] overflow-hidden">
         <img
           src={mainPhoto?.url || fallbackSrc}
           alt={mainPhoto?.alt || property.title}
@@ -65,7 +65,7 @@ export function PropertyCard({
             event.currentTarget.src = fallbackSrc;
           }}
         />
-        <div className="absolute left-4 top-4 flex gap-2">
+        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
           <Badge variant="accent">{formatBusinessType(property.businessType)}</Badge>
           {property.rentalArrangement === "roommate" ? (
             <Badge variant="success">{formatRentalArrangement(property.rentalArrangement)}</Badge>
@@ -78,18 +78,18 @@ export function PropertyCard({
         <button
           type="button"
           onClick={toggleFavorite}
-          className="absolute right-4 top-4 rounded-full bg-white/90 p-3 shadow-soft"
+          className="absolute right-3 top-3 rounded-full bg-white/90 p-2.5 shadow-soft"
           aria-label="Guardar en favoritos"
         >
           <Heart className={`h-4 w-4 ${isFavorite ? "fill-terracotta text-terracotta" : ""}`} />
         </button>
       </div>
 
-      <div className="space-y-4 p-5">
+      <div className="space-y-3 p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-2xl font-semibold">{formatCurrency(property.price, property.currency)}</div>
-            <h3 className="mt-2 text-lg font-semibold leading-snug">{property.title}</h3>
+            <div className="text-xl font-semibold">{formatCurrency(property.price, property.currency)}</div>
+            <h3 className="mt-1.5 text-base font-semibold leading-snug">{property.title}</h3>
           </div>
           <span className="text-sm text-ink/45">{formatPropertyType(property.propertyType)}</span>
         </div>
@@ -99,7 +99,7 @@ export function PropertyCard({
           <span>{formatLocation(property)}</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-sm text-ink/70 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 text-xs text-ink/70 sm:grid-cols-4">
           <span className="data-pill">
             <BedDouble className="h-4 w-4" />
             {property.rentalArrangement === "roommate"

@@ -158,10 +158,28 @@ export default function SearchPage() {
     <div className="app-shell section-pad space-y-6">
       <div>
         <span className="eyebrow">Exploracion</span>
-        <h1 className="mt-4 font-serif text-5xl font-semibold">Busca propiedades en Costa Rica</h1>
-        <p className="mt-3 max-w-3xl text-base text-ink/65">
-          Usa filtros avanzados, mapa visible, dibujo de zona y busqueda por GPS para encontrar oportunidades reales.
-        </p>
+        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="font-serif text-5xl font-semibold">Busca propiedades en Costa Rica</h1>
+            <p className="mt-3 max-w-3xl text-base text-ink/65">
+              Usa filtros avanzados, mapa visible, dibujo de zona y busqueda por GPS para encontrar oportunidades reales.
+            </p>
+          </div>
+          <div className="surface min-w-[280px] border border-pine/15 bg-pine/10 p-4">
+            <p className="text-sm font-semibold text-pine">
+              {token
+                ? "Tienes una propiedad? Publicala para vender o alquilar desde el mapa."
+                : "Quieres vender o alquilar una propiedad? Inicia sesion para publicarla."}
+            </p>
+            <div className="mt-3">
+              <Link href={token ? "/dashboard/properties/new" : "/login"}>
+                <Button variant="success" className="w-full shadow-soft">
+                  {token ? "Vender o alquilar mi propiedad" : "Iniciar sesion para publicar"}
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       <SearchFilters
@@ -175,14 +193,17 @@ export default function SearchPage() {
 
       {message ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{message}</p> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <p className="text-sm text-ink/55">
               {loading ? "Buscando..." : `${pagination.total} propiedades encontradas`}
             </p>
-            <Link href="/dashboard/properties/new" className="text-sm font-semibold text-lagoon">
-              Publicar propiedad
+            <Link
+              href={token ? "/dashboard/properties/new" : "/login"}
+              className="text-sm font-semibold text-pine"
+            >
+              {token ? "Publicar propiedad" : "Inicia sesion para publicar"}
             </Link>
           </div>
 

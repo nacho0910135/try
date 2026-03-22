@@ -21,8 +21,8 @@ const photoSchema = z.object({
   publicId: z.string().optional().nullable(),
   isPrimary: z.boolean().optional(),
   alt: z.string().optional(),
-  width: z.number().optional(),
-  height: z.number().optional()
+  width: z.number().optional().nullable(),
+  height: z.number().optional().nullable()
 });
 
 const mediaSchema = z.object({
@@ -35,8 +35,8 @@ const mediaSchema = z.object({
   alt: z.string().optional(),
   isPrimary: z.boolean().optional(),
   order: z.number().optional(),
-  width: z.number().optional(),
-  height: z.number().optional(),
+  width: z.number().optional().nullable(),
+  height: z.number().optional().nullable(),
   durationSeconds: z.number().optional()
 });
 

@@ -133,7 +133,7 @@ export function SearchMap({
 
   if (!token) {
     return (
-      <div className="surface flex min-h-[520px] flex-col items-center justify-center gap-3 p-8 text-center">
+      <div className="surface flex min-h-[680px] flex-col items-center justify-center gap-3 p-8 text-center">
         <h3 className="text-lg font-semibold">Activa Mapbox para ver el mapa interactivo</h3>
         <p className="max-w-md text-sm text-ink/60">
           Configura `NEXT_PUBLIC_MAPBOX_TOKEN` en el frontend para usar bounds, pines y dibujo de zonas.
@@ -216,7 +216,7 @@ export function SearchMap({
             north: bounds.getNorth()
           });
         }}
-        style={{ width: "100%", minHeight: 520 }}
+        style={{ width: "100%", minHeight: 680 }}
       >
         <NavigationControl position="top-right" />
         <GeolocateControl position="top-right" trackUserLocation={false} showUserHeading />

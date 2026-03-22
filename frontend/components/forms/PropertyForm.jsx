@@ -31,6 +31,25 @@ import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Textarea } from "../ui/Textarea";
 
+const sellerRoleChoices = {
+  es: [
+    "Propietario",
+    "Agente de ventas",
+    "Asesor inmobiliario",
+    "Broker",
+    "Desarrollador",
+    "Administrador de propiedades"
+  ],
+  en: [
+    "Owner",
+    "Sales agent",
+    "Real estate advisor",
+    "Broker",
+    "Developer",
+    "Property manager"
+  ]
+};
+
 const numberField = (fallback = 0) =>
   z.preprocess(
     (value) => {
@@ -461,12 +480,16 @@ export function PropertyForm({ property, propertyId }) {
     handleSubmit,
     reset,
     setValue,
+    clearErrors,
     watch,
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: zodResolver(propertyFormSchema),
     defaultValues: toDefaultValues(property)
   });
+  const provinceField = register("province");
+  const cantonField = register("canton");
+  const districtField = register("district");
   const businessTypeValue = watch("businessType");
   const propertyTypeValue = watch("propertyType");
   const rentalArrangementValue = watch("rentalArrangement");
@@ -485,6 +508,7 @@ export function PropertyForm({ property, propertyId }) {
     rawDistrictOptions,
     districtValue
   );
+  const sellerRoleOptions = sellerRoleChoices[isEnglish ? "en" : "es"];
   const googleMapsCoordinatesUrl = `https://www.google.com/maps/search/?api=1&query=${latValue},${lngValue}`;
 
   useEffect(() => {
@@ -502,8 +526,9 @@ export function PropertyForm({ property, propertyId }) {
   useEffect(() => {
     if (districtValue && !rawDistrictOptions.includes(districtValue)) {
       setValue("district", "");
+      clearErrors("district");
     }
-  }, [districtValue, rawDistrictOptions, setValue]);
+  }, [clearErrors, districtValue, rawDistrictOptions, setValue]);
 
   useEffect(() => {
     if (businessTypeValue !== "rent") {
@@ -899,11 +924,19 @@ export function PropertyForm({ property, propertyId }) {
           <div>
             <label className="field-label">{copy.province}</label>
             <Select
-              {...register("province")}
+              name={provinceField.name}
+              ref={provinceField.ref}
+              value={provinceValue || ""}
+              onBlur={(event) => {
+                provinceField.onBlur(event);
+                clearErrors("province");
+              }}
               onChange={(event) => {
+                provinceField.onChange(event);
                 setValue("province", event.target.value, { shouldValidate: true, shouldDirty: true });
                 setValue("canton", "", { shouldValidate: true, shouldDirty: true });
                 setValue("district", "", { shouldValidate: true, shouldDirty: true });
+                clearErrors(["province", "canton", "district"]);
               }}
             >
               {provinces.map((item) => (
@@ -912,15 +945,24 @@ export function PropertyForm({ property, propertyId }) {
                 </option>
               ))}
             </Select>
+            {errors.province ? <p className="mt-2 text-sm text-red-600">{errors.province.message}</p> : null}
           </div>
           <div>
             <label className="field-label">{copy.canton}</label>
             <Select
-              {...register("canton")}
+              name={cantonField.name}
+              ref={cantonField.ref}
+              value={cantonValue || ""}
               disabled={!provinceValue}
+              onBlur={(event) => {
+                cantonField.onBlur(event);
+                clearErrors("canton");
+              }}
               onChange={(event) => {
+                cantonField.onChange(event);
                 setValue("canton", event.target.value, { shouldValidate: true, shouldDirty: true });
                 setValue("district", "", { shouldValidate: true, shouldDirty: true });
+                clearErrors(["canton", "district"]);
               }}
             >
               <option value="">{provinceValue ? copy.selectCanton : copy.firstProvince}</option>
@@ -934,7 +976,21 @@ export function PropertyForm({ property, propertyId }) {
           </div>
           <div>
             <label className="field-label">{copy.district}</label>
-            <Select {...register("district")} disabled={!provinceValue || !cantonValue}>
+            <Select
+              name={districtField.name}
+              ref={districtField.ref}
+              value={districtValue || ""}
+              disabled={!provinceValue || !cantonValue}
+              onBlur={(event) => {
+                districtField.onBlur(event);
+                clearErrors("district");
+              }}
+              onChange={(event) => {
+                districtField.onChange(event);
+                setValue("district", event.target.value, { shouldValidate: true, shouldDirty: true });
+                clearErrors("district");
+              }}
+            >
               <option value="">
                 {provinceValue && cantonValue ? copy.selectDistrict : copy.firstCanton}
               </option>
@@ -988,7 +1044,14 @@ export function PropertyForm({ property, propertyId }) {
           </div>
           <div>
             <label className="field-label">{copy.sellerRole}</label>
-            <Input {...register("sellerRole")} />
+            <Select {...register("sellerRole")}>
+              <option value="">{isEnglish ? "Select role" : "Selecciona rol"}</option>
+              {sellerRoleOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </Select>
           </div>
         </div>
       </section>
