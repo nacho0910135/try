@@ -1,0 +1,73 @@
+@import "mapbox-gl/dist/mapbox-gl.css";
+@import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-sand text-ink antialiased;
+    font-family: var(--font-sans), sans-serif;
+    background-image:
+      radial-gradient(circle at top, rgba(29, 95, 116, 0.08), transparent 28%),
+      linear-gradient(180deg, #fffdf9 0%, #f8f2ea 58%, #eef3f6 100%);
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    @apply outline-none;
+  }
+
+  .font-serif {
+    font-family: var(--font-serif), serif;
+  }
+}
+
+@layer components {
+  .app-shell {
+    @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8;
+  }
+
+  .surface {
+    @apply rounded-[28px] border border-white/70 bg-white/85 shadow-soft backdrop-blur;
+  }
+
+  .section-pad {
+    @apply py-8 sm:py-12 lg:py-16;
+  }
+
+  .eyebrow {
+    @apply inline-flex rounded-full border border-terracotta/20 bg-terracotta/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta;
+  }
+
+  .data-pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-3 py-2 text-sm text-ink/80;
+  }
+
+  .field-label {
+    @apply mb-2 block text-sm font-semibold text-ink/80;
+  }
+
+  .input-base {
+    @apply w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-ink/35 focus:border-lagoon/40 focus:ring-2 focus:ring-lagoon/15;
+  }
+
+  .mapboxgl-ctrl-group {
+    @apply rounded-2xl border border-white/60 shadow-soft;
+  }
+}
