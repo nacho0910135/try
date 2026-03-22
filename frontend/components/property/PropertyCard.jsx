@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Bath, BedDouble, Car, Heart, MapPin, Square } from "lucide-react";
 import { addFavorite, removeFavorite } from "@/lib/api";
 import { useLanguage } from "@/components/layout/LanguageProvider";
@@ -51,6 +52,12 @@ export function PropertyCard({
   const { language, t } = useLanguage();
   const mainPhoto = getMainPhoto(property);
   const fallbackSrc = "/property-placeholder.svg";
+  const [favoriteState, setFavoriteState] = useState(isFavorite);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
+
+  useEffect(() => {
+    setFavoriteState(isFavorite);
+  }, [isFavorite]);
 
   const toggleFavorite = async (event) => {
     event.preventDefault();
@@ -61,14 +68,23 @@ export function PropertyCard({
       return;
     }
 
-    if (isFavorite) {
-      await removeFavorite(property._id);
-      onFavoriteChange?.(property._id, false);
-      return;
-    }
+    const nextState = !favoriteState;
+    setFavoriteState(nextState);
+    setFavoriteBusy(true);
 
-    await addFavorite(property._id);
-    onFavoriteChange?.(property._id, true);
+    try {
+      if (favoriteState) {
+        await removeFavorite(property._id);
+        onFavoriteChange?.(property._id, false);
+      } else {
+        await addFavorite(property._id);
+        onFavoriteChange?.(property._id, true);
+      }
+    } catch (_error) {
+      setFavoriteState(!nextState);
+    } finally {
+      setFavoriteBusy(false);
+    }
   };
 
   const boolLabel = (value) => (value ? t("common.yes") : t("common.no"));
@@ -110,10 +126,19 @@ export function PropertyCard({
         <button
           type="button"
           onClick={toggleFavorite}
-          className="absolute right-3 top-3 rounded-full bg-white/90 p-2.5 shadow-soft"
+          disabled={favoriteBusy}
+          className={`absolute right-3 top-3 rounded-full p-2.5 shadow-soft transition ${
+            favoriteState
+              ? "bg-rose-50 text-rose-500 ring-2 ring-rose-200"
+              : "bg-white/90 text-ink hover:bg-white"
+          }`}
           aria-label={t("propertyCard.favoriteAria")}
         >
-          <Heart className={`h-4 w-4 ${isFavorite ? "fill-terracotta text-terracotta" : ""}`} />
+          <Heart
+            className={`h-4 w-4 transition ${
+              favoriteState ? "fill-rose-500 text-rose-500 scale-110" : ""
+            }`}
+          />
         </button>
       </div>
 

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { analysisRoutes } from "./analysisRoutes.js";
 import { adminRoutes } from "./adminRoutes.js";
 import { authRoutes } from "./authRoutes.js";
 import { favoriteRoutes } from "./favoriteRoutes.js";
@@ -11,6 +12,7 @@ import { userRoutes } from "./userRoutes.js";
 export const router = Router();
 
 router.use("/auth", authRoutes);
+router.use("/analysis", analysisRoutes);
 router.use("/properties", propertyRoutes);
 router.use("/favorites", favoriteRoutes);
 router.use("/saved-searches", savedSearchRoutes);

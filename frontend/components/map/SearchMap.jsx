@@ -29,6 +29,29 @@ const collectBounds = (coordinates, state) => {
   coordinates.forEach((item) => collectBounds(item, state));
 };
 
+const markerStylesByStatus = {
+  available: {
+    base: "border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-500",
+    selected: "border-emerald-900 bg-emerald-700 text-white ring-4 ring-emerald-200"
+  },
+  reserved: {
+    base: "border-amber-700 bg-amber-500 text-white hover:bg-amber-400",
+    selected: "border-amber-900 bg-amber-600 text-white ring-4 ring-amber-200"
+  },
+  sold: {
+    base: "border-rose-700 bg-rose-600 text-white hover:bg-rose-500",
+    selected: "border-rose-900 bg-rose-700 text-white ring-4 ring-rose-200"
+  },
+  rented: {
+    base: "border-sky-700 bg-sky-600 text-white hover:bg-sky-500",
+    selected: "border-sky-900 bg-sky-700 text-white ring-4 ring-sky-200"
+  },
+  inactive: {
+    base: "border-slate-600 bg-slate-500 text-white hover:bg-slate-400",
+    selected: "border-slate-800 bg-slate-600 text-white ring-4 ring-slate-200"
+  }
+};
+
 export function SearchMap({
   properties = [],
   selectedPropertyId,
@@ -42,7 +65,7 @@ export function SearchMap({
   const router = useRouter();
   const { t } = useLanguage();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/light-v11";
+  const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/outdoors-v12";
   const mapRef = useRef(null);
   const drawRef = useRef(null);
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
@@ -151,14 +174,14 @@ export function SearchMap({
       "fill-color": [
         "case",
         ["==", ["get", "district"], selectedDistrict || ""],
-        "#ff7a3d",
-        "#17324e"
+        "#22c55e",
+        "#3b82f6"
       ],
       "fill-opacity": [
         "case",
         ["==", ["get", "district"], selectedDistrict || ""],
-        0.34,
-        0.12
+        0.38,
+        0.2
       ]
     }
   };
@@ -170,16 +193,16 @@ export function SearchMap({
       "line-color": [
         "case",
         ["==", ["get", "district"], selectedDistrict || ""],
-        "#ff7a3d",
-        "#7f96ad"
+        "#15803d",
+        "#ffffff"
       ],
       "line-width": [
         "case",
         ["==", ["get", "district"], selectedDistrict || ""],
-        2.2,
-        1.1
+        2.4,
+        1.2
       ],
-      "line-opacity": 0.82
+      "line-opacity": 0.9
     }
   };
 
@@ -231,31 +254,38 @@ export function SearchMap({
         ) : null}
 
         {properties.map((property) => (
-          <Marker
-            key={property._id}
-            longitude={property.location.coordinates[0]}
-            latitude={property.location.coordinates[1]}
-            anchor="bottom"
-          >
-            <button
-              type="button"
-              onClick={() => {
-                onSelectProperty?.(property._id);
-                router.push(`/properties/${property.slug}`);
-              }}
-              className={`rounded-full border-2 px-2.5 py-1.5 text-[11px] font-semibold shadow-soft transition ${
-                selectedPropertyId === property._id
-                  ? "border-terracotta bg-terracotta text-white"
-                  : "border-white/80 bg-white/95 text-ink hover:-translate-y-0.5"
-              }`}
-              aria-label={t("map.selectedAria", {
-                title: property.title,
-                price: formatCurrency(property.price, property.currency)
-              })}
-            >
-              {formatCompactCurrency(property.price, property.currency)}
-            </button>
-          </Marker>
+          (() => {
+            const marketStatus = property.marketStatus || "available";
+            const markerStyle = markerStylesByStatus[marketStatus] || markerStylesByStatus.available;
+
+            return (
+              <Marker
+                key={property._id}
+                longitude={property.location.coordinates[0]}
+                latitude={property.location.coordinates[1]}
+                anchor="bottom"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectProperty?.(property._id);
+                    router.push(`/properties/${property.slug}`);
+                  }}
+                  className={`rounded-full border-2 px-2.5 py-1.5 text-[11px] font-semibold shadow-soft transition ${
+                    selectedPropertyId === property._id
+                      ? markerStyle.selected
+                      : markerStyle.base
+                  }`}
+                  aria-label={t("map.selectedAria", {
+                    title: property.title,
+                    price: formatCurrency(property.price, property.currency)
+                  })}
+                >
+                  {formatCompactCurrency(property.price, property.currency)}
+                </button>
+              </Marker>
+            );
+          })()
         ))}
       </Map>
 

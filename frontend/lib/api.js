@@ -63,6 +63,12 @@ export const getFavorites = () => unwrap(api.get("/favorites"));
 export const addFavorite = (propertyId) => unwrap(api.post(`/favorites/${propertyId}`));
 export const removeFavorite = (propertyId) => unwrap(api.delete(`/favorites/${propertyId}`));
 
+export const getInteractiveAnalysisOverview = () => unwrap(api.get("/analysis/overview"));
+export const compareInteractiveProperties = (propertyIds, language = "es") =>
+  unwrap(api.post("/analysis/compare", { propertyIds, language }));
+export const askInteractiveAnalysis = (payload) =>
+  unwrap(api.post("/analysis/chat", payload));
+
 export const getSavedSearches = () => unwrap(api.get("/saved-searches"));
 export const createSavedSearch = (payload) => unwrap(api.post("/saved-searches", payload));
 export const updateSavedSearch = (searchId, payload) =>

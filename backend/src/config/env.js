@@ -20,7 +20,10 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().default("http://localhost:3000"),
   CLOUDINARY_CLOUD_NAME: z.preprocess(emptyToUndefined, z.string().optional()),
   CLOUDINARY_API_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
-  CLOUDINARY_API_SECRET: z.preprocess(emptyToUndefined, z.string().optional())
+  CLOUDINARY_API_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),
+  DEEPSEEK_API_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
+  DEEPSEEK_BASE_URL: z.string().default("https://api.deepseek.com"),
+  DEEPSEEK_MODEL: z.string().default("deepseek-chat")
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -31,4 +34,3 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
-

@@ -28,9 +28,20 @@ export const formatCurrency = (value, currency = "USD") =>
     maximumFractionDigits: currency === "CRC" ? 0 : 0
   }).format(value || 0);
 
-export const formatCompactCurrency = (value, currency = "USD") => {
+const legacyFormatCompactCurrency = (value, currency = "USD") => {
   const amount = Number(value || 0);
   const symbol = currency === "CRC" ? "₡" : "$";
+  const compact = new Intl.NumberFormat("es-CR", {
+    notation: "compact",
+    maximumFractionDigits: 1
+  }).format(amount);
+
+  return `${symbol}${compact}`;
+};
+
+export const formatCompactCurrency = (value, currency = "USD") => {
+  const amount = Number(value || 0);
+  const symbol = currency === "CRC" ? "CRC " : "$";
   const compact = new Intl.NumberFormat("es-CR", {
     notation: "compact",
     maximumFractionDigits: 1

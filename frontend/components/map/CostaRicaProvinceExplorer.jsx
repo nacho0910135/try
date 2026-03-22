@@ -55,7 +55,7 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
   const router = useRouter();
   const { language, t } = useLanguage();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/light-v11";
+  const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/outdoors-v12";
   const mapRef = useRef(null);
   const [hoveredProvince, setHoveredProvince] = useState(null);
   const [provinceGeoJson, setProvinceGeoJson] = useState(null);

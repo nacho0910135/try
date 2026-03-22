@@ -9,6 +9,8 @@ const translations = {
     nav: {
       home: "Inicio",
       explore: "Explorar",
+      analysis: "Analisis Interactivo",
+      battle: "Batalla Comparativa",
       favorites: "Favoritos",
       dashboard: "Dashboard",
       admin: "Admin",
@@ -17,7 +19,7 @@ const translations = {
       login: "Entrar"
     },
     brand: {
-      tagline: "Compra | Renta | Lotes"
+      tagline: "Compra Venta Renta de Casas y Lotes"
     },
     common: {
       all: "Todos",
@@ -32,6 +34,8 @@ const translations = {
       description:
         "Plataforma inmobiliaria para explorar, publicar y conectar propiedades en Costa Rica.",
       explore: "Explorar",
+      analysis: "Analisis",
+      battle: "Batalla",
       searchProperties: "Buscar propiedades",
       favorites: "Favoritos",
       publishProperty: "Publicar propiedad",
@@ -250,6 +254,8 @@ const translations = {
     nav: {
       home: "Home",
       explore: "Explore",
+      analysis: "Interactive Analysis",
+      battle: "Comparative Battle",
       favorites: "Favorites",
       dashboard: "Dashboard",
       admin: "Admin",
@@ -258,7 +264,7 @@ const translations = {
       login: "Sign in"
     },
     brand: {
-      tagline: "Buy | Rent | Lots"
+      tagline: "Buy Sell Rent Homes and Lots"
     },
     common: {
       all: "All",
@@ -273,6 +279,8 @@ const translations = {
       description:
         "Real estate platform to explore, publish, and connect properties across Costa Rica.",
       explore: "Explore",
+      analysis: "Analysis",
+      battle: "Battle",
       searchProperties: "Search properties",
       favorites: "Favorites",
       publishProperty: "Publish property",

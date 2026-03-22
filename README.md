@@ -28,10 +28,12 @@ Se eligio Next.js sobre React + Vite porque encaja bien con un frontend de produ
 - Home geografica con selector visual de provincias
 - Mapa interactivo con marcadores enriquecidos, preview expandido, geolocalizacion y dibujo de zona
 - Favoritos
+- Batalla comparativa entre 2 favoritos con analisis AI sanitizado
 - Busquedas guardadas
 - Leads recibidos y enviados
 - Dashboard para agente/propietario
 - Panel admin con metricas, usuarios, moderacion e inteligencia de mercado base
+- Pestaña `Analisis Interactivo` con dashboards, proyecciones heuristicas y chat protegido
 - Seed con propiedades de ejemplo de Costa Rica
 
 ## Lo que no incluye
@@ -81,6 +83,9 @@ Variables principales:
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
+- `DEEPSEEK_API_KEY`
+- `DEEPSEEK_BASE_URL`
+- `DEEPSEEK_MODEL`
 
 ### Frontend
 
@@ -167,6 +172,16 @@ Para uploads reales:
 
 Si no configuras Cloudinary, el backend devuelve URLs placeholder para mantener el flujo del MVP utilizable.
 
+## DeepSeek
+
+Para habilitar la comparacion AI y el chat de `Analisis Interactivo`:
+
+1. Coloca tu key en `backend/.env` como `DEEPSEEK_API_KEY`.
+2. Mantén `DEEPSEEK_BASE_URL=https://api.deepseek.com`.
+3. Ajusta `DEEPSEEK_MODEL` si quieres cambiar de modelo.
+
+La integracion se hace solo desde backend para no exponer la key al navegador. El contexto enviado al modelo excluye datos sensibles del propietario y solo comparte senales de inventario como precio, ubicacion general, cuartos, banos, area, score de mercado y distancias opcionales.
+
 ## Modelo geoespacial
 
 El backend usa GeoJSON y `2dsphere` en propiedades:
@@ -197,6 +212,9 @@ Rutas destacadas:
 - `GET /api/admin/metrics`
 - `GET /api/admin/analytics/overview`
 - `GET /api/admin/analytics/properties/:propertyId`
+- `GET /api/analysis/overview`
+- `POST /api/analysis/compare`
+- `POST /api/analysis/chat`
 
 ## Notas de MVP
 
@@ -206,6 +224,7 @@ Rutas destacadas:
 - No se incluyeron tests automatizados en esta entrega.
 - La carga real de video quedo preparada a nivel de schema/UI; para produccion falta conectar almacenamiento externo.
 - La proximidad a hospital, escuela y colegio usa stubs controlados listos para reemplazar via `backend/src/services/proximityService.js`.
+- El analisis interactivo usa regresion lineal simple sobre cierres historicos por zona/moneda y heuristicas de oportunidad. No es una tasacion oficial ni reemplaza criterio profesional.
 
 ## Siguientes mejoras recomendadas
 

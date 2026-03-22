@@ -23,6 +23,10 @@ export function SiteFooter() {
           <div className="mt-4 space-y-2 text-sm text-ink/70">
             <Link href="/search">{t("footer.searchProperties")}</Link>
             <br />
+            <Link href="/analysis">{t("footer.analysis")}</Link>
+            <br />
+            <Link href="/battle">{t("footer.battle")}</Link>
+            <br />
             <Link href="/favorites">{t("footer.favorites")}</Link>
             <br />
             <Link href="/dashboard">{t("footer.publishProperty")}</Link>

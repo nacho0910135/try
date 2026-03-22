@@ -1,25 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="roof" x1="0%" x2="100%" y1="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffb52f" />
-      <stop offset="100%" stop-color="#ff6d1f" />
+    <linearGradient id="sky" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#1545a8" />
+      <stop offset="100%" stop-color="#0d2f78" />
     </linearGradient>
-    <linearGradient id="house" x1="0%" x2="100%" y1="0%" y2="100%">
-      <stop offset="0%" stop-color="#0f4ea9" />
+    <linearGradient id="roof" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffd23f" />
+      <stop offset="100%" stop-color="#ff960f" />
+    </linearGradient>
+    <linearGradient id="house" x1="0%" x2="100%" y1="10%" y2="100%">
+      <stop offset="0%" stop-color="#184bb0" />
       <stop offset="100%" stop-color="#0b2d72" />
     </linearGradient>
-    <linearGradient id="field" x1="0%" x2="100%" y1="0%" y2="0%">
-      <stop offset="0%" stop-color="#78c92f" />
-      <stop offset="100%" stop-color="#2f8f2c" />
+    <linearGradient id="ground" x1="0%" x2="100%" y1="0%" y2="0%">
+      <stop offset="0%" stop-color="#d2ff17" />
+      <stop offset="100%" stop-color="#74c200" />
     </linearGradient>
+    <linearGradient id="palm" x1="0%" x2="100%" y1="10%" y2="100%">
+      <stop offset="0%" stop-color="#9be000" />
+      <stop offset="100%" stop-color="#3d9000" />
+    </linearGradient>
+    <clipPath id="oval">
+      <ellipse cx="64" cy="47" rx="43" ry="31" />
+    </clipPath>
   </defs>
-  <rect width="128" height="128" rx="28" fill="#f6f0e7" />
-  <path d="M18 92c18-10 42-13 68-8 10 2 18 5 24 4-8 8-19 13-33 16H34c-7-3-12-6-16-12Z" fill="url(#field)" />
-  <path d="M70 30c8 7 14 18 16 34h-8c-2-15-6-25-13-35l5 1Z" fill="#b55f39" />
-  <path d="M58 28c7 0 14 5 18 10-6-2-12-2-18 0 2-4 5-7 9-10h-9Zm-7 10c7 0 13 2 18 7-6 0-11 2-16 5 1-4 3-8 6-12h-8Zm17-5c6 0 12 2 17 7-6-2-12-1-17 1 1-3 3-5 5-8h-5Z" fill="#69b312" stroke="#377d16" stroke-width="1" stroke-linejoin="round" />
-  <path d="M20 62 48 44l28 18v24H20V62Z" fill="url(#house)" />
-  <path d="M12 66 48 38l36 28H72L48 49 24 66H12Z" fill="url(#roof)" />
-  <rect x="34" y="66" width="13" height="15" rx="1.5" fill="#f3f8ff" />
-  <rect x="53" y="67" width="16" height="12" rx="1.5" fill="#f3f8ff" />
-  <path d="M40.5 66v15M34 73.5h13M61 67v12" stroke="#0f4ea9" stroke-width="1.6" />
+
+  <rect width="128" height="128" rx="28" fill="#202326" />
+  <ellipse cx="64" cy="47" rx="44" ry="32" fill="url(#sky)" stroke="#0b2b68" stroke-width="2.5" />
+  <g clip-path="url(#oval)">
+    <path d="M0 34c26-8 56-10 87-8 17 1 30 4 41 11v31H0V44c10-4 16-7 14-10Z" fill="#f7f8fb" />
+    <path d="M0 56c28-14 58-21 90-19 13 1 25 3 38 8v12H0V56Z" fill="#e91418" />
+    <path d="M0 66c26-8 54-12 85-11 15 1 29 3 43 8v14H0V66Z" fill="#133f9e" />
+    <circle cx="38" cy="43" r="6" fill="#ffffff" stroke="#d7dbe4" stroke-width="1.5" />
+    <circle cx="38" cy="43" r="3.2" fill="#2e8a22" />
+  </g>
+
+  <path d="M18 88c18-6 35-8 53-5 11 2 23 7 36 8 9 1 17 1 23-1-9 8-23 13-41 16H47c-12-2-22-7-29-18Z" fill="url(#ground)" stroke="#428700" stroke-width="2" />
+  <path d="M31 91c16-4 31-5 49-3 8 1 16 4 24 7" fill="none" stroke="#264d00" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M84 36c6 10 9 24 11 42h-5c-2-16-5-29-10-42h4Z" fill="#7d4304" />
+  <path d="M83 35c10-10 24-13 36-9-9 5-16 12-22 21-3-4-7-8-14-12Z" fill="url(#palm)" stroke="#2b6f00" stroke-width="1.5" stroke-linejoin="round" />
+  <path d="M82 37c-1-14 7-24 20-30-3 11-3 21 3 31-8-2-14-2-23-1Z" fill="url(#palm)" stroke="#2b6f00" stroke-width="1.5" stroke-linejoin="round" />
+  <path d="M82 38c-12-7-24-6-36-1 9 2 17 7 24 16 3-5 7-10 12-15Z" fill="url(#palm)" stroke="#2b6f00" stroke-width="1.5" stroke-linejoin="round" />
+
+  <path d="M39 63 61 47l23 16v20H39V63Z" fill="url(#house)" stroke="#09285e" stroke-width="2.4" />
+  <path d="M31 66 61 42l31 22H82L61 49 41 64H31Z" fill="url(#roof)" stroke="#e67b00" stroke-width="2" />
+  <rect x="48" y="62" width="11" height="13" rx="1.5" fill="#f7f7fb" />
+  <rect x="67" y="63" width="13" height="12" rx="1.5" fill="#f7f7fb" />
+  <path d="M53.5 62v13M48 68.5h11M73.5 63v12" stroke="#1f4da7" stroke-width="1.8" />
 </svg>
