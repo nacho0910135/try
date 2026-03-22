@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PROPERTY_STATUSES, USER_ROLES } from "../constants/enums.js";
+import { PROPERTY_STATUSES, USER_ROLES, VERIFICATION_STATUSES } from "../constants/enums.js";
 import {
   booleanField,
   integerField,
@@ -44,6 +44,16 @@ export const updateUserStatusSchema = z.object({
   }),
   body: z.object({
     isActive: z.boolean()
+  })
+});
+
+export const updateUserVerificationSchema = z.object({
+  params: z.object({
+    userId: objectIdSchema
+  }),
+  body: z.object({
+    status: z.enum(VERIFICATION_STATUSES.filter((status) => status !== "not-requested")),
+    reviewNote: z.string().max(300).optional()
   })
 });
 

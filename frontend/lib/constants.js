@@ -81,6 +81,15 @@ export const leadStatusLabels = {
   closed: "Cerrado"
 };
 
+export const offerStatusLabels = {
+  new: "Nueva",
+  reviewing: "En revision",
+  negotiating: "Negociando",
+  accepted: "Aceptada",
+  rejected: "Rechazada",
+  closed: "Cerrada"
+};
+
 export const mapDefaultCenter = {
   latitude: 9.9281,
   longitude: -84.0907,

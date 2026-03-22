@@ -111,8 +111,52 @@ export const adminService = {
     return user;
   },
 
+  async updateUserVerification(userId, adminUser, payload) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    user.verification = {
+      ...(user.verification || {}),
+      status: payload.status,
+      reviewedAt: new Date(),
+      reviewedBy: adminUser._id,
+      reviewNote: payload.reviewNote || "",
+      ...(payload.status === "verified"
+        ? {
+            verifiedAt: new Date(),
+            requestedBadge:
+              user.verification?.requestedBadge ||
+              (user.role === "agent" ? "Agente verificado" : "Cuenta verificada")
+          }
+        : {}),
+      ...(payload.status === "rejected"
+        ? {
+            verifiedAt: undefined
+          }
+        : {})
+    };
+
+    await user.save();
+
+    return user;
+  },
+
   async getMetrics() {
-    const [users, properties, published, pendingApproval, featured, leads, favorites, savedSearches] =
+    const [
+      users,
+      properties,
+      published,
+      pendingApproval,
+      featured,
+      leads,
+      favorites,
+      savedSearches,
+      pendingVerification,
+      verifiedUsers
+    ] =
       await Promise.all([
         User.countDocuments(),
         Property.countDocuments(),
@@ -121,7 +165,9 @@ export const adminService = {
         Property.countDocuments({ featured: true }),
         Lead.countDocuments(),
         Favorite.countDocuments(),
-        SavedSearch.countDocuments()
+        SavedSearch.countDocuments(),
+        User.countDocuments({ "verification.status": "pending" }),
+        User.countDocuments({ "verification.status": "verified" })
       ]);
 
     return {
@@ -132,8 +178,9 @@ export const adminService = {
       featured,
       leads,
       favorites,
-      savedSearches
+      savedSearches,
+      pendingVerification,
+      verifiedUsers
     };
   }
 };
-

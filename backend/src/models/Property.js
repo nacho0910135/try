@@ -147,6 +147,10 @@ const engagementSchema = new mongoose.Schema(
     leads: {
       type: Number,
       default: 0
+    },
+    offers: {
+      type: Number,
+      default: 0
     }
   },
   { _id: false }
@@ -476,6 +480,7 @@ propertySchema.pre("save", function syncDerivedFields(next) {
   if (this.businessType !== "rent") {
     this.rentalArrangement = "full-property";
     this.depositRequired = false;
+    this.petsAllowed = false;
   }
 
   if (

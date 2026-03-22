@@ -4,7 +4,8 @@ import {
   listProperties,
   listUsers,
   moderateProperty,
-  updateUserStatus
+  updateUserStatus,
+  updateUserVerification
 } from "../controllers/adminController.js";
 import { authorize, requireAuth } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validateMiddleware.js";
@@ -13,6 +14,7 @@ import {
   listAdminPropertiesSchema,
   listAdminUsersSchema,
   moderatePropertySchema,
+  updateUserVerificationSchema,
   updateUserStatusSchema
 } from "../validators/adminValidators.js";
 import {
@@ -32,5 +34,10 @@ adminRoutes.get(
 );
 adminRoutes.get("/users", validate(listAdminUsersSchema), listUsers);
 adminRoutes.patch("/users/:userId/status", validate(updateUserStatusSchema), updateUserStatus);
+adminRoutes.patch(
+  "/users/:userId/verification",
+  validate(updateUserVerificationSchema),
+  updateUserVerification
+);
 adminRoutes.get("/properties", validate(listAdminPropertiesSchema), listProperties);
 adminRoutes.patch("/properties/:propertyId", validate(moderatePropertySchema), moderateProperty);

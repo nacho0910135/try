@@ -395,7 +395,7 @@ export function PropertyForm({ property, propertyId }) {
             marketStatus: "Estado de mercado",
             features: "Caracteristicas",
             bedrooms: "Habitaciones",
-            bathrooms: "Banos",
+            bathrooms: "Baños",
             parkingSpaces: "Parqueos",
             constructionArea: "Area construccion",
             landArea: "Area terreno",
@@ -414,7 +414,7 @@ export function PropertyForm({ property, propertyId }) {
             maxRoommates: "Maximo de roomies",
             genderPreference: "Preferencia",
             privateRoom: "Cuarto privado",
-            privateBathroom: "Bano privado",
+            privateBathroom: "Baño privado",
             utilitiesIncluded: "Servicios incluidos",
             studentFriendly: "Apto para estudiantes",
             sharedAreas: "Areas compartidas",
@@ -588,6 +588,14 @@ export function PropertyForm({ property, propertyId }) {
     if (businessTypeValue !== "rent") {
       setValue("rentalArrangement", "full-property", {
         shouldValidate: true,
+        shouldDirty: false
+      });
+      setValue("petsAllowed", false, {
+        shouldValidate: false,
+        shouldDirty: false
+      });
+      setValue("depositRequired", false, {
+        shouldValidate: false,
         shouldDirty: false
       });
       return;
@@ -873,12 +881,11 @@ export function PropertyForm({ property, propertyId }) {
         </div>
         <div className="flex flex-wrap gap-5">
           <Checkbox label={copy.furnished} {...register("furnished")} />
-          <Checkbox
-            label={businessTypeValue === "rent" ? copy.petsAllowedRent : copy.petsAllowedSale}
-            {...register("petsAllowed")}
-          />
           {businessTypeValue === "rent" ? (
-            <Checkbox label={copy.depositRequired} {...register("depositRequired")} />
+            <>
+              <Checkbox label={copy.petsAllowedRent} {...register("petsAllowed")} />
+              <Checkbox label={copy.depositRequired} {...register("depositRequired")} />
+            </>
           ) : null}
           <Checkbox label={copy.hideExactLocation} {...register("hideExactLocation")} />
         </div>

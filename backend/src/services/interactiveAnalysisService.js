@@ -214,7 +214,7 @@ const buildMetricBattle = (first, second, language) => {
       en: "Bedrooms"
     },
     bathrooms: {
-      es: "Banos",
+      es: "Baños",
       en: "Bathrooms"
     },
     marketFit: {

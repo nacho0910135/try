@@ -1,4 +1,8 @@
 export const USER_ROLES = ["user", "agent", "owner", "admin"];
+export const SUBSCRIPTION_PLAN_NAMES = ["free", "owner-plus", "agent-pro", "broker-max"];
+export const SUBSCRIPTION_STATUSES = ["trial", "active", "inactive"];
+export const VERIFICATION_STATUSES = ["not-requested", "pending", "verified", "rejected"];
+export const VERIFICATION_TYPES = ["identity", "owner", "agent-license", "broker"];
 export const BUSINESS_TYPES = ["sale", "rent"];
 export const PROPERTY_TYPES = ["house", "apartment", "condominium", "lot", "room", "commercial"];
 export const CURRENCIES = ["CRC", "USD"];
@@ -9,6 +13,15 @@ export const RENTAL_ARRANGEMENTS = ["full-property", "roommate"];
 export const ROOMMATE_GENDER_PREFERENCES = ["any", "female-only", "male-only"];
 export const LEAD_SOURCES = ["property-page", "search", "whatsapp", "direct"];
 export const LEAD_STATUSES = ["new", "contacted", "qualified", "closed"];
+export const OFFER_SOURCES = ["property-page", "dashboard", "analysis", "direct"];
+export const OFFER_STATUSES = [
+  "new",
+  "reviewing",
+  "negotiating",
+  "accepted",
+  "rejected",
+  "closed"
+];
 export const COSTA_RICA_PROVINCES = [
   "San Jose",
   "Alajuela",

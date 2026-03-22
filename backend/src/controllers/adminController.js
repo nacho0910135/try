@@ -11,6 +11,11 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   res.json({ success: true, user });
 });
 
+export const updateUserVerification = asyncHandler(async (req, res) => {
+  const user = await adminService.updateUserVerification(req.params.userId, req.user, req.body);
+  res.json({ success: true, user });
+});
+
 export const listProperties = asyncHandler(async (req, res) => {
   const data = await adminService.listProperties(req.query);
   res.json({ success: true, ...data });
@@ -25,4 +30,3 @@ export const getMetrics = asyncHandler(async (_req, res) => {
   const metrics = await adminService.getMetrics();
   res.json({ success: true, metrics });
 });
-

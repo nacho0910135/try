@@ -148,8 +148,8 @@ export const buildPropertyPayload = (values, photos = [], videoUrls = []) => {
     landArea: Number(values.landArea || values.lotArea || 0),
     lotArea: Number(values.lotArea || values.landArea || 0),
     furnished: Boolean(values.furnished),
-    petsAllowed: Boolean(values.petsAllowed),
-    depositRequired: Boolean(values.depositRequired),
+    petsAllowed: values.businessType === "rent" ? Boolean(values.petsAllowed) : false,
+    depositRequired: values.businessType === "rent" ? Boolean(values.depositRequired) : false,
     status: values.status,
     marketStatus: values.marketStatus,
     amenities: values.amenities

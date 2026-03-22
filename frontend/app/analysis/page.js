@@ -230,7 +230,7 @@ export default function AnalysisPage() {
             demandLabel: "Demanda",
             priceLabel: "Precio",
             marketScoreLabel: "Puntaje de mercado",
-            roomsBathsLabel: "Cuartos / banos",
+            roomsBathsLabel: "Cuartos / baños",
             tieMetric: "Empate",
             winMetric: "Gana",
             loseMetric: "Pierde",
@@ -258,7 +258,7 @@ export default function AnalysisPage() {
             familyReadyListings: "Casas familiares",
             averageArea: "Area activa promedio",
             averageBedrooms: "Habitaciones promedio",
-            averageBathrooms: "Banos promedio",
+            averageBathrooms: "Baños promedio",
             topDemandChart: "Demanda por zona",
             inventoryChart: "Inventario por tipo",
             trendChart: "Tendencia reciente de PPSM"

@@ -2,7 +2,9 @@ import { Property } from "../models/Property.js";
 import { ApiError } from "../utils/apiError.js";
 import { buildBoundsPolygon, normalizePolygonCoordinates } from "../utils/geo.js";
 import { buildPagination } from "../utils/pagination.js";
+import { enrichPropertyCollection, enrichPropertyForClient } from "../utils/propertyInsights.js";
 import { createSlug } from "../utils/slug.js";
+import { resolveEffectiveSubscription } from "../constants/plans.js";
 
 const ownerIdFromProperty = (property) =>
   property?.owner?._id?.toString?.() || property?.owner?.toString?.();
@@ -344,7 +346,7 @@ export const propertyService = {
 
     const [items, total] = await Promise.all([
       Property.find(filter)
-        .populate("owner", "name phone avatar role")
+        .populate("owner", "name phone avatar role verification")
         .sort(sort)
         .skip(pagination.skip)
         .limit(pagination.limit),
@@ -352,7 +354,7 @@ export const propertyService = {
     ]);
 
     return {
-      items,
+      items: enrichPropertyCollection(items),
       pagination: {
         page: pagination.page,
         limit: pagination.limit,
@@ -363,17 +365,22 @@ export const propertyService = {
   },
 
   async listFeatured(limit = 6) {
-    return Property.find({
+    const items = await Property.find({
       ...buildPublicFilter(),
       featured: true
     })
-      .populate("owner", "name phone avatar role")
+      .populate("owner", "name phone avatar role verification")
       .sort({ publishedAt: -1, createdAt: -1 })
       .limit(limit);
+
+    return enrichPropertyCollection(items);
   },
 
   async getBySlug(slug, user) {
-    const property = await Property.findOne({ slug }).populate("owner", "name phone avatar role");
+    const property = await Property.findOne({ slug }).populate(
+      "owner",
+      "name phone avatar role verification"
+    );
 
     if (!property) {
       throw new ApiError(404, "Property not found");
@@ -392,13 +399,20 @@ export const propertyService = {
         { $inc: { views: 1, "engagement.views": 1 } }
       );
       property.views += 1;
+      property.engagement = {
+        ...(property.engagement?.toObject ? property.engagement.toObject() : property.engagement),
+        views: Number(property.engagement?.views || 0) + 1
+      };
     }
 
-    return property;
+    return enrichPropertyForClient(property);
   },
 
   async getManageProperty(propertyId, user) {
-    const property = await Property.findById(propertyId).populate("owner", "name phone avatar role");
+    const property = await Property.findById(propertyId).populate(
+      "owner",
+      "name phone avatar role verification"
+    );
 
     if (!property) {
       throw new ApiError(404, "Property not found");
@@ -408,14 +422,31 @@ export const propertyService = {
       throw new ApiError(403, "You do not have access to this property");
     }
 
-    return property;
+    return enrichPropertyForClient(property);
   },
 
   async listMine(user) {
-    return Property.find({ owner: user._id }).sort({ updatedAt: -1, createdAt: -1 });
+    const items = await Property.find({ owner: user._id })
+      .populate("owner", "name phone avatar role verification")
+      .sort({ updatedAt: -1, createdAt: -1 });
+    return enrichPropertyCollection(items);
   },
 
   async create(user, payload) {
+    const subscription = resolveEffectiveSubscription(user);
+    const activeListings = await Property.countDocuments({
+      owner: user._id,
+      status: { $in: ["draft", "published", "paused"] },
+      marketStatus: { $in: ["available", "reserved"] }
+    });
+
+    if (activeListings >= subscription.propertyLimit && user.role !== "admin") {
+      throw new ApiError(
+        403,
+        `Tu plan actual permite hasta ${subscription.propertyLimit} propiedades activas.`
+      );
+    }
+
     const normalized = normalizePropertyPayload(payload);
     normalized.owner = user._id;
     normalized.status = normalized.status || "published";
@@ -447,7 +478,11 @@ export const propertyService = {
     makePropertyPublicWhenPublished(normalized, user);
 
     const property = await Property.create(normalized);
-    return Property.findById(property._id).populate("owner", "name phone avatar role");
+    const created = await Property.findById(property._id).populate(
+      "owner",
+      "name phone avatar role verification"
+    );
+    return enrichPropertyForClient(created);
   },
 
   async update(propertyId, user, payload) {
@@ -496,7 +531,11 @@ export const propertyService = {
 
     await property.save();
 
-    return Property.findById(property._id).populate("owner", "name phone avatar role");
+    const updated = await Property.findById(property._id).populate(
+      "owner",
+      "name phone avatar role verification"
+    );
+    return enrichPropertyForClient(updated);
   },
 
   async updateStatus(propertyId, user, status) {
@@ -523,7 +562,7 @@ export const propertyService = {
     }
 
     await property.save();
-    return property;
+    return enrichPropertyForClient(property);
   },
 
   async remove(propertyId, user) {

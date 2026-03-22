@@ -138,6 +138,27 @@ export default function DashboardPropertiesPage() {
     await loadProperties();
   };
 
+  const getAttentionCopy = (level) => {
+    if (level === "urgent") {
+      return {
+        label: "Urgente",
+        className: "text-terracotta"
+      };
+    }
+
+    if (level === "healthy") {
+      return {
+        label: "Saludable",
+        className: "text-pine"
+      };
+    }
+
+    return {
+      label: "Observar",
+      className: "text-lagoon"
+    };
+  };
+
   if (loading) {
     return <LoadingState label="Cargando propiedades..." />;
   }
@@ -182,6 +203,7 @@ export default function DashboardPropertiesPage() {
               <th className="pb-4">Ubicacion</th>
               <th className="pb-4">Precio</th>
               <th className="pb-4">Visualizaciones</th>
+              <th className="pb-4">Salud</th>
               <th className="pb-4">Estado</th>
               <th className="pb-4">Mercado</th>
               <th className="pb-4">Acciones</th>
@@ -189,16 +211,44 @@ export default function DashboardPropertiesPage() {
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item._id} className="border-b border-ink/5">
+              <tr key={item._id} className="border-b border-ink/5 align-top">
                 <td className="py-4 pr-4">
                   <div className="font-semibold">{item.title}</div>
-                  <div className="text-xs text-ink/45">{item.propertyType}</div>
+                  <div className="text-xs text-ink/45">
+                    {item.propertyType} {item.featured ? "- Destacada" : "- Organica"}
+                  </div>
+                  {item.trustProfile?.score ? (
+                    <div className="mt-2 text-xs text-ink/55">
+                      Trust score {item.trustProfile.score}/100
+                    </div>
+                  ) : null}
                 </td>
                 <td className="py-4 pr-4 text-ink/65">{formatLocation(item)}</td>
                 <td className="py-4 pr-4">{formatCurrency(item.price, item.currency)}</td>
                 <td className="py-4 pr-4">
                   <div className="font-semibold">{item.views || item.engagement?.views || 0}</div>
                   <div className="text-xs text-ink/45">vistas publicas</div>
+                  <div className="mt-1 text-xs text-ink/55">
+                    {item.engagement?.favorites || 0} fav - {item.engagement?.leads || 0} leads -{" "}
+                    {item.engagement?.offers || 0} ofertas
+                  </div>
+                </td>
+                <td className="py-4 pr-4">
+                  <div className="font-semibold">
+                    {item.listingInsights?.completenessScore || 0}/100
+                  </div>
+                  <div
+                    className={`mt-1 text-xs font-semibold ${
+                      getAttentionCopy(item.listingInsights?.attentionLevel).className
+                    }`}
+                  >
+                    {getAttentionCopy(item.listingInsights?.attentionLevel).label}
+                  </div>
+                  <div className="mt-1 max-w-[220px] text-xs leading-5 text-ink/55">
+                    {item.listingInsights?.actionItems?.[0] ||
+                      item.listingInsights?.strengths?.[0] ||
+                      "Sin acciones prioritarias por ahora."}
+                  </div>
                 </td>
                 <td className="py-4 pr-4">
                   <select

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Bath, BedDouble, Car, Heart, MapPin, Square } from "lucide-react";
+import { Bath, BedDouble, Car, Heart, MapPin, ShieldCheck, Sparkles, Square, TimerReset } from "lucide-react";
 import { addFavorite, removeFavorite } from "@/lib/api";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import {
@@ -95,6 +95,27 @@ export function PropertyCard({
     MARKET_LABELS[property.marketStatus]?.[language] || property.marketStatus;
   const rentalLabel =
     RENTAL_LABELS[property.rentalArrangement]?.[language] || property.rentalArrangement;
+  const trustLabel =
+    property.trustProfile?.level === "high"
+      ? language === "en"
+        ? "Verified"
+        : "Verificada"
+      : property.trustProfile?.level === "solid"
+        ? language === "en"
+          ? "Reliable"
+          : "Confiable"
+        : null;
+  const priceSignalLabel =
+    property.pricingInsight?.marketScore === "below-market"
+      ? language === "en"
+        ? "Opportunity"
+        : "Oportunidad"
+      : property.pricingInsight?.marketScore === "in-range"
+        ? language === "en"
+          ? "In range"
+          : "En rango"
+        : null;
+  const daysOnMarket = property.pricingInsight?.daysOnMarket;
 
   return (
     <Link
@@ -123,6 +144,8 @@ export function PropertyCard({
             <Badge variant="info">{marketLabel}</Badge>
           ) : null}
           {property.featured ? <Badge variant="info">{t("propertyCard.featured")}</Badge> : null}
+          {trustLabel ? <Badge variant="success">{trustLabel}</Badge> : null}
+          {priceSignalLabel ? <Badge variant="accent">{priceSignalLabel}</Badge> : null}
         </div>
         <button
           type="button"
@@ -160,6 +183,29 @@ export function PropertyCard({
           <MapPin className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           <span>{formatLocation(property)}</span>
         </div>
+
+        {(property.trustProfile?.score || daysOnMarket !== undefined) ? (
+          <div className={`flex flex-wrap text-ink/60 ${compact ? "gap-1.5 text-[11px]" : "gap-2 text-xs"}`}>
+            {property.trustProfile?.score ? (
+              <span className="data-pill">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                {property.trustProfile.score}/100
+              </span>
+            ) : null}
+            {daysOnMarket !== null && daysOnMarket !== undefined ? (
+              <span className="data-pill">
+                <TimerReset className="h-3.5 w-3.5" />
+                {daysOnMarket} {language === "en" ? "days" : "dias"}
+              </span>
+            ) : null}
+            {property.pricingInsight?.marketScoreLabel ? (
+              <span className="data-pill">
+                <Sparkles className="h-3.5 w-3.5" />
+                {property.pricingInsight.marketScoreLabel}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className={`grid grid-cols-2 text-xs text-ink/70 sm:grid-cols-4 ${compact ? "gap-1.5" : "gap-2"}`}>
           <span className="data-pill">

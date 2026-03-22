@@ -128,7 +128,7 @@ export default function BattlePage() {
             askButton: "Preguntar al asistente",
             asking: "Pensando...",
             dashboardOnly:
-              "El asistente solo recibe senales sanitizadas de las propiedades como precio, ubicacion general, habitaciones, banos, area, market score y distancias a servicios. Los datos del propietario quedan fuera.",
+              "El asistente solo recibe senales sanitizadas de las propiedades como precio, ubicacion general, habitaciones, baños, area, market score y distancias a servicios. Los datos del propietario quedan fuera.",
             mixedCurrencies:
               "Estas propiedades usan monedas distintas. Los valores monetarios se muestran lado a lado, pero no forzamos una ganadora solo por precio.",
             heuristic: "Heuristica",
@@ -137,7 +137,7 @@ export default function BattlePage() {
             manageFavorites: "Gestionar favoritos",
             priceLabel: "Precio",
             marketScoreLabel: "Puntaje de mercado",
-            roomsBathsLabel: "Cuartos / banos",
+            roomsBathsLabel: "Cuartos / baños",
             tieMetric: "Empate",
             winMetric: "Gana",
             loseMetric: "Pierde"

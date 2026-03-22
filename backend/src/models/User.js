@@ -1,7 +1,84 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import mongoose from "mongoose";
-import { USER_ROLES } from "../constants/enums.js";
+import {
+  SUBSCRIPTION_PLAN_NAMES,
+  SUBSCRIPTION_STATUSES,
+  USER_ROLES,
+  VERIFICATION_STATUSES,
+  VERIFICATION_TYPES
+} from "../constants/enums.js";
+import { buildDefaultSubscriptionForRole, COMMERCIAL_PLAN_CONFIG } from "../constants/plans.js";
+
+const subscriptionSchema = new mongoose.Schema(
+  {
+    plan: {
+      type: String,
+      enum: SUBSCRIPTION_PLAN_NAMES,
+      default: "free"
+    },
+    status: {
+      type: String,
+      enum: SUBSCRIPTION_STATUSES,
+      default: "active"
+    },
+    billingCycle: {
+      type: String,
+      enum: ["monthly", "yearly"],
+      default: "monthly"
+    },
+    monthlyPrice: {
+      type: Number,
+      default: 0
+    },
+    propertyLimit: {
+      type: Number,
+      default: 1
+    },
+    promotedSlots: {
+      type: Number,
+      default: 0
+    },
+    startedAt: Date,
+    trialEndsAt: Date
+  },
+  { _id: false }
+);
+
+const verificationSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: VERIFICATION_STATUSES,
+      default: "not-requested"
+    },
+    requestedType: {
+      type: String,
+      enum: VERIFICATION_TYPES,
+      default: "identity"
+    },
+    requestedBadge: {
+      type: String,
+      default: ""
+    },
+    requestNote: {
+      type: String,
+      default: ""
+    },
+    requestedAt: Date,
+    reviewedAt: Date,
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    reviewNote: {
+      type: String,
+      default: ""
+    },
+    verifiedAt: Date
+  },
+  { _id: false }
+);
 
 const userSchema = new mongoose.Schema(
   {
@@ -40,6 +117,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    subscription: {
+      type: subscriptionSchema,
+      default: undefined
+    },
+    verification: {
+      type: verificationSchema,
+      default: undefined
+    },
     passwordResetToken: {
       type: String,
       select: false
@@ -61,6 +146,36 @@ const userSchema = new mongoose.Schema(
     }
   }
 );
+
+userSchema.pre("validate", function applyCommercialDefaults(next) {
+  const fallback = buildDefaultSubscriptionForRole(this.role);
+  const planId = this.subscription?.plan || fallback.plan;
+  const plan = COMMERCIAL_PLAN_CONFIG[planId] || COMMERCIAL_PLAN_CONFIG.free;
+
+  this.subscription = {
+    ...fallback,
+    ...this.subscription,
+    plan: plan.id,
+    monthlyPrice: this.subscription?.monthlyPrice ?? plan.monthlyPrice,
+    propertyLimit: this.subscription?.propertyLimit ?? plan.propertyLimit,
+    promotedSlots: this.subscription?.promotedSlots ?? plan.promotedSlots
+  };
+
+  return next();
+});
+
+userSchema.pre("validate", function applyVerificationDefaults(next) {
+  this.verification = {
+    status: "not-requested",
+    requestedType: "identity",
+    requestedBadge: "",
+    requestNote: "",
+    reviewNote: "",
+    ...this.verification
+  };
+
+  return next();
+});
 
 userSchema.pre("save", async function hashPassword(next) {
   if (!this.isModified("password")) {
@@ -86,4 +201,3 @@ userSchema.methods.createPasswordResetToken = function createPasswordResetToken(
 };
 
 export const User = mongoose.model("User", userSchema);
-

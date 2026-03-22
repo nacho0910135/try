@@ -83,8 +83,18 @@ export const getSentLeads = (filters = {}) =>
   unwrap(api.get(`/leads/sent?${serializePropertyQuery(filters)}`));
 export const updateLeadStatus = (leadId, status) =>
   unwrap(api.patch(`/leads/${leadId}/status`, { status }));
+export const createOffer = (payload) => unwrap(api.post("/offers", payload));
+export const getReceivedOffers = (filters = {}) =>
+  unwrap(api.get(`/offers/received?${serializePropertyQuery(filters)}`));
+export const getSentOffers = (filters = {}) =>
+  unwrap(api.get(`/offers/sent?${serializePropertyQuery(filters)}`));
+export const updateOfferStatus = (offerId, status) =>
+  unwrap(api.patch(`/offers/${offerId}/status`, { status }));
 
 export const getDashboardSummary = () => unwrap(api.get("/users/dashboard-summary"));
+export const getCommercialOverview = () => unwrap(api.get("/users/commercial-overview"));
+export const requestUserVerification = (payload) =>
+  unwrap(api.post("/users/verification-request", payload));
 
 export const getAdminMetrics = () => unwrap(api.get("/admin/metrics"));
 export const getAdminAnalyticsOverview = () =>
@@ -95,6 +105,8 @@ export const getAdminUsers = (filters = {}) =>
   unwrap(api.get(`/admin/users?${serializePropertyQuery(filters)}`));
 export const updateAdminUserStatus = (userId, isActive) =>
   unwrap(api.patch(`/admin/users/${userId}/status`, { isActive }));
+export const updateAdminUserVerification = (userId, payload) =>
+  unwrap(api.patch(`/admin/users/${userId}/verification`, payload));
 export const getAdminProperties = (filters = {}) =>
   unwrap(api.get(`/admin/properties?${serializePropertyQuery(filters)}`));
 export const moderateAdminProperty = (propertyId, payload) =>

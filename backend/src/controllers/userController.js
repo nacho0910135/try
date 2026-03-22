@@ -6,3 +6,12 @@ export const getDashboardSummary = asyncHandler(async (req, res) => {
   res.json({ success: true, summary });
 });
 
+export const getCommercialOverview = asyncHandler(async (req, res) => {
+  const overview = await userService.getCommercialOverview(req.user);
+  res.json({ success: true, overview });
+});
+
+export const requestVerification = asyncHandler(async (req, res) => {
+  const user = await userService.requestVerification(req.user, req.body);
+  res.json({ success: true, user });
+});

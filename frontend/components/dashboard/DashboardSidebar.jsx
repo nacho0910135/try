@@ -6,9 +6,11 @@ import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/dashboard", label: "Resumen" },
+  { href: "/dashboard/business", label: "Negocio y publicidad" },
   { href: "/dashboard/properties", label: "Mis propiedades" },
   { href: "/dashboard/properties/new", label: "Nueva propiedad" },
   { href: "/dashboard/leads", label: "Leads" },
+  { href: "/dashboard/offers", label: "Ofertas" },
   { href: "/dashboard/saved-searches", label: "Busquedas guardadas" }
 ];
 
