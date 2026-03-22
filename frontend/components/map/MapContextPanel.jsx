@@ -156,6 +156,14 @@ export function MapContextPanel({
         })}
       </div>
 
+      {!activeLayerIds.length ? (
+        <div className="surface-soft border border-ink/8 bg-white/80 p-4 text-sm leading-6 text-ink/62">
+          {language === "en"
+            ? "All context layers start turned off. Activate only the zones you want to compare with the listings."
+            : "Todas las capas de contexto inician apagadas. Activa solo las zonas que quieras cruzar con las propiedades."}
+        </div>
+      ) : null}
+
       {focusedPoint ? (
         <div className="surface-soft border border-lagoon/15 bg-lagoon/[0.07] p-4">
           <div className="flex flex-wrap items-start justify-between gap-4">

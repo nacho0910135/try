@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Compass, MapPinned, Search } from "lucide-react";
+import { ArrowRight, Compass, MapPinned } from "lucide-react";
 import { getFeaturedProperties } from "@/lib/api";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { CostaRicaProvinceExplorer } from "@/components/map/CostaRicaProvinceExplorer";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Select";
 import { costaRicaProvinces } from "@/lib/costa-rica-provinces";
 import { formatCurrency, getMainPhoto } from "@/lib/utils";
 
@@ -20,7 +18,6 @@ export default function HomePage() {
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
   const [featuredError, setFeaturedError] = useState("");
-  const [query, setQuery] = useState("");
   const [province, setProvince] = useState("San Jose");
 
   useEffect(() => {
@@ -79,39 +76,34 @@ export default function HomePage() {
                 {t("homePage.description")}
               </p>
 
-              <div className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-                <div className="surface-soft space-y-3 p-4 sm:p-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="field-label">{t("homePage.searchZoneLabel")}</label>
-                      <Input
-                        value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                        placeholder={t("homePage.searchZonePlaceholder")}
-                      />
-                    </div>
-                    <div>
-                      <label className="field-label">{t("homePage.provinceLabel")}</label>
-                      <Select
-                        value={province}
-                        onChange={(event) => setProvince(event.target.value)}
-                      >
-                        {costaRicaProvinces.map((item) => (
-                          <option key={item.name} value={item.name}>
-                            {item.name}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
+              <div className="mt-6 grid gap-4 xl:grid-cols-[1fr_0.9fr]">
+                <div className="surface-soft p-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-pine/70">
+                    {language === "en" ? "Explore from the map" : "Explora desde el mapa"}
                   </div>
-                  <Link
-                    href={`/search?q=${encodeURIComponent(query)}&province=${encodeURIComponent(province)}`}
-                  >
-                    <Button className="w-full gap-2">
-                      <Search className="mr-2 h-4 w-4" />
-                      {t("homePage.exploreButton")}
-                    </Button>
-                  </Link>
+                  <h3 className="mt-2 text-xl font-semibold text-ink">
+                    {language === "en"
+                      ? "Choose a province directly on the map"
+                      : "Elige una provincia directamente en el mapa"}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-ink/65">
+                    {language === "en"
+                      ? "The map is now the main selector. Pick a province and jump straight into the live search."
+                      : "El mapa ahora es el selector principal. Elige una provincia y entra directo a la busqueda en vivo."}
+                  </p>
+                  <div className="mt-4 rounded-[22px] bg-white/75 px-3 py-2 text-xs font-medium text-ink/60">
+                    {language === "en"
+                      ? "Tap any province shape to update the spotlight and open its listings."
+                      : "Toca cualquier provincia en el mapa para actualizar el enfoque y abrir sus propiedades."}
+                  </div>
+                  <div className="mt-4">
+                    <Link href={`/search?province=${encodeURIComponent(province)}`}>
+                      <Button className="w-full gap-2">
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                        {t("homePage.exploreButton")}
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
                 <div className="surface-soft p-4">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-ink/40">

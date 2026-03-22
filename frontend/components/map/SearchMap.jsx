@@ -268,20 +268,6 @@ export function SearchMap({
             district: districtFeature.properties.district
           });
         }}
-        onMoveEnd={(event) => {
-          if (focusedContextPoint) {
-            return;
-          }
-
-          const bounds = event.target.getBounds();
-
-          onBoundsChange?.({
-            west: bounds.getWest(),
-            south: bounds.getSouth(),
-            east: bounds.getEast(),
-            north: bounds.getNorth()
-          });
-        }}
         style={{
           width: "100%",
           height:

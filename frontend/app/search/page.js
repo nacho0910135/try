@@ -67,8 +67,9 @@ function SearchPageContent() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [favoriteIds, setFavoriteIds] = useState([]);
-  const [activeContextLayers, setActiveContextLayers] = useState(["universities", "business"]);
+  const [activeContextLayers, setActiveContextLayers] = useState([]);
   const [focusedContextPoint, setFocusedContextPoint] = useState(null);
+  const [retryNonce, setRetryNonce] = useState(0);
   const contextRadiusKm = Number(filters.radiusKm || 8);
 
   const contextualProperties = useMemo(
@@ -103,12 +104,17 @@ function SearchPageContent() {
     const timeout = setTimeout(async () => {
       try {
         setLoading(true);
+        setMessage("");
         const data = await getProperties({ ...filters, page, limit: 12 });
 
         setProperties((current) => (page === 1 ? data.items : [...current, ...data.items]));
         setPagination(data.pagination);
         router.replace(`/search?${serializePropertyQuery(filters)}`, { scroll: false });
       } catch (error) {
+        if (page === 1) {
+          setProperties([]);
+          setPagination({ page: 1, totalPages: 1, total: 0 });
+        }
         setMessage(error.response?.data?.message || t("searchPage.searchFailed"));
       } finally {
         setLoading(false);
@@ -116,7 +122,7 @@ function SearchPageContent() {
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [filters, page, router, t]);
+  }, [filters, page, retryNonce, router, t]);
 
   useEffect(() => {
     if (!token) {
@@ -125,8 +131,12 @@ function SearchPageContent() {
     }
 
     const loadFavorites = async () => {
-      const data = await getFavorites();
-      setFavoriteIds(data.items.map((item) => item.property?._id).filter(Boolean));
+      try {
+        const data = await getFavorites();
+        setFavoriteIds(data.items.map((item) => item.property?._id).filter(Boolean));
+      } catch (_error) {
+        setFavoriteIds([]);
+      }
     };
 
     loadFavorites();
@@ -140,7 +150,7 @@ function SearchPageContent() {
   const handleReset = () => {
     setPage(1);
     setFocusedContextPoint(null);
-    setActiveContextLayers(["universities", "business"]);
+    setActiveContextLayers([]);
     replaceFilters({});
     setMessage("");
   };
@@ -157,9 +167,7 @@ function SearchPageContent() {
     setSelectedPropertyId(null);
     setPage(1);
     setFocusedContextPoint(result.focusedPoint || null);
-    setActiveContextLayers(
-      hasContextLayers ? result.contextLayerIds : ["universities", "business"]
-    );
+    setActiveContextLayers(hasContextLayers ? result.contextLayerIds : []);
 
     replaceFilters({
       ...result.filters
@@ -290,7 +298,9 @@ function SearchPageContent() {
         canSave={Boolean(token)}
       />
 
-      {message ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{message}</p> : null}
+      {message ? (
+        <p className="rounded-2xl bg-mist px-4 py-3 text-sm leading-6 text-ink/70">{message}</p>
+      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)] xl:gap-5">
         <div className="order-2 xl:order-1 xl:sticky xl:top-24 xl:h-fit xl:self-start">
@@ -417,6 +427,20 @@ function SearchPageContent() {
 
         {loading && page === 1 ? (
           <LoadingState label={t("searchPage.loadingProperties")} />
+        ) : message && !contextualProperties.length ? (
+          <EmptyState
+            title={language === "en" ? "We could not load listings" : "No pudimos cargar las publicaciones"}
+            description={
+              language === "en"
+                ? "Check that the backend is available on your local network and try again."
+                : "Verifica que el backend este disponible en tu red local y vuelve a intentarlo."
+            }
+            actionLabel={language === "en" ? "Retry" : "Reintentar"}
+            onAction={() => {
+              setMessage("");
+              setRetryNonce((current) => current + 1);
+            }}
+          />
         ) : contextualProperties.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {contextualProperties.map((property) => (
