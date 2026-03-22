@@ -130,6 +130,7 @@ function GalleryViewer({ item, title }) {
       key={item.id}
       src={item.url || fallbackSrc}
       alt={item.alt || title}
+      decoding="async"
       className="absolute inset-0 h-full w-full object-cover"
       onError={(event) => {
         event.currentTarget.onerror = null;
@@ -228,6 +229,8 @@ export function PropertyGallery({ media = [], photos = [], title }) {
                     <img
                       src={item.thumbnailUrl || fallbackSrc}
                       alt={item.alt || title}
+                      loading="lazy"
+                      decoding="async"
                       className="absolute inset-0 h-full w-full object-cover"
                       onError={(event) => {
                         event.currentTarget.onerror = null;
@@ -245,6 +248,8 @@ export function PropertyGallery({ media = [], photos = [], title }) {
                   <img
                     src={item.thumbnailUrl || fallbackSrc}
                     alt={item.alt || title}
+                    loading="lazy"
+                    decoding="async"
                     className="absolute inset-0 h-full w-full object-cover"
                     onError={(event) => {
                       event.currentTarget.onerror = null;

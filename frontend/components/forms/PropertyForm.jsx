@@ -308,8 +308,9 @@ export function PropertyForm({ property, propertyId }) {
               "Use coordinates so the property appears on the map, nearby searches, and polygons.",
             locationHelp:
               "You can get latitude and longitude in Google Maps: open the map, right-click the point, and copy the coordinates shown below.",
+            locationButtonHint:
+              "Turn on your phone GPS first. If you prefer, paste latitude and longitude from Google Maps.",
             openGoogleMaps: "Open Google Maps",
-            viewCurrentCoordinates: "View current coordinates",
             useMyLocation: "Use my location",
             province: "Province",
             canton: "Canton",
@@ -353,7 +354,8 @@ export function PropertyForm({ property, propertyId }) {
               "Photos uploaded successfully. Now click Save property to persist the changes.",
             feedbackLocationSuccess:
               "Location detected successfully. You can now save your property.",
-            feedbackLocationError: "Your current location could not be obtained.",
+            feedbackLocationError:
+              "Your current location could not be obtained. Turn on GPS or enter latitude and longitude from Google Maps.",
             feedbackCreateSuccess: "Listing created successfully. Redirecting...",
             feedbackUpdateSuccess: "Listing updated successfully. Redirecting...",
             dashboardFlashCreate:
@@ -424,8 +426,9 @@ export function PropertyForm({ property, propertyId }) {
               "Usa coordenadas para que la propiedad aparezca en mapa, busquedas cercanas y poligonos.",
             locationHelp:
               "Puedes obtener latitud y longitud en Google Maps: abre el mapa, haz clic derecho sobre el punto y copia las coordenadas que aparecen abajo.",
+            locationButtonHint:
+              "Primero activa el GPS del telefono. Si prefieres, pega la latitud y longitud obtenidas en Google Maps.",
             openGoogleMaps: "Abrir Google Maps",
-            viewCurrentCoordinates: "Ver coordenadas actuales",
             useMyLocation: "Usar mi ubicacion",
             province: "Provincia",
             canton: "Canton",
@@ -469,7 +472,8 @@ export function PropertyForm({ property, propertyId }) {
               "Fotos cargadas correctamente. Ahora pulsa Guardar propiedad para guardar los cambios.",
             feedbackLocationSuccess:
               "Ubicacion detectada correctamente. Ya puedes guardar tu propiedad.",
-            feedbackLocationError: "No se pudo obtener tu ubicacion actual.",
+            feedbackLocationError:
+              "No se pudo obtener tu ubicacion actual. Activa el GPS o ingresa la latitud y longitud desde Google Maps.",
             feedbackCreateSuccess: "Publicacion creada correctamente. Redirigiendo...",
             feedbackUpdateSuccess: "Publicacion actualizada correctamente. Redirigiendo...",
             dashboardFlashCreate:
@@ -564,8 +568,6 @@ export function PropertyForm({ property, propertyId }) {
     districtValue
   );
   const sellerRoleOptions = sellerRoleChoices[isEnglish ? "en" : "es"];
-  const googleMapsCoordinatesUrl = `https://www.google.com/maps/search/?api=1&query=${latValue},${lngValue}`;
-
   useEffect(() => {
     reset(toDefaultValues(property));
     setPhotos(property?.photos || []);
@@ -961,7 +963,7 @@ export function PropertyForm({ property, propertyId }) {
       ) : null}
 
       <section className="surface space-y-5 p-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-semibold">{copy.location}</h2>
             <p className="mt-2 text-sm text-ink/60">{copy.locationDescription}</p>
@@ -975,24 +977,19 @@ export function PropertyForm({ property, propertyId }) {
               >
                 {copy.openGoogleMaps}
               </a>
-              <a
-                href={googleMapsCoordinatesUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-lagoon transition hover:text-terracotta"
-              >
-                {copy.viewCurrentCoordinates}
-              </a>
             </div>
           </div>
-          <Button
-            variant="success"
-            className="shadow-soft ring-4 ring-pine/15"
-            onClick={useCurrentLocation}
-          >
-            <MapPinned className="mr-2 h-4 w-4" />
-            {copy.useMyLocation}
-          </Button>
+          <div className="max-w-xs text-right">
+            <Button
+              variant="success"
+              className="shadow-soft ring-4 ring-pine/15"
+              onClick={useCurrentLocation}
+            >
+              <MapPinned className="mr-2 h-4 w-4" />
+              {copy.useMyLocation}
+            </Button>
+            <p className="mt-2 text-xs leading-5 text-ink/55">{copy.locationButtonHint}</p>
+          </div>
         </div>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           <div>

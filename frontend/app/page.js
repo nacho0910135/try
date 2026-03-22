@@ -1,45 +1,63 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { ArrowRight, Compass, MapPinned } from "lucide-react";
 import { getFeaturedProperties } from "@/lib/api";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useLanguage } from "@/components/layout/LanguageProvider";
-import { CostaRicaProvinceExplorer } from "@/components/map/CostaRicaProvinceExplorer";
+import { MapLoadingShell } from "@/components/map/MapLoadingShell";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
 import { costaRicaProvinces } from "@/lib/costa-rica-provinces";
 import { formatCurrency, getMainPhoto } from "@/lib/utils";
 
+const CostaRicaProvinceExplorer = dynamic(
+  () =>
+    import("@/components/map/CostaRicaProvinceExplorer").then((module) => ({
+      default: module.CostaRicaProvinceExplorer
+    })),
+  {
+    ssr: false,
+    loading: () => <MapLoadingShell minHeight={560} label="Cargando atlas de Costa Rica..." />
+  }
+);
+
 export default function HomePage() {
   const { language, t } = useLanguage();
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [featuredError, setFeaturedError] = useState("");
+  const [featuredLoadFailed, setFeaturedLoadFailed] = useState(false);
   const [province, setProvince] = useState("San Jose");
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadFeatured = async () => {
       try {
         const data = await getFeaturedProperties();
+        if (cancelled) return;
         setFeatured(data.items || []);
-        setFeaturedError("");
+        setFeaturedLoadFailed(false);
       } catch (_error) {
+        if (cancelled) return;
         setFeatured([]);
-        setFeaturedError(
-          language === "en"
-            ? "Featured properties could not be loaded right now."
-            : "No se pudieron cargar las propiedades destacadas en este momento."
-        );
+        setFeaturedLoadFailed(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     loadFeatured();
-  }, [language]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const selectedProvinceMeta = costaRicaProvinces.find((item) => item.name === province);
   const featuredForProvince = featured.filter(
@@ -197,9 +215,11 @@ export default function HomePage() {
                 : "Cargando propiedades destacadas..."
             }
           />
-        ) : featuredError ? (
+        ) : featuredLoadFailed ? (
           <div className="surface-soft p-5 text-sm leading-6 text-ink/65">
-            {featuredError}
+            {language === "en"
+              ? "Featured properties could not be loaded right now."
+              : "No se pudieron cargar las propiedades destacadas en este momento."}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">

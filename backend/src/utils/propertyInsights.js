@@ -16,6 +16,49 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 const uniqueList = (items = []) => [...new Set(items.filter(Boolean))];
 
+const normalizeUploadUrl = (value) => {
+  if (typeof value !== "string" || !value) {
+    return value;
+  }
+
+  if (value.startsWith("/uploads/") || value.startsWith("data:")) {
+    return value;
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const parsed = new URL(value);
+
+      if (parsed.pathname.startsWith("/uploads/")) {
+        return parsed.pathname;
+      }
+
+      return value;
+    } catch (_error) {
+      return value;
+    }
+  }
+
+  return value;
+};
+
+const normalizePropertyMediaUrls = (property) => ({
+  ...property,
+  photos: Array.isArray(property?.photos)
+    ? property.photos.map((photo) => ({
+        ...photo,
+        url: normalizeUploadUrl(photo?.url)
+      }))
+    : property?.photos,
+  media: Array.isArray(property?.media)
+    ? property.media.map((item) => ({
+        ...item,
+        url: normalizeUploadUrl(item?.url),
+        thumbnailUrl: normalizeUploadUrl(item?.thumbnailUrl)
+      }))
+    : property?.media
+});
+
 const countMedia = (property, type) =>
   Array.isArray(property?.media)
     ? property.media.filter((item) => item?.type === type).length
@@ -387,7 +430,8 @@ const buildListingInsights = (property, pricingInsight) => {
 };
 
 export const enrichPropertyForClient = (property) => {
-  const base = property?.toObject ? property.toObject({ virtuals: true }) : { ...property };
+  const rawBase = property?.toObject ? property.toObject({ virtuals: true }) : { ...property };
+  const base = normalizePropertyMediaUrls(rawBase);
   const trustProfile = buildTrustProfile(base);
   const pricingInsight = buildPricingInsight(base);
   const decisionSummary = buildDecisionSummary(base, pricingInsight);

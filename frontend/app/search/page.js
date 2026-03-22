@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSavedSearch, getFavorites, getProperties } from "@/lib/api";
@@ -9,10 +10,9 @@ import { useAuthStore } from "@/store/auth-store";
 import { useSearchStore } from "@/store/search-store";
 import { SearchFilters } from "@/components/forms/SearchFilters";
 import { useLanguage } from "@/components/layout/LanguageProvider";
+import { MapLoadingShell } from "@/components/map/MapLoadingShell";
 import { MapContextInsights } from "@/components/map/MapContextInsights";
 import { MapContextPanel } from "@/components/map/MapContextPanel";
-import { SearchMap } from "@/components/map/SearchMap";
-import { CostaRicaProvinceExplorer } from "@/components/map/CostaRicaProvinceExplorer";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { ConversationalSearchPanel } from "@/components/search/ConversationalSearchPanel";
 import { Button } from "@/components/ui/Button";
@@ -22,6 +22,28 @@ import {
   buildContextResultsSummary,
   getPropertyContextMatches
 } from "@/lib/map-context-insights";
+
+const SearchMap = dynamic(
+  () =>
+    import("@/components/map/SearchMap").then((module) => ({
+      default: module.SearchMap
+    })),
+  {
+    ssr: false,
+    loading: () => <MapLoadingShell minHeight={520} label="Cargando mapa de precios..." />
+  }
+);
+
+const CostaRicaProvinceExplorer = dynamic(
+  () =>
+    import("@/components/map/CostaRicaProvinceExplorer").then((module) => ({
+      default: module.CostaRicaProvinceExplorer
+    })),
+  {
+    ssr: false,
+    loading: () => <MapLoadingShell minHeight={280} label="Cargando provincias..." />
+  }
+);
 
 const parseFilterValue = (value) => {
   if (value === "true") return true;
@@ -57,6 +79,7 @@ function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initializedRef = useRef(false);
+  const requestSequenceRef = useRef(0);
   const { token } = useAuthStore();
   const { language, t } = useLanguage();
   const { filters, replaceFilters, setFilters, selectedPropertyId, setSelectedPropertyId } =
@@ -101,23 +124,34 @@ function SearchPageContent() {
   useEffect(() => {
     if (!initializedRef.current) return;
 
+    const requestId = ++requestSequenceRef.current;
     const timeout = setTimeout(async () => {
       try {
         setLoading(true);
         setMessage("");
         const data = await getProperties({ ...filters, page, limit: 12 });
 
+        if (requestId !== requestSequenceRef.current) {
+          return;
+        }
+
         setProperties((current) => (page === 1 ? data.items : [...current, ...data.items]));
         setPagination(data.pagination);
         router.replace(`/search?${serializePropertyQuery(filters)}`, { scroll: false });
       } catch (error) {
+        if (requestId !== requestSequenceRef.current) {
+          return;
+        }
+
         if (page === 1) {
           setProperties([]);
           setPagination({ page: 1, totalPages: 1, total: 0 });
         }
         setMessage(error.response?.data?.message || t("searchPage.searchFailed"));
       } finally {
-        setLoading(false);
+        if (requestId === requestSequenceRef.current) {
+          setLoading(false);
+        }
       }
     }, 250);
 

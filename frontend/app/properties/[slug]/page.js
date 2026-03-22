@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -16,7 +17,7 @@ import { addFavorite, getFavorites, getPropertyBySlug, removeFavorite } from "@/
 import { analyticsEvents, trackEvent } from "@/lib/analytics";
 import { ContactLeadForm } from "@/components/forms/ContactLeadForm";
 import { OfferForm } from "@/components/forms/OfferForm";
-import { PropertyMapPreview } from "@/components/map/PropertyMapPreview";
+import { MapLoadingShell } from "@/components/map/MapLoadingShell";
 import { PropertyGallery } from "@/components/property/PropertyGallery";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -34,6 +35,17 @@ import {
   formatYesNo
 } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+
+const PropertyMapPreview = dynamic(
+  () =>
+    import("@/components/map/PropertyMapPreview").then((module) => ({
+      default: module.PropertyMapPreview
+    })),
+  {
+    ssr: false,
+    loading: () => <MapLoadingShell minHeight={280} label="Cargando mapa de ubicacion..." />
+  }
+);
 
 const sellerRoleLabels = {
   owner: "Propietario",

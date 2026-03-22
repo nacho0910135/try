@@ -156,6 +156,9 @@ export function PropertyCard({
         <img
           src={mainPhoto?.url || fallbackSrc}
           alt={mainPhoto?.alt || property.title}
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           onError={(event) => {
             event.currentTarget.onerror = null;

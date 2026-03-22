@@ -2,6 +2,7 @@ const backendApiTarget =
   process.env.INTERNAL_API_URL ||
   process.env.BACKEND_INTERNAL_URL ||
   "http://127.0.0.1:5000/api";
+const backendPublicTarget = backendApiTarget.replace(/\/api\/?$/, "");
 
 const nextConfig = {
   experimental: {
@@ -40,6 +41,10 @@ const nextConfig = {
       {
         source: "/backend-api/:path*",
         destination: `${backendApiTarget.replace(/\/$/, "")}/:path*`
+      },
+      {
+        source: "/uploads/:path*",
+        destination: `${backendPublicTarget.replace(/\/$/, "")}/uploads/:path*`
       }
     ];
   }
