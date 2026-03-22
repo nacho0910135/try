@@ -3,10 +3,11 @@
 import Map, { Marker, NavigationControl } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
 import { MapPin } from "lucide-react";
+import { resolveMapStyle } from "@/lib/map-style";
 
 export function PropertyMapPreview({ property }) {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/light-v11";
+  const mapStyle = resolveMapStyle(process.env.NEXT_PUBLIC_MAPBOX_STYLE);
 
   if (!token) {
     return (

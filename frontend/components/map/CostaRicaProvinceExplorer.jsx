@@ -9,6 +9,7 @@ import { costaRicaProvinces } from "@/lib/costa-rica-provinces";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { getProvinceByName } from "@/lib/costa-rica-geo";
 import { mapDefaultCenter } from "@/lib/constants";
+import { resolveMapStyle } from "@/lib/map-style";
 
 const getGeoJsonBounds = (featureCollection) => {
   if (!featureCollection?.features?.length) {
@@ -55,7 +56,7 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
   const router = useRouter();
   const { language, t } = useLanguage();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/outdoors-v12";
+  const mapStyle = resolveMapStyle(process.env.NEXT_PUBLIC_MAPBOX_STYLE);
   const mapRef = useRef(null);
   const [hoveredProvince, setHoveredProvince] = useState(null);
   const [provinceGeoJson, setProvinceGeoJson] = useState(null);

@@ -9,6 +9,7 @@ import { useLanguage } from "@/components/layout/LanguageProvider";
 import { formatCompactCurrency, formatCurrency } from "@/lib/utils";
 import { mapDefaultCenter } from "@/lib/constants";
 import { getProvinceCode } from "@/lib/costa-rica-geo";
+import { resolveMapStyle } from "@/lib/map-style";
 
 const collectBounds = (coordinates, state) => {
   if (!Array.isArray(coordinates)) {
@@ -65,7 +66,7 @@ export function SearchMap({
   const router = useRouter();
   const { t } = useLanguage();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/outdoors-v12";
+  const mapStyle = resolveMapStyle(process.env.NEXT_PUBLIC_MAPBOX_STYLE);
   const mapRef = useRef(null);
   const drawRef = useRef(null);
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
