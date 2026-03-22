@@ -7,6 +7,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { createProperty, updateProperty, uploadPropertyImages } from "@/lib/api";
+import { analyticsEvents, trackEvent } from "@/lib/analytics";
 import {
   amenitySuggestions,
   businessTypes,
@@ -688,6 +689,18 @@ export function PropertyForm({ property, propertyId }) {
       } else {
         await createProperty(payload);
       }
+
+      trackEvent(propertyId ? analyticsEvents.propertyUpdated : analyticsEvents.propertyCreated, {
+        propertyId: propertyId || undefined,
+        businessType: payload.businessType,
+        propertyType: payload.propertyType,
+        province: payload.address?.province,
+        canton: payload.address?.canton,
+        district: payload.address?.district,
+        marketStatus: payload.marketStatus,
+        photosCount: payload.photos?.length || 0,
+        videosCount: payload.media?.filter((item) => item.type === "video").length || 0
+      });
 
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(

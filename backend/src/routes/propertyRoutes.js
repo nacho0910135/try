@@ -13,6 +13,7 @@ import {
   updatePropertyStatus
 } from "../controllers/propertyController.js";
 import { authorize, optionalAuth, requireAuth } from "../middlewares/authMiddleware.js";
+import { propertySearchLimiter } from "../middlewares/rateLimiters.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 import {
   createPropertySchema,
@@ -27,7 +28,7 @@ import {
 
 export const propertyRoutes = Router();
 
-propertyRoutes.get("/", validate(listPropertiesSchema), listProperties);
+propertyRoutes.get("/", propertySearchLimiter, validate(listPropertiesSchema), listProperties);
 propertyRoutes.get("/seo/zone", validate(zoneSeoSchema), getZoneSeoData);
 propertyRoutes.get("/featured", listFeaturedProperties);
 propertyRoutes.get("/my/listings", requireAuth, authorize("agent", "owner", "admin"), listMyProperties);

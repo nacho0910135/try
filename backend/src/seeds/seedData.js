@@ -35,20 +35,123 @@ export const seedUsers = [
   }
 ];
 
-const placeholderPhotos = (label) => [
-  {
-    url: createPlaceholderImageDataUri(`${label} principal`),
-    publicId: null,
-    isPrimary: true,
-    alt: `${label} principal`
-  },
-  {
-    url: createPlaceholderImageDataUri(`${label} secundaria`),
-    publicId: null,
-    isPrimary: false,
-    alt: `${label} secundaria`
+const samplePhotoLibrary = {
+  house: [
+    {
+      url: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1600&q=80",
+      alt: "fachada de casa moderna"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80",
+      alt: "casa contemporanea con jardin"
+    }
+  ],
+  apartment: [
+    {
+      url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=80",
+      alt: "interior de apartamento moderno"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
+      alt: "sala amplia con luz natural"
+    }
+  ],
+  coastal: [
+    {
+      url: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1600&q=80",
+      alt: "residencia junto a la costa"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
+      alt: "interior luminoso de propiedad vacacional"
+    }
+  ],
+  lot: [
+    {
+      url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80",
+      alt: "terreno amplio con vegetacion"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&fit=crop&w=1600&q=80",
+      alt: "lote abierto con entorno natural"
+    }
+  ],
+  commercial: [
+    {
+      url: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=80",
+      alt: "oficina comercial moderna"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=1600&q=80",
+      alt: "espacio comercial con area de trabajo"
+    }
+  ],
+  room: [
+    {
+      url: "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1600&q=80",
+      alt: "habitacion moderna amueblada"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
+      alt: "area comun de residencia compartida"
+    }
+  ]
+};
+
+const inferPhotoProfile = (label = "") => {
+  const normalized = label.toLowerCase();
+
+  if (/(tamarindo|jaco|nosara)/i.test(normalized)) {
+    return "coastal";
   }
-];
+
+  if (/(apartamento|condominio)/i.test(normalized)) {
+    return "apartment";
+  }
+
+  if (/(lote|terreno)/i.test(normalized)) {
+    return "lot";
+  }
+
+  if (/(comercial|local)/i.test(normalized)) {
+    return "commercial";
+  }
+
+  if (/(habitacion|roomies|room)/i.test(normalized)) {
+    return "room";
+  }
+
+  return "house";
+};
+
+const placeholderPhotos = (label) => {
+  const profile = inferPhotoProfile(label);
+  const photos = samplePhotoLibrary[profile];
+
+  if (!photos?.length) {
+    return [
+      {
+        url: createPlaceholderImageDataUri(`${label} principal`),
+        publicId: null,
+        isPrimary: true,
+        alt: `${label} principal`
+      },
+      {
+        url: createPlaceholderImageDataUri(`${label} secundaria`),
+        publicId: null,
+        isPrimary: false,
+        alt: `${label} secundaria`
+      }
+    ];
+  }
+
+  return photos.map((photo, index) => ({
+    url: photo.url,
+    publicId: null,
+    isPrimary: index === 0,
+    alt: `${label} - ${photo.alt}`
+  }));
+};
 
 const baseSeedProperties = (owners) => [
   {
@@ -675,12 +778,12 @@ const generatedSeedProperties = (owners) =>
         petsAllowed: true,
         featured: index % 3 === 0,
         amenities: [...location.amenities, "Sala amplia"],
-        photos: placeholderPhotos(`${location.neighborhood} Casa Demo`),
+        photos: placeholderPhotos(`${location.neighborhood} Casa`),
         location: { type: "Point", coordinates: offsetCoordinates(location.coordinates, 0) },
         address: buildAddress(
           location,
           houseNeighborhood,
-          `${location.exactAddress}. Casa demo en sector residencial.`
+          `${location.exactAddress}. Casa en sector residencial.`
         ),
         owner,
         ...buildLifecycle(houseMarketStatus, publishedAtBase)
@@ -702,12 +805,12 @@ const generatedSeedProperties = (owners) =>
         depositRequired: index % 3 !== 0,
         featured: index % 4 === 0,
         amenities: [...location.amenities.slice(0, 3), "Balcon"],
-        photos: placeholderPhotos(`${location.neighborhood} Apartamento Demo`),
+        photos: placeholderPhotos(`${location.neighborhood} Apartamento`),
         location: { type: "Point", coordinates: offsetCoordinates(location.coordinates, 1) },
         address: buildAddress(
           location,
           apartmentNeighborhood,
-          `${location.exactAddress}. Apartamento demo cerca de servicios.`
+          `${location.exactAddress}. Apartamento cerca de servicios.`
         ),
         owner,
         ...buildLifecycle(
@@ -734,12 +837,12 @@ const generatedSeedProperties = (owners) =>
         petsAllowed: false,
         featured: index % 5 === 0,
         amenities: ["Uso residencial", "Servicios disponibles", "Acceso asfaltado"],
-        photos: placeholderPhotos(`${location.neighborhood} Lote Demo`),
+        photos: placeholderPhotos(`${location.neighborhood} Lote`),
         location: { type: "Point", coordinates: offsetCoordinates(location.coordinates, 2) },
         address: buildAddress(
           location,
           lotNeighborhood,
-          `${location.exactAddress}. Lote demo con acceso vehicular.`
+          `${location.exactAddress}. Lote con acceso vehicular.`
         ),
         owner,
         ...buildLifecycle(
@@ -780,12 +883,12 @@ const generatedSeedProperties = (owners) =>
               genderPreference: "any",
               sharedAreas: ["Cocina", "Sala", "Lavanderia"]
             },
-            photos: placeholderPhotos(`${location.neighborhood} Roomies Demo`),
+            photos: placeholderPhotos(`${location.neighborhood} Roomies`),
             location: { type: "Point", coordinates: offsetCoordinates(location.coordinates, 3) },
             address: buildAddress(
               location,
               roomNeighborhood,
-              `${location.exactAddress}. Habitacion demo en residencia compartida.`
+              `${location.exactAddress}. Habitacion en residencia compartida.`
             ),
             owner,
             ...buildLifecycle(
@@ -810,12 +913,12 @@ const generatedSeedProperties = (owners) =>
             depositRequired: true,
             featured: index % 5 === 0,
             amenities: ["Frente a calle principal", "Bodega", "Parqueos"],
-            photos: placeholderPhotos(`${location.neighborhood} Comercial Demo`),
+            photos: placeholderPhotos(`${location.neighborhood} Comercial`),
             location: { type: "Point", coordinates: offsetCoordinates(location.coordinates, 3) },
             address: buildAddress(
               location,
               commercialNeighborhood,
-              `${location.exactAddress}. Local demo con vitrina y acceso directo.`
+              `${location.exactAddress}. Local con vitrina y acceso directo.`
             ),
             owner,
             ...buildLifecycle(

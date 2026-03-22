@@ -2,8 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Bath, BedDouble, Car, Heart, MapPin, ShieldCheck, Sparkles, Square, TimerReset } from "lucide-react";
+import {
+  Bath,
+  BedDouble,
+  Car,
+  Heart,
+  Images,
+  MapPin,
+  PlayCircle,
+  ShieldCheck,
+  Sparkles,
+  Square,
+  TimerReset
+} from "lucide-react";
 import { addFavorite, removeFavorite } from "@/lib/api";
+import { analyticsEvents, trackEvent } from "@/lib/analytics";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import {
   formatArea,
@@ -78,9 +91,21 @@ export function PropertyCard({
       if (favoriteState) {
         await removeFavorite(property._id);
         onFavoriteChange?.(property._id, false);
+        trackEvent(analyticsEvents.favoriteRemoved, {
+          propertyId: property._id,
+          slug: property.slug,
+          businessType: property.businessType,
+          propertyType: property.propertyType
+        });
       } else {
         await addFavorite(property._id);
         onFavoriteChange?.(property._id, true);
+        trackEvent(analyticsEvents.favoriteAdded, {
+          propertyId: property._id,
+          slug: property.slug,
+          businessType: property.businessType,
+          propertyType: property.propertyType
+        });
       }
     } catch (_error) {
       setFavoriteState(!nextState);
@@ -101,11 +126,7 @@ export function PropertyCard({
       ? language === "en"
         ? "Verified"
         : "Verificada"
-      : property.trustProfile?.level === "solid"
-        ? language === "en"
-          ? "Reliable"
-          : "Confiable"
-        : null;
+      : null;
   const priceSignalLabel =
     property.pricingInsight?.marketScore === "below-market"
       ? language === "en"
@@ -117,6 +138,9 @@ export function PropertyCard({
           : "En rango"
         : null;
   const daysOnMarket = property.pricingInsight?.daysOnMarket;
+  const mediaCount = property.media?.length || property.photos?.length || 0;
+  const videoCount =
+    property.media?.filter((item) => item.type === "video").length || 0;
 
   return (
     <Link
@@ -128,7 +152,7 @@ export function PropertyCard({
           : "hover:-translate-y-1.5 hover:shadow-[0_32px_80px_rgba(17,34,54,0.14)]"
       }`}
     >
-      <div className={`relative overflow-hidden ${compact ? "aspect-[16/9]" : "aspect-[16/10]"}`}>
+      <div className={`relative overflow-hidden ${compact ? "aspect-[4/3] sm:aspect-[16/9]" : "aspect-[16/10]"}`}>
         <img
           src={mainPhoto?.url || fallbackSrc}
           alt={mainPhoto?.alt || property.title}
@@ -168,15 +192,30 @@ export function PropertyCard({
             } ${compact ? "h-3.5 w-3.5" : "h-4 w-4"}`}
           />
         </button>
+        <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-3">
+          <div className="inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">
+            <Images className="h-3.5 w-3.5" />
+            {mediaCount}
+            {videoCount ? (
+              <span className="inline-flex items-center gap-1 text-white/90">
+                <PlayCircle className="h-3.5 w-3.5" />
+                {videoCount}
+              </span>
+            ) : null}
+          </div>
+          <span className="rounded-full bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-ink shadow-soft backdrop-blur">
+            {language === "en" ? "Tap to open" : "Toca para abrir"}
+          </span>
+        </div>
       </div>
 
-      <div className={`${compact ? "space-y-2.5 p-[14px]" : "space-y-3.5 p-[18px]"}`}>
+      <div className={`${compact ? "space-y-3 p-4 sm:space-y-2.5 sm:p-[14px]" : "space-y-3.5 p-[18px]"}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className={compact ? "text-lg font-semibold text-ink" : "text-[1.45rem] font-semibold text-ink"}>
+            <div className={compact ? "text-xl font-semibold text-ink sm:text-lg" : "text-[1.45rem] font-semibold text-ink"}>
               {formatCurrency(property.price, property.currency)}
             </div>
-            <h3 className={`font-semibold leading-snug text-ink ${compact ? "mt-1 text-sm" : "mt-1.5 text-base"}`}>
+            <h3 className={`font-semibold leading-snug text-ink ${compact ? "mt-1 text-base sm:text-sm" : "mt-1.5 text-base"}`}>
               {property.title}
             </h3>
           </div>

@@ -7,7 +7,11 @@ export default function sitemap() {
     "",
     "/search",
     "/analysis",
-    "/battle"
+    "/battle",
+    "/contact",
+    "/legal/privacy",
+    "/legal/terms",
+    "/legal/cookies"
   ].map((path) => ({
     url: `${siteUrl}${path}`,
     lastModified: now,

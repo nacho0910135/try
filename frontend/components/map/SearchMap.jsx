@@ -229,13 +229,13 @@ export function SearchMap({
 
   return (
     <div className={cn("map-stage", className)}>
-      <div className="pointer-events-none absolute inset-x-4 top-4 z-10 flex flex-wrap items-start justify-between gap-3">
-        <div className="surface-soft px-4 py-3">
+      <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-wrap items-start justify-between gap-3 sm:inset-x-4 sm:top-4">
+        <div className="surface-soft px-3 py-2.5 sm:px-4 sm:py-3">
           <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-pine/75">
             {language === "en" ? "Live price field" : "Campo de precios"}
           </div>
-          <div className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-ink">
-            <MapPinned className="h-4 w-4 text-terracotta" />
+          <div className="mt-1.5 flex items-center gap-2 text-xs font-semibold text-ink sm:text-sm">
+            <MapPinned className="h-4 w-4 shrink-0 text-terracotta" />
             {selectedProvince || "Costa Rica"}
             <span className="text-ink/35">•</span>
             {properties.length} {language === "en" ? "results" : "resultados"}
@@ -283,7 +283,13 @@ export function SearchMap({
             north: bounds.getNorth()
           });
         }}
-        style={{ width: "100%", minHeight }}
+        style={{
+          width: "100%",
+          minHeight:
+            typeof minHeight === "number"
+              ? `clamp(540px, 72svh, ${minHeight}px)`
+              : "clamp(540px, 72svh, 820px)"
+        }}
       >
         <NavigationControl position="top-right" />
         <GeolocateControl position="top-right" trackUserLocation={false} showUserHeading />
@@ -313,7 +319,7 @@ export function SearchMap({
                     onSelectProperty?.(property._id);
                     router.push(`/properties/${property.slug}`);
                   }}
-                  className={`rounded-full border-2 px-3 py-1.5 text-[11px] font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition ${
+                  className={`rounded-full border-2 px-3 py-2 text-xs font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition sm:px-3 sm:py-1.5 sm:text-[11px] ${
                     selectedPropertyId === property._id
                       ? markerStyle.selected
                       : markerStyle.base
@@ -343,7 +349,7 @@ export function SearchMap({
               <button
                 type="button"
                 onClick={() => onSelectContextPoint?.(point)}
-                className={`rounded-full border px-2.5 py-1.5 text-[10px] font-semibold text-white shadow-soft transition ${
+                className={`rounded-full border px-3 py-2 text-[11px] font-semibold text-white shadow-soft transition sm:px-2.5 sm:py-1.5 sm:text-[10px] ${
                   selected ? "ring-4 ring-white/80 scale-105" : "opacity-90 hover:opacity-100"
                 }`}
                 style={{

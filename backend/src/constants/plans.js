@@ -3,19 +3,20 @@ import { SUBSCRIPTION_PLAN_NAMES } from "./enums.js";
 export const COMMERCIAL_PLAN_CONFIG = {
   free: {
     id: "free",
-    name: "Gratis",
+    name: "Acceso libre",
     monthlyPrice: 0,
     yearlyPrice: 0,
-    propertyLimit: 1,
+    propertyLimit: 9999,
     promotedSlots: 0,
-    leadInbox: false,
-    offersInbox: false,
-    analytics: false,
-    adMetrics: false,
+    leadInbox: true,
+    offersInbox: true,
+    analytics: true,
+    adMetrics: true,
     features: [
-      "Busqueda ilimitada",
-      "Favoritos y comparativas",
-      "1 propiedad activa como prueba"
+      "Publicacion gratuita",
+      "Exploracion y favoritos sin costo",
+      "Leads, ofertas y metricas incluidos",
+      "Los destacados se gestionan como boost aparte"
     ]
   },
   "owner-plus": {
@@ -74,61 +75,45 @@ export const COMMERCIAL_PLAN_CONFIG = {
   }
 };
 
-const TRIAL_DAYS_BY_PLAN = {
-  free: 0,
-  "owner-plus": 30,
-  "agent-pro": 30,
-  "broker-max": 30
-};
+const FREE_ONLY_PLAN_ID = "free";
 
 export const getCommercialPlanCatalog = () =>
-  SUBSCRIPTION_PLAN_NAMES.map((planId) => COMMERCIAL_PLAN_CONFIG[planId]);
+  SUBSCRIPTION_PLAN_NAMES.filter((planId) => planId === FREE_ONLY_PLAN_ID).map(
+    (planId) => COMMERCIAL_PLAN_CONFIG[planId]
+  );
 
-export const getDefaultPlanIdForRole = (role) => {
-  switch (role) {
-    case "owner":
-      return "owner-plus";
-    case "agent":
-      return "agent-pro";
-    case "admin":
-      return "broker-max";
-    default:
-      return "free";
-  }
-};
+export const getDefaultPlanIdForRole = () => FREE_ONLY_PLAN_ID;
 
-export const buildDefaultSubscriptionForRole = (role, now = new Date()) => {
-  const planId = getDefaultPlanIdForRole(role);
+export const buildDefaultSubscriptionForRole = (_role, now = new Date()) => {
+  const planId = getDefaultPlanIdForRole();
   const plan = COMMERCIAL_PLAN_CONFIG[planId];
-  const trialDays = TRIAL_DAYS_BY_PLAN[planId] || 0;
-  const trialEndsAt =
-    trialDays > 0 ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000) : undefined;
 
   return {
     plan: plan.id,
-    status: planId === "free" ? "active" : role === "admin" ? "active" : "trial",
+    status: "active",
     billingCycle: "monthly",
     monthlyPrice: plan.monthlyPrice,
     propertyLimit: plan.propertyLimit,
     promotedSlots: plan.promotedSlots,
-    startedAt: now,
-    trialEndsAt
+    startedAt: now
   };
 };
 
 export const resolveEffectiveSubscription = (user) => {
   const fallback = buildDefaultSubscriptionForRole(user?.role);
-  const planId = user?.subscription?.plan || fallback.plan;
-  const plan = COMMERCIAL_PLAN_CONFIG[planId] || COMMERCIAL_PLAN_CONFIG.free;
+  const plan = COMMERCIAL_PLAN_CONFIG[FREE_ONLY_PLAN_ID];
 
   return {
     ...fallback,
     ...user?.subscription,
     plan: plan.id,
     label: plan.name,
-    monthlyPrice: user?.subscription?.monthlyPrice ?? plan.monthlyPrice,
-    propertyLimit: user?.subscription?.propertyLimit ?? plan.propertyLimit,
-    promotedSlots: user?.subscription?.promotedSlots ?? plan.promotedSlots,
+    status: "active",
+    billingCycle: "monthly",
+    monthlyPrice: plan.monthlyPrice,
+    propertyLimit: plan.propertyLimit,
+    promotedSlots: plan.promotedSlots,
+    trialEndsAt: undefined,
     features: plan.features,
     leadInbox: plan.leadInbox,
     offersInbox: plan.offersInbox,

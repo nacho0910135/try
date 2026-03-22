@@ -1,16 +1,23 @@
 import { app } from "./app.js";
 import { connectDatabase } from "./config/db.js";
 import { env } from "./config/env.js";
+import { startAlertScheduler } from "./jobs/alertScheduler.js";
+import { logger } from "./utils/logger.js";
 
 const startServer = async () => {
   await connectDatabase();
 
   app.listen(env.PORT, () => {
-    console.log(`BienesRaicesCR API listening on http://localhost:${env.PORT}`);
+    logger.info("server_started", {
+      port: env.PORT,
+      environment: env.NODE_ENV
+    });
   });
+
+  startAlertScheduler();
 };
 
 startServer().catch((error) => {
-  console.error("Failed to start server", error);
+  logger.error("server_start_failed", { error });
   process.exit(1);
 });

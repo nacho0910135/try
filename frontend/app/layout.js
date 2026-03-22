@@ -1,3 +1,5 @@
+import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { CookieBanner } from "@/components/layout/CookieBanner";
 import { LanguageProvider } from "@/components/layout/LanguageProvider";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -16,9 +18,12 @@ export default function RootLayout({ children }) {
     <html lang="es">
       <body className="font-sans">
         <LanguageProvider>
-          <SiteHeader />
-          <main className="min-h-[calc(100vh-160px)]">{children}</main>
-          <SiteFooter />
+          <AnalyticsProvider>
+            <SiteHeader />
+            <main className="min-h-[calc(100vh-160px)]">{children}</main>
+            <SiteFooter />
+            <CookieBanner />
+          </AnalyticsProvider>
         </LanguageProvider>
       </body>
     </html>

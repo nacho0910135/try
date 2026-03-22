@@ -293,17 +293,17 @@ function SearchPageContent() {
       {message ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{message}</p> : null}
 
       <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="xl:sticky xl:top-24 xl:h-fit xl:self-start">
+        <div className="order-2 xl:order-1 xl:sticky xl:top-24 xl:h-fit xl:self-start">
           <CostaRicaProvinceExplorer
             selectedProvince={filters.province}
             onSelectProvince={handleProvinceAtlasSelection}
             compact
             navigateOnSelect={false}
-            mapMinHeight={360}
+            mapMinHeight={280}
           />
         </div>
 
-        <div>
+        <div className="order-1 xl:order-2">
           <div className="surface-soft mb-4 p-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -418,7 +418,7 @@ function SearchPageContent() {
         {loading && page === 1 ? (
           <LoadingState label={t("searchPage.loadingProperties")} />
         ) : contextualProperties.length ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {contextualProperties.map((property) => (
               <PropertyCard
                 key={property._id}

@@ -20,6 +20,56 @@ const propertyTypeLabels = {
 };
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const ALERT_CARD_FIELDS = "title slug price currency photos media address marketStatus createdAt priceHistory";
+
+const roundToSingleDecimal = (value) => Math.round(value * 10) / 10;
+
+const buildPriceDropEntry = (property, thresholdDate) => {
+  const history = (property.priceHistory || [])
+    .filter((entry) => Number.isFinite(Number(entry?.price)) && entry?.changedAt)
+    .map((entry) => ({
+      price: Number(entry.price),
+      changedAt: new Date(entry.changedAt)
+    }))
+    .sort((first, second) => first.changedAt - second.changedAt);
+
+  if (history.length < 2) {
+    return null;
+  }
+
+  let latestDrop = null;
+
+  for (let index = 1; index < history.length; index += 1) {
+    const previous = history[index - 1];
+    const current = history[index];
+
+    if (current.changedAt <= thresholdDate || current.price >= previous.price) {
+      continue;
+    }
+
+    const changeAmount = current.price - previous.price;
+
+    latestDrop = {
+      _id: property._id,
+      title: property.title,
+      slug: property.slug,
+      currency: property.currency,
+      photos: property.photos || [],
+      media: property.media || [],
+      address: property.address,
+      marketStatus: property.marketStatus,
+      currentPrice: current.price,
+      previousPrice: previous.price,
+      changeAmount,
+      changePct: previous.price
+        ? roundToSingleDecimal((changeAmount / previous.price) * 100)
+        : 0,
+      changedAt: current.changedAt
+    };
+  }
+
+  return latestDrop;
+};
 
 const buildSavedSearchName = (payload = {}) => {
   const filters = payload.filters || {};
@@ -188,7 +238,8 @@ export const buildAlertPreview = async (savedSearch) => {
   const lastViewedAt = savedSearch.lastViewedAt || savedSearch.createdAt;
   const lastAlertSentAt = savedSearch.lastAlertSentAt || savedSearch.createdAt;
 
-  const [totalMatches, newMatches, emailMatches, recentMatches] = await Promise.all([
+  const [totalMatches, newMatches, emailMatches, recentMatches, recentNewMatches, recentPriceDropCandidates] =
+    await Promise.all([
     Property.countDocuments(filter),
     Property.countDocuments({
       ...filter,
@@ -199,17 +250,42 @@ export const buildAlertPreview = async (savedSearch) => {
       createdAt: { $gt: lastAlertSentAt }
     }),
     Property.find(filter)
-      .select("title slug price currency photos address marketStatus createdAt")
+      .select(ALERT_CARD_FIELDS)
       .sort({ createdAt: -1, publishedAt: -1 })
       .limit(3)
+      .lean(),
+    Property.find({
+      ...filter,
+      createdAt: { $gt: lastAlertSentAt }
+    })
+      .select(ALERT_CARD_FIELDS)
+      .sort({ createdAt: -1, publishedAt: -1 })
+      .limit(3)
+      .lean(),
+    Property.find({
+      ...filter,
+      "priceHistory.changedAt": { $gt: lastAlertSentAt }
+    })
+      .select(ALERT_CARD_FIELDS)
+      .sort({ updatedAt: -1, publishedAt: -1 })
       .lean()
   ]);
+
+  const recentPriceDrops = recentPriceDropCandidates
+    .map((property) => buildPriceDropEntry(property, new Date(lastAlertSentAt)))
+    .filter(Boolean)
+    .sort((first, second) => new Date(second.changedAt) - new Date(first.changedAt));
+
+  const priceDropMatchesCount = recentPriceDrops.length;
 
   return {
     totalMatches,
     newMatches,
     emailMatches,
-    recentMatches
+    priceDropMatchesCount,
+    recentMatches,
+    recentNewMatches,
+    recentPriceDrops: recentPriceDrops.slice(0, 3)
   };
 };
 
@@ -271,7 +347,7 @@ export const savedSearchService = {
 
     const alertPreview = await buildAlertPreview(savedSearch);
 
-    if (!alertPreview.totalMatches) {
+    if (!alertPreview.totalMatches && !alertPreview.priceDropMatchesCount) {
       throw new ApiError(400, "Esta busqueda no tiene propiedades activas para enviar por correo.");
     }
 
@@ -316,12 +392,12 @@ export const savedSearchService = {
 
       const alertPreview = await buildAlertPreview(savedSearch);
 
-      if (!alertPreview.emailMatches) {
+      if (!alertPreview.emailMatches && !alertPreview.priceDropMatchesCount) {
         results.push({
           savedSearchId: savedSearch._id.toString(),
           name: savedSearch.name,
           status: "skipped",
-          reason: "no-new-matches"
+          reason: "no-new-matches-or-price-drops"
         });
         continue;
       }
@@ -342,7 +418,8 @@ export const savedSearchService = {
         savedSearchId: savedSearch._id.toString(),
         name: savedSearch.name,
         status: emailResult.delivered ? "sent" : "unconfigured",
-        matches: alertPreview.emailMatches
+        matches: alertPreview.emailMatches,
+        priceDrops: alertPreview.priceDropMatchesCount
       });
     }
 

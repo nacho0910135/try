@@ -13,6 +13,7 @@
     "seed": "npm run seed --workspace backend",
     "seed:samples": "npm run seed:samples --workspace backend",
     "alerts:send": "npm run alerts:send --workspace backend",
+    "backup:mongo": "node scripts/mongo-backup.mjs",
     "lint": "npm run lint --workspace backend && npm run lint --workspace frontend"
   },
   "devDependencies": {

@@ -16,7 +16,6 @@ import { useLanguage } from "@/components/layout/LanguageProvider";
 import { useAuthStore } from "@/store/auth-store";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
-import { formatCurrency } from "@/lib/utils";
 
 const leadStatusLabels = {
   new: "Nuevo",
@@ -130,15 +129,13 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="rounded-[26px] border border-pine/15 bg-white/85 p-5 shadow-soft">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-pine/75">Plan actual</div>
-            <div className="mt-2 text-2xl font-semibold text-ink">{summary.plan?.label || "Gratis"}</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-pine/75">Modelo actual</div>
+            <div className="mt-2 text-2xl font-semibold text-ink">Publicacion gratuita</div>
             <div className="mt-1 text-sm text-ink/60">
-              {summary.plan?.status === "trial" ? "Prueba activa" : "Activo"} -{" "}
-              {formatCurrency(summary.plan?.monthlyPrice || 0, "USD")} / mes
+              Ver propiedades y publicar es gratis mientras crecemos en afluencia.
             </div>
             <div className="mt-4 text-sm text-ink/70">
-              {summary.planUsage?.activeListings || 0}/{summary.plan?.propertyLimit || 1} propiedades activas -{" "}
-              {summary.planUsage?.promotedListings || 0}/{summary.plan?.promotedSlots || 0} destacados en uso
+              {summary.activeProperties || 0} activas - {summary.featuredProperties || 0} con boost de visibilidad
             </div>
           </div>
         </div>
@@ -216,17 +213,16 @@ export default function DashboardPage() {
             Tu tasa actual de conversion es de <strong>{summary.conversionRate || 0}%</strong>. Usa el panel de negocio para ver que anuncios convierten mejor en leads y ofertas.
           </p>
           <Link href="/dashboard/business" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-lagoon">
-            Abrir negocio y publicidad
+            Abrir visibilidad y metricas
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
         <div className="surface p-6">
           <Sparkles className="h-5 w-5 text-lagoon" />
-          <h2 className="mt-4 text-2xl font-semibold">Inventario y visibilidad</h2>
+          <h2 className="mt-4 text-2xl font-semibold">Inventario y boost de visibilidad</h2>
           <p className="mt-3 text-sm leading-7 text-ink/65">
-            Tienes {summary.featuredProperties || 0} publicaciones destacadas y te quedan{" "}
-            {summary.planUsage?.remainingPromotedSlots || 0} espacios premium libres. Ese es el bloque que mas
-            valor te conviene potenciar cuando busques mas leads y cierres.
+            Tienes {summary.featuredProperties || 0} publicaciones destacadas. Ese es el unico upgrade comercial
+            activo en esta etapa: usar destacados como boost de visibilidad para conseguir mas alcance, leads y cierres.
           </p>
           <div className="mt-4 flex gap-3">
             <Link href="/dashboard/properties">

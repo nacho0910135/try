@@ -64,22 +64,27 @@ const runSeedSamples = async () => {
     slug: createSlug(`${property.title}-${property.address?.canton || ""}`)
   }));
 
-  const existingProperties = await Property.find({
-    slug: { $in: sampleProperties.map((property) => property.slug) }
-  }).select("slug");
+  const bulkOperations = sampleProperties.map((property) => ({
+    updateOne: {
+      filter: { slug: property.slug },
+      update: {
+        $set: {
+          ...property,
+          updatedAt: new Date()
+        }
+      },
+      upsert: true
+    }
+  }));
 
-  const existingSlugs = new Set(existingProperties.map((property) => property.slug));
-  const propertiesToInsert = sampleProperties.filter((property) => !existingSlugs.has(property.slug));
+  const result = await Property.bulkWrite(bulkOperations);
 
-  if (!propertiesToInsert.length) {
-    console.log("No new sample properties to insert");
-    await mongoose.connection.close();
-    return;
-  }
+  const insertedCount = result.upsertedCount || 0;
+  const updatedCount = result.modifiedCount || 0;
 
-  await Property.create(propertiesToInsert);
-
-  console.log(`Inserted ${propertiesToInsert.length} sample properties without deleting existing data`);
+  console.log(
+    `Sample properties synced successfully. Inserted: ${insertedCount}, updated: ${updatedCount}`
+  );
   await mongoose.connection.close();
 };
 

@@ -47,7 +47,7 @@ export default function HomePage() {
         <div className="surface-elevated overflow-hidden bg-hero-grid p-5 sm:p-8 lg:p-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(320px,0.52fr)_minmax(0,1.48fr)] lg:items-start">
             <div className="max-w-xl lg:pt-4">
-              <BrandLogo className="mb-5" />
+              <BrandLogo className="mb-4" compact showTagline={false} />
               <span className="eyebrow">{t("homePage.eyebrow")}</span>
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="stat-chip">

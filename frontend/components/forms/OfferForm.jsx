@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { createOffer } from "@/lib/api";
+import { analyticsEvents, trackEvent } from "@/lib/analytics";
 import { formatCurrency } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { Button } from "../ui/Button";
@@ -21,6 +22,9 @@ const offerSchema = z.object({
 
 export function OfferForm({
   propertyId,
+  propertyTitle,
+  propertySlug,
+  propertyType,
   businessType = "sale",
   currency = "USD",
   askingPrice = 0
@@ -62,6 +66,14 @@ export function OfferForm({
         ...values,
         currency,
         source: "property-page"
+      });
+      trackEvent(analyticsEvents.offerSubmitted, {
+        propertyId,
+        propertyTitle,
+        propertySlug,
+        propertyType,
+        businessType,
+        currency
       });
       setFeedback("Tu oferta fue enviada correctamente al anunciante.");
       reset({

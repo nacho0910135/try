@@ -5,7 +5,6 @@ import { analyzeListingModeration } from "../utils/listingModeration.js";
 import { buildPagination } from "../utils/pagination.js";
 import { enrichPropertyCollection, enrichPropertyForClient } from "../utils/propertyInsights.js";
 import { createSlug } from "../utils/slug.js";
-import { resolveEffectiveSubscription } from "../constants/plans.js";
 
 const ownerIdFromProperty = (property) =>
   property?.owner?._id?.toString?.() || property?.owner?.toString?.();
@@ -379,16 +378,6 @@ const getPropertyOrThrow = async (propertyId) => {
   return property;
 };
 
-const countPromotedListings = (ownerId, excludePropertyId) =>
-  Property.countDocuments({
-    owner: ownerId,
-    featured: true,
-    status: "published",
-    isApproved: true,
-    marketStatus: { $in: getPublicMarketStatuses() },
-    ...(excludePropertyId ? { _id: { $ne: excludePropertyId } } : {})
-  });
-
 const findPotentialDuplicates = (ownerId, candidate, excludePropertyId) => {
   const filter = {
     owner: ownerId,
@@ -604,20 +593,6 @@ export const propertyService = {
   },
 
   async create(user, payload) {
-    const subscription = resolveEffectiveSubscription(user);
-    const activeListings = await Property.countDocuments({
-      owner: user._id,
-      status: { $in: ["draft", "published", "paused"] },
-      marketStatus: { $in: ["available", "reserved"] }
-    });
-
-    if (activeListings >= subscription.propertyLimit && user.role !== "admin") {
-      throw new ApiError(
-        403,
-        `Tu plan actual permite hasta ${subscription.propertyLimit} propiedades activas.`
-      );
-    }
-
     const normalized = normalizePropertyPayload(payload);
     normalized.owner = user._id;
     normalized.status = normalized.status || "published";
@@ -766,26 +741,6 @@ export const propertyService = {
         400,
         "Solo puedes destacar publicaciones aprobadas, publicadas y disponibles o reservadas."
       );
-    }
-
-    if (user.role !== "admin") {
-      const subscription = resolveEffectiveSubscription(user);
-
-      if (!subscription.promotedSlots) {
-        throw new ApiError(
-          403,
-          "Tu plan actual no incluye espacios destacados. Cambia de plan para activar esta mejora."
-        );
-      }
-
-      const currentPromoted = await countPromotedListings(user._id, property._id);
-
-      if (currentPromoted >= subscription.promotedSlots) {
-        throw new ApiError(
-          403,
-          `Ya usaste tus ${subscription.promotedSlots} espacios destacados. Quita uno o mejora tu plan.`
-        );
-      }
     }
 
     property.featured = true;

@@ -158,14 +158,14 @@ function DashboardPropertiesPageContent() {
         [item._id]: {
           tone: "success",
           message: item.featured
-            ? "La publicacion ya no esta destacada."
-            : "La publicacion quedo destacada correctamente."
+            ? "El boost de visibilidad fue removido."
+            : "El boost de visibilidad quedo activo correctamente."
         }
       }));
       setFlashMessage(
         item.featured
-          ? "Quitaste una propiedad del bloque destacado."
-          : "Activaste una propiedad en tus espacios destacados."
+          ? "Quitaste una propiedad del bloque de destacados."
+          : "Activaste un boost de visibilidad para esta propiedad."
       );
       await Promise.all([loadProperties(), loadCommercialOverview()]);
     } catch (error) {
@@ -269,44 +269,42 @@ function DashboardPropertiesPageContent() {
         </Link>
       </div>
 
-      {commercialOverview?.planUsage ? (
+      {commercialOverview?.summary ? (
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-[24px] border border-pine/15 bg-pine/8 p-4">
-            <div className="text-xs uppercase tracking-[0.18em] text-pine/75">Plan activo</div>
-            <div className="mt-2 text-lg font-semibold text-ink">{commercialOverview.plan.label}</div>
+            <div className="text-xs uppercase tracking-[0.18em] text-pine/75">Modelo activo</div>
+            <div className="mt-2 text-lg font-semibold text-ink">Publicacion gratuita</div>
             <div className="mt-1 text-sm text-ink/60">
-              {commercialOverview.plan.status === "trial" ? "Prueba activa" : "Activo"}
+              Publica gratis y usa destacados como boost de visibilidad.
             </div>
           </div>
           <div className="rounded-[24px] border border-ink/10 bg-white p-4">
             <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Propiedades activas</div>
             <div className="mt-2 text-2xl font-semibold text-ink">
-              {commercialOverview.planUsage.activeListings}/{commercialOverview.planUsage.propertyLimit}
+              {commercialOverview.summary.activeListings}
             </div>
             <div className="mt-1 text-sm text-ink/60">
-              {commercialOverview.planUsage.remainingPropertySlots} cupos disponibles
+              {commercialOverview.summary.totalListings} publicaciones totales
             </div>
           </div>
           <div className="rounded-[24px] border border-ink/10 bg-white p-4">
-            <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Espacios destacados</div>
+            <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Boosts activos</div>
             <div className="mt-2 text-2xl font-semibold text-ink">
-              {commercialOverview.planUsage.promotedListings}/{commercialOverview.planUsage.promotedSlots}
+              {commercialOverview.adPerformance?.promotedListings || 0}
             </div>
             <div className="mt-1 text-sm text-ink/60">
-              {commercialOverview.planUsage.remainingPromotedSlots} espacios premium libres
+              {commercialOverview.summary.totalLeads || 0} leads generados
             </div>
           </div>
           <div className="rounded-[24px] border border-ink/10 bg-white p-4">
-            <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Siguiente mejora</div>
+            <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Siguiente foco</div>
             <div className="mt-2 text-sm font-semibold text-ink">
-              {commercialOverview.planUsage.canPromoteMore
-                ? "Ya puedes destacar otra propiedad"
-                : "Te conviene liberar un destacado o mejorar el plan"}
+              Revisa visualizaciones, leads y ofertas para decidir que propiedad conviene impulsar.
             </div>
             <div className="mt-3">
               <Link href="/dashboard/business">
                 <Button variant="secondary" className="w-full">
-                  Ver negocio y planes
+                  Ver visibilidad y metricas
                 </Button>
               </Link>
             </div>
@@ -340,11 +338,11 @@ function DashboardPropertiesPageContent() {
                 <td className="py-4 pr-4">
                   <div className="font-semibold">{item.title}</div>
                   <div className="text-xs text-ink/45">
-                    {item.propertyType} {item.featured ? "- Destacada" : "- Organica"}
+                    {item.propertyType} {item.featured ? "- Con boost" : "- Organica"}
                   </div>
                   {item.trustProfile?.score ? (
                     <div className="mt-2 text-xs text-ink/55">
-                      Trust score {item.trustProfile.score}/100
+                      Calidad del anuncio {item.trustProfile.score}/100
                     </div>
                   ) : null}
                   {item.moderationSignals?.duplicateCandidateCount ? (
@@ -439,16 +437,15 @@ function DashboardPropertiesPageContent() {
                       disabled={
                         savingPropertyId === item._id ||
                         (!item.featured &&
-                          (!commercialOverview?.planUsage?.canPromoteMore ||
-                            item.status !== "published" ||
+                          (item.status !== "published" ||
                             !["available", "reserved"].includes(item.marketStatus || "available")))
                       }
                     >
                       {savingPropertyId === item._id
                         ? "Actualizando..."
                         : item.featured
-                          ? "Quitar destacado"
-                          : "Destacar"}
+                          ? "Quitar boost"
+                          : "Activar boost"}
                     </Button>
                     <Link href={`/dashboard/properties/${item._id}/edit`}>
                       <Button variant="secondary">Editar</Button>
@@ -472,7 +469,7 @@ function DashboardPropertiesPageContent() {
                   (item.status !== "published" ||
                     !["available", "reserved"].includes(item.marketStatus || "available")) ? (
                     <p className="mt-2 text-xs text-ink/50">
-                      Solo publicaciones publicadas y disponibles o reservadas pueden destacarse.
+                      Solo publicaciones publicadas y disponibles o reservadas pueden recibir boost.
                     </p>
                   ) : null}
                 </td>

@@ -93,6 +93,13 @@ export const billingService = {
   },
 
   async createCheckoutSession(user, payload) {
+    void user;
+    void payload;
+    throw new ApiError(
+      503,
+      "La venta de planes esta desactivada por ahora. BienesRaicesCR mantiene publicacion y exploracion gratuitas mientras activamos el boost destacado."
+    );
+
     const stripe = await stripeService.getClient();
 
     if (!stripe) {
@@ -163,6 +170,12 @@ export const billingService = {
   },
 
   async createPortalSession(user) {
+    void user;
+    throw new ApiError(
+      503,
+      "El portal de planes esta desactivado por ahora. La plataforma opera con publicacion gratuita y boost destacado aparte."
+    );
+
     const stripe = await stripeService.getClient();
 
     if (!stripe) {

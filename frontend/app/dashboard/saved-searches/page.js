@@ -10,7 +10,7 @@ import {
   sendSavedSearchAlert,
   updateSavedSearch
 } from "@/lib/api";
-import { serializePropertyQuery } from "@/lib/utils";
+import { formatCurrency, serializePropertyQuery } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -163,7 +163,7 @@ export default function DashboardSavedSearchesPage() {
                   {Object.entries(item.filters || {})
                     .filter(([, value]) => value !== null && value !== undefined && value !== "")
                     .map(([key, value]) => `${key}: ${typeof value === "object" ? "mapa" : value}`)
-                    .join(" · ")}
+                    .join(" | ")}
                 </p>
               </div>
 
@@ -199,7 +199,7 @@ export default function DashboardSavedSearchesPage() {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <div className="mt-5 grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
               <div className="space-y-3">
                 <div className="rounded-[22px] border border-pine/12 bg-pine/8 p-4">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-pine">
@@ -242,47 +242,106 @@ export default function DashboardSavedSearchesPage() {
                       : "Todavia no se ha enviado un correo"}
                   </div>
                 </div>
+
+                <div className="rounded-[22px] border border-sun/15 bg-sun/10 p-4">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-terracotta">
+                    <Sparkles className="h-4 w-4" />
+                    Bajadas de precio
+                  </div>
+                  <div className="mt-4 text-3xl font-semibold text-ink">
+                    {item.alertPreview?.priceDropMatchesCount || 0}
+                  </div>
+                  <div className="mt-1 text-sm text-ink/60">
+                    propiedades que ajustaron su precio desde el ultimo correo
+                  </div>
+                </div>
               </div>
 
-              <div className="rounded-[24px] border border-ink/10 bg-white p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-sm font-semibold text-ink">Coincidencias recientes</div>
-                    <div className="mt-1 text-sm text-ink/55">
-                      Vista rapida del inventario actual para esta alerta.
+              <div className="space-y-4">
+                <div className="rounded-[24px] border border-ink/10 bg-white p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-sm font-semibold text-ink">Coincidencias recientes</div>
+                      <div className="mt-1 text-sm text-ink/55">
+                        Vista rapida del inventario actual para esta alerta.
+                      </div>
                     </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {item.alertPreview?.recentMatches?.length ? (
+                      item.alertPreview.recentMatches.map((property) => (
+                        <div
+                          key={property._id}
+                          className="rounded-[20px] border border-ink/10 bg-mist p-4"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="font-semibold text-ink">{property.title}</div>
+                              <div className="mt-1 text-sm text-ink/55">
+                                {property.address?.district}, {property.address?.canton},{" "}
+                                {property.address?.province}
+                              </div>
+                            </div>
+                            <Link
+                              href={`/properties/${property.slug}`}
+                              className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-pine shadow-soft"
+                            >
+                              Ver
+                            </Link>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-ink/55">
+                        No hay coincidencias activas en este momento para esta busqueda.
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-3">
-                  {item.alertPreview?.recentMatches?.length ? (
-                    item.alertPreview.recentMatches.map((property) => (
-                      <div
-                        key={property._id}
-                        className="rounded-[20px] border border-ink/10 bg-mist p-4"
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <div className="font-semibold text-ink">{property.title}</div>
-                            <div className="mt-1 text-sm text-ink/55">
-                              {property.address?.district}, {property.address?.canton},{" "}
-                              {property.address?.province}
+                <div className="rounded-[24px] border border-ink/10 bg-white p-5">
+                  <div>
+                    <div className="text-sm font-semibold text-ink">Ajustes recientes de precio</div>
+                    <div className="mt-1 text-sm text-ink/55">
+                      Oportunidades detectadas automaticamente para esta misma zona.
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {item.alertPreview?.recentPriceDrops?.length ? (
+                      item.alertPreview.recentPriceDrops.map((property) => (
+                        <div
+                          key={`${property._id}-drop`}
+                          className="rounded-[20px] border border-terracotta/12 bg-terracotta/6 p-4"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="font-semibold text-ink">{property.title}</div>
+                              <div className="mt-1 text-sm text-ink/55">
+                                {property.address?.district}, {property.address?.canton},{" "}
+                                {property.address?.province}
+                              </div>
+                              <div className="mt-2 text-sm font-medium text-terracotta">
+                                Bajo de {formatCurrency(property.previousPrice, property.currency)} a{" "}
+                                {formatCurrency(property.currentPrice, property.currency)}
+                              </div>
                             </div>
+                            <Link
+                              href={`/properties/${property.slug}`}
+                              className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-terracotta shadow-soft"
+                            >
+                              Ver
+                            </Link>
                           </div>
-                          <Link
-                            href={`/properties/${property.slug}`}
-                            className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-pine shadow-soft"
-                          >
-                            Ver
-                          </Link>
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-ink/55">
-                      No hay coincidencias activas en este momento para esta busqueda.
-                    </p>
-                  )}
+                      ))
+                    ) : (
+                      <p className="text-sm text-ink/55">
+                        Todavia no hay bajadas de precio registradas para esta alerta.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

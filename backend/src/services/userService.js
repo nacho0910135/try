@@ -5,7 +5,6 @@ import { Property } from "../models/Property.js";
 import { SavedSearch } from "../models/SavedSearch.js";
 import { User } from "../models/User.js";
 import {
-  COMMERCIAL_PLAN_CONFIG,
   getCommercialPlanCatalog,
   resolveEffectiveSubscription
 } from "../constants/plans.js";
@@ -583,33 +582,12 @@ export const userService = {
   },
 
   async updateSubscription(user, payload) {
-    const currentUser = await User.findById(user._id);
-
-    if (!currentUser) {
-      throw new ApiError(404, "User not found");
-    }
-
-    const plan = COMMERCIAL_PLAN_CONFIG[payload.plan];
-
-    if (!plan) {
-      throw new ApiError(400, "Selected plan is not available");
-    }
-
-    currentUser.subscription = {
-      ...(currentUser.subscription || {}),
-      plan: plan.id,
-      status: "active",
-      billingCycle: payload.billingCycle || "monthly",
-      monthlyPrice: plan.monthlyPrice,
-      propertyLimit: plan.propertyLimit,
-      promotedSlots: plan.promotedSlots,
-      startedAt: new Date(),
-      trialEndsAt: undefined
-    };
-
-    await currentUser.save();
-
-    return resolveEffectiveSubscription(currentUser);
+    void user;
+    void payload;
+    throw new ApiError(
+      503,
+      "Los planes estan desactivados por ahora. La publicacion y exploracion son gratuitas mientras activamos el modelo final."
+    );
   },
 
   async requestVerification(user, payload) {

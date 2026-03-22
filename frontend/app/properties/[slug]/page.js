@@ -10,11 +10,10 @@ import {
   PhoneCall,
   ShieldCheck,
   Sparkles,
-  TrendingUp,
   TriangleAlert
 } from "lucide-react";
 import { addFavorite, getFavorites, getPropertyBySlug, removeFavorite } from "@/lib/api";
-import { MiniLineChart } from "@/components/analysis/VisualCharts";
+import { analyticsEvents, trackEvent } from "@/lib/analytics";
 import { ContactLeadForm } from "@/components/forms/ContactLeadForm";
 import { OfferForm } from "@/components/forms/OfferForm";
 import { PropertyMapPreview } from "@/components/map/PropertyMapPreview";
@@ -75,6 +74,22 @@ export default function PropertyDetailPage({ params }) {
     loadFavorites();
   }, [token, property?._id]);
 
+  useEffect(() => {
+    if (!property?._id) {
+      return;
+    }
+
+    trackEvent(analyticsEvents.propertyViewed, {
+      propertyId: property._id,
+      slug: property.slug,
+      businessType: property.businessType,
+      propertyType: property.propertyType,
+      province: property.address?.province,
+      canton: property.address?.canton,
+      district: property.address?.district
+    });
+  }, [property?._id, property?.slug]);
+
   const handleFavorite = async () => {
     if (!token) {
       window.location.href = "/login";
@@ -84,11 +99,23 @@ export default function PropertyDetailPage({ params }) {
     if (favorite) {
       await removeFavorite(property._id);
       setFavorite(false);
+      trackEvent(analyticsEvents.favoriteRemoved, {
+        propertyId: property._id,
+        slug: property.slug,
+        businessType: property.businessType,
+        propertyType: property.propertyType
+      });
       return;
     }
 
     await addFavorite(property._id);
     setFavorite(true);
+    trackEvent(analyticsEvents.favoriteAdded, {
+      propertyId: property._id,
+      slug: property.slug,
+      businessType: property.businessType,
+      propertyType: property.propertyType
+    });
   };
 
   if (loading) {
@@ -117,10 +144,10 @@ export default function PropertyDetailPage({ params }) {
       )}`
     : null;
   const videos = property.media?.filter((item) => item.type === "video") || [];
+  const images = property.media?.filter((item) => item.type === "image") || property.photos || [];
   const isRoommateListing = property.rentalArrangement === "roommate";
   const canReceiveOffers = property.marketStatus === "available";
   const trustProfile = property.trustProfile || { badges: [] };
-  const pricingInsight = property.pricingInsight || {};
   const decisionSummary = property.decisionSummary || {};
   const serviceDistanceItems = [
     {
@@ -141,40 +168,7 @@ export default function PropertyDetailPage({ params }) {
       value: Number(item.value)
     }))
     .filter((item) => Number.isFinite(item.value));
-  const priceHistorySeries = (pricingInsight.priceHistorySeries || []).map((item) => ({
-    label: new Date(item.changedAt).toLocaleDateString("es-CR", {
-      month: "short",
-      day: "2-digit"
-    }),
-    value: Number(item.value || 0)
-  }));
   const streetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${property.location.coordinates[1]},${property.location.coordinates[0]}`;
-  const trustLevelLabel =
-    trustProfile.level === "high"
-      ? "Confianza alta"
-      : trustProfile.level === "solid"
-        ? "Confianza solida"
-        : "Base por reforzar";
-  const trustToneClass =
-    trustProfile.level === "high"
-      ? "bg-pine/10 text-pine"
-      : trustProfile.level === "solid"
-        ? "bg-lagoon/10 text-lagoon"
-        : "bg-terracotta/10 text-terracotta";
-  const marketToneClass =
-    pricingInsight.marketScoreLevel === "opportunity"
-      ? "bg-pine/10 text-pine"
-      : pricingInsight.marketScoreLevel === "balanced"
-        ? "bg-lagoon/10 text-lagoon"
-        : pricingInsight.marketScoreLevel === "premium"
-          ? "bg-terracotta/10 text-terracotta"
-          : "bg-mist text-ink/70";
-  const priceChangeToneClass =
-    pricingInsight.direction === "down"
-      ? "text-pine"
-      : pricingInsight.direction === "up"
-        ? "text-terracotta"
-        : "text-ink/55";
 
   return (
     <div className="app-shell section-pad space-y-8">
@@ -215,7 +209,7 @@ export default function PropertyDetailPage({ params }) {
         </div>
       </div>
 
-      <PropertyGallery photos={property.photos} title={property.title} />
+      <PropertyGallery media={property.media} photos={property.photos} title={property.title} />
 
       <div className="grid gap-8 xl:grid-cols-[1.02fr_0.98fr]">
         <div className="space-y-6">
@@ -237,114 +231,20 @@ export default function PropertyDetailPage({ params }) {
                 {formatArea(property.constructionArea || property.lotArea || 0)}
               </span>
             </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <span className="data-pill">
+                {images.length} {images.length === 1 ? "imagen" : "imagenes"}
+              </span>
+              <span className="data-pill">
+                {videos.length} {videos.length === 1 ? "video" : "videos"}
+              </span>
+              {property.media?.some((item) => item.isPrimary) ? (
+                <span className="data-pill">Portada multimedia configurada</span>
+              ) : null}
+            </div>
             <p className="mt-6 whitespace-pre-line text-sm leading-7 text-ink/70">
               {property.description}
             </p>
-          </div>
-
-          <div className="grid gap-6 xl:grid-cols-2">
-            <div className="surface p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold text-pine">
-                    <ShieldCheck className="h-4 w-4" />
-                    Confianza del anuncio
-                  </div>
-                  <h2 className="mt-3 text-2xl font-semibold">Senales para decidir con mas seguridad</h2>
-                </div>
-                <div className={`rounded-full px-4 py-2 text-sm font-semibold ${trustToneClass}`}>
-                  {trustLevelLabel}
-                </div>
-              </div>
-              <div className="mt-5 grid gap-4 sm:grid-cols-[0.9fr_1.1fr]">
-                <div className="rounded-[28px] bg-mist p-5 text-center">
-                  <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Trust score</div>
-                  <div className="mt-3 text-5xl font-semibold text-ink">{trustProfile.score || 0}</div>
-                  <div className="mt-2 text-sm text-ink/60">{trustProfile.summary}</div>
-                </div>
-                <div className="space-y-3">
-                  {trustProfile.badges?.length ? (
-                    trustProfile.badges.map((badge) => (
-                      <div
-                        key={badge.key}
-                        className="rounded-[20px] border border-ink/10 bg-white px-4 py-3 text-sm text-ink/70"
-                      >
-                        <Badge variant={badge.tone || "neutral"}>{badge.label}</Badge>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-[20px] border border-ink/10 bg-white px-4 py-3 text-sm text-ink/60">
-                      Aun faltan senales suficientes para reforzar la confianza del anuncio.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="surface p-6">
-              <div className="flex items-center gap-2 text-sm font-semibold text-lagoon">
-                <TrendingUp className="h-4 w-4" />
-                Inteligencia de precio
-              </div>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-2xl font-semibold">Como se ve esta propiedad frente al mercado</h2>
-                <div className={`rounded-full px-4 py-2 text-sm font-semibold ${marketToneClass}`}>
-                  {pricingInsight.marketScoreLabel || "Sin comparables suficientes"}
-                </div>
-              </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[22px] bg-mist p-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Dias en mercado</div>
-                  <div className="mt-2 text-2xl font-semibold text-ink">
-                    {pricingInsight.daysToClose ?? pricingInsight.daysOnMarket ?? "-"}
-                  </div>
-                </div>
-                <div className="rounded-[22px] bg-mist p-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Precio por m2</div>
-                  <div className="mt-2 text-2xl font-semibold text-ink">
-                    {pricingInsight.pricePerSquareMeter
-                      ? `${formatCurrency(pricingInsight.pricePerSquareMeter, property.currency)} / m2`
-                      : "-"}
-                  </div>
-                </div>
-                <div className="rounded-[22px] bg-mist p-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Cambio reciente</div>
-                  <div className={`mt-2 text-2xl font-semibold ${priceChangeToneClass}`}>
-                    {pricingInsight.previousPrice
-                      ? `${pricingInsight.changeAmount > 0 ? "+" : ""}${formatCurrency(
-                          pricingInsight.changeAmount,
-                          property.currency
-                        )}`
-                      : "Sin cambios"}
-                  </div>
-                  {pricingInsight.previousPrice ? (
-                    <div className="mt-1 text-sm text-ink/55">{pricingInsight.changePct}% vs. ajuste anterior</div>
-                  ) : null}
-                </div>
-                <div className="rounded-[22px] bg-mist p-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Rango sugerido</div>
-                  <div className="mt-2 text-sm font-semibold text-ink">
-                    {pricingInsight.suggestedPriceMin && pricingInsight.suggestedPriceMax
-                      ? `${formatCurrency(pricingInsight.suggestedPriceMin, property.currency)} - ${formatCurrency(
-                          pricingInsight.suggestedPriceMax,
-                          property.currency
-                        )}`
-                      : "Aun no hay rango sugerido"}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-5">
-                <div className="mb-2 text-xs uppercase tracking-[0.18em] text-ink/45">
-                  Historial reciente de precio
-                </div>
-                <MiniLineChart
-                  series={priceHistorySeries}
-                  stroke="#0f4ea9"
-                  fill="rgba(15, 78, 169, 0.12)"
-                  emptyLabel="Aun no hay suficiente historial de precio"
-                />
-              </div>
-            </div>
           </div>
 
           <div className="surface p-6">
@@ -478,34 +378,6 @@ export default function PropertyDetailPage({ params }) {
             </div>
           ) : null}
 
-          {videos.length ? (
-            <div className="surface p-6">
-              <h2 className="text-2xl font-semibold">Videos</h2>
-              <div className="mt-5 grid gap-4">
-                {videos.map((video) =>
-                  video.url.endsWith(".mp4") ? (
-                    <video
-                      key={video.url}
-                      src={video.url}
-                      controls
-                      className="w-full rounded-[24px] bg-black"
-                    />
-                  ) : (
-                    <a
-                      key={video.url}
-                      href={video.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-[24px] border border-ink/10 bg-white p-4 text-sm font-semibold text-lagoon"
-                    >
-                      Abrir video
-                    </a>
-                  )
-                )}
-              </div>
-            </div>
-          ) : null}
-
           {serviceDistanceItems.length ? (
             <div className="surface p-6">
               <h2 className="text-2xl font-semibold">Servicios cercanos</h2>
@@ -573,13 +445,22 @@ export default function PropertyDetailPage({ params }) {
           {canReceiveOffers ? (
             <OfferForm
               propertyId={property._id}
+              propertyTitle={property.title}
+              propertySlug={property.slug}
+              propertyType={property.propertyType}
               businessType={property.businessType}
               currency={property.currency}
               askingPrice={property.price}
             />
           ) : null}
 
-          <ContactLeadForm propertyId={property._id} />
+          <ContactLeadForm
+            propertyId={property._id}
+            propertyTitle={property.title}
+            propertySlug={property.slug}
+            businessType={property.businessType}
+            propertyType={property.propertyType}
+          />
         </div>
       </div>
     </div>
