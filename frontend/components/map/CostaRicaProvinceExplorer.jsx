@@ -9,6 +9,47 @@ import { costaRicaProvinces } from "@/lib/costa-rica-provinces";
 import { getProvinceByName } from "@/lib/costa-rica-geo";
 import { mapDefaultCenter } from "@/lib/constants";
 
+const getGeoJsonBounds = (featureCollection) => {
+  if (!featureCollection?.features?.length) {
+    return null;
+  }
+
+  let minLng = Infinity;
+  let minLat = Infinity;
+  let maxLng = -Infinity;
+  let maxLat = -Infinity;
+
+  const walkCoordinates = (coordinates) => {
+    if (!Array.isArray(coordinates)) {
+      return;
+    }
+
+    if (typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
+      const [lng, lat] = coordinates;
+      minLng = Math.min(minLng, lng);
+      minLat = Math.min(minLat, lat);
+      maxLng = Math.max(maxLng, lng);
+      maxLat = Math.max(maxLat, lat);
+      return;
+    }
+
+    coordinates.forEach(walkCoordinates);
+  };
+
+  featureCollection.features.forEach((feature) => {
+    walkCoordinates(feature.geometry?.coordinates);
+  });
+
+  if ([minLng, minLat, maxLng, maxLat].some((value) => !Number.isFinite(value))) {
+    return null;
+  }
+
+  return [
+    [minLng, minLat],
+    [maxLng, maxLat]
+  ];
+};
+
 export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }) {
   const router = useRouter();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -58,6 +99,30 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
       setProvinceGeoJson(null);
     });
   }, []);
+
+  useEffect(() => {
+    if (!provinceGeoJson || !mapRef.current) {
+      return;
+    }
+
+    const bounds = getGeoJsonBounds(provinceGeoJson);
+
+    if (!bounds) {
+      return;
+    }
+
+    const map = mapRef.current.getMap?.();
+
+    if (!map) {
+      return;
+    }
+
+    map.fitBounds(bounds, {
+      padding: { top: 36, right: 36, bottom: 36, left: 36 },
+      duration: 1100,
+      maxZoom: 7.45
+    });
+  }, [provinceGeoJson]);
 
   if (!token) {
     return (
@@ -132,7 +197,7 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
               mapboxAccessToken={token}
               mapLib={mapboxgl}
               mapStyle={mapStyle}
-              initialViewState={{ ...mapDefaultCenter, zoom: 6.15 }}
+              initialViewState={{ ...mapDefaultCenter, zoom: 7.1 }}
               interactiveLayerIds={["province-fills"]}
               minZoom={5.7}
               maxZoom={8.5}
