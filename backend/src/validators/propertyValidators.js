@@ -42,13 +42,17 @@ const mediaSchema = z.object({
 
 const propertyBodySchema = z.object({
   title: z.string().min(10).max(160),
-  description: z.string().min(40).max(5000),
+  description: z.string().min(10).max(5000),
   businessType: z.enum(BUSINESS_TYPES),
   operationType: z.enum(BUSINESS_TYPES).optional(),
   rentalArrangement: z.enum(RENTAL_ARRANGEMENTS).optional(),
   propertyType: z.enum(PROPERTY_TYPES),
   price: z.number().nonnegative(),
-  finalPrice: z.number().nonnegative().optional(),
+  finalPrice: z
+    .preprocess(
+      (value) => (value === null || value === undefined || value === "" ? undefined : value),
+      z.number().nonnegative().optional()
+    ),
   currency: z.enum(CURRENCIES),
   bedrooms: z.number().int().nonnegative().default(0),
   bathrooms: z.number().int().nonnegative().default(0),

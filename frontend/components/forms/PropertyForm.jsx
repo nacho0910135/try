@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, MapPinned } from "lucide-react";
 import { z } from "zod";
@@ -24,56 +24,88 @@ import {
   getDistrictsByProvinceAndCanton
 } from "@/lib/costa-rica-locations";
 import { buildPropertyPayload } from "@/lib/utils";
+import { useLanguage } from "@/components/layout/LanguageProvider";
 import { Button } from "../ui/Button";
 import { Checkbox } from "../ui/Checkbox";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Textarea } from "../ui/Textarea";
 
-const propertyFormSchema = z.object({
-  title: z.string().min(10, "Minimo 10 caracteres"),
-  description: z.string().min(40, "Describe mejor la propiedad"),
-  businessType: z.string().min(1),
-  rentalArrangement: z.string().optional(),
-  propertyType: z.string().min(1),
-  price: z.coerce.number().nonnegative(),
-  finalPrice: z.union([z.coerce.number().nonnegative(), z.literal("")]).optional(),
-  currency: z.string().min(1),
-  bedrooms: z.coerce.number().nonnegative(),
-  bathrooms: z.coerce.number().nonnegative(),
-  parkingSpaces: z.coerce.number().nonnegative(),
-  constructionArea: z.coerce.number().nonnegative(),
-  landArea: z.coerce.number().nonnegative(),
-  furnished: z.boolean().optional(),
-  petsAllowed: z.boolean().optional(),
-  depositRequired: z.boolean().optional(),
-  amenities: z.string(),
-  status: z.string().min(1),
-  marketStatus: z.string().min(1),
-  province: z.string().min(2),
-  canton: z.string().min(2),
-  district: z.string().min(2),
-  neighborhood: z.string(),
-  exactAddress: z.string(),
-  addressText: z.string(),
-  sellerName: z.string(),
-  sellerPhone: z.string(),
-  sellerEmail: z.string(),
-  sellerRole: z.string(),
-  videoUrls: z.string(),
-  hideExactLocation: z.boolean().optional(),
-  privateRoom: z.boolean().optional(),
-  privateBathroom: z.boolean().optional(),
-  utilitiesIncluded: z.boolean().optional(),
-  studentFriendly: z.boolean().optional(),
-  availableRooms: z.coerce.number().nonnegative(),
-  currentRoommates: z.coerce.number().nonnegative(),
-  maxRoommates: z.coerce.number().nonnegative(),
-  genderPreference: z.string(),
-  sharedAreas: z.string(),
-  lat: z.coerce.number(),
-  lng: z.coerce.number()
-});
+const numberField = (fallback = 0) =>
+  z.preprocess(
+    (value) => {
+      if (value === "" || value === null || value === undefined || Number.isNaN(value)) {
+        return fallback;
+      }
+
+      return value;
+    },
+    z.coerce.number().nonnegative()
+  );
+
+const optionalNumberField = () =>
+  z.preprocess(
+    (value) => {
+      if (value === "" || value === null || value === undefined || Number.isNaN(value)) {
+        return undefined;
+      }
+
+      return value;
+    },
+    z.coerce.number().nonnegative().optional()
+  );
+
+const createPropertyFormSchema = (copy) =>
+  z.object({
+    title: z.string().min(10, copy.validationTitleMin),
+    description: z.string().min(10, copy.validationDescriptionMin),
+    businessType: z.string().min(1, copy.validationRequired),
+    rentalArrangement: z.string().optional(),
+    propertyType: z.string().min(1, copy.validationRequired),
+    price: numberField(),
+    finalPrice: optionalNumberField(),
+    currency: z.string().min(1, copy.validationRequired),
+    bedrooms: numberField(),
+    bathrooms: numberField(),
+    parkingSpaces: numberField(),
+    constructionArea: numberField(),
+    landArea: numberField(),
+    furnished: z.boolean().optional(),
+    petsAllowed: z.boolean().optional(),
+    depositRequired: z.boolean().optional(),
+    amenities: z.string(),
+    status: z.string().min(1, copy.validationRequired),
+    marketStatus: z.string().min(1, copy.validationRequired),
+    province: z.string().min(2, copy.validationProvince),
+    canton: z.string().min(2, copy.validationCanton),
+    district: z.string().min(2, copy.validationDistrict),
+    neighborhood: z.string(),
+    exactAddress: z.string(),
+    addressText: z.string(),
+    sellerName: z.string(),
+    sellerPhone: z.string(),
+    sellerEmail: z.string(),
+    sellerRole: z.string(),
+    videoUrls: z.string(),
+    hideExactLocation: z.boolean().optional(),
+    privateRoom: z.boolean().optional(),
+    privateBathroom: z.boolean().optional(),
+    utilitiesIncluded: z.boolean().optional(),
+    studentFriendly: z.boolean().optional(),
+    availableRooms: numberField(),
+    currentRoommates: numberField(),
+    maxRoommates: numberField(),
+    genderPreference: z.string(),
+    sharedAreas: z.string(),
+    lat: z.coerce.number({
+      required_error: copy.validationCoordinates,
+      invalid_type_error: copy.validationCoordinates
+    }),
+    lng: z.coerce.number({
+      required_error: copy.validationCoordinates,
+      invalid_type_error: copy.validationCoordinates
+    })
+  });
 
 const findFirstMessage = (value) => {
   if (!value) {
@@ -163,6 +195,262 @@ const toDefaultValues = (property) => ({
 
 export function PropertyForm({ property, propertyId }) {
   const router = useRouter();
+  const { language } = useLanguage();
+  const isEnglish = language === "en";
+  const copy = useMemo(
+    () =>
+      isEnglish
+        ? {
+            newProperty: "New property",
+            editProperty: "Edit",
+            createProperty: "Create a listing",
+            updateProperty: "Update your listing",
+            saveProperty: "Save property",
+            saveChanges: "Save changes",
+            saving: "Saving...",
+            title: "Title",
+            price: "Price",
+            finalPrice: "Final price",
+            description: "Description",
+            business: "Business",
+            rentalArrangement: "Rental arrangement",
+            propertyType: "Property type",
+            currency: "Currency",
+            status: "Status",
+            marketStatus: "Market status",
+            features: "Features",
+            bedrooms: "Bedrooms",
+            bathrooms: "Bathrooms",
+            parkingSpaces: "Parking spaces",
+            constructionArea: "Construction area",
+            landArea: "Land area",
+            furnished: "Furnished",
+            petsAllowedRent: "Pets allowed",
+            petsAllowedSale: "Pets allowed",
+            depositRequired: "Deposit required",
+            hideExactLocation: "Hide exact location",
+            amenities: "Amenities",
+            amenitiesHint: "Separate each amenity with a comma.",
+            roommateTitle: "Roommates / shared rental",
+            roommateDescription:
+              "Use this section for rooms, shared rentals, or student/professional co-living spaces.",
+            availableRooms: "Available rooms",
+            currentRoommates: "Current roommates",
+            maxRoommates: "Max roommates",
+            genderPreference: "Preference",
+            privateRoom: "Private room",
+            privateBathroom: "Private bathroom",
+            utilitiesIncluded: "Utilities included",
+            studentFriendly: "Student friendly",
+            sharedAreas: "Shared areas",
+            location: "Location",
+            locationDescription:
+              "Use coordinates so the property appears on the map, nearby searches, and polygons.",
+            locationHelp:
+              "You can get latitude and longitude in Google Maps: open the map, right-click the point, and copy the coordinates shown below.",
+            openGoogleMaps: "Open Google Maps",
+            viewCurrentCoordinates: "View current coordinates",
+            useMyLocation: "Use my location",
+            province: "Province",
+            canton: "Canton",
+            district: "District",
+            latitude: "Latitude",
+            longitude: "Longitude",
+            neighborhood: "Neighborhood or area",
+            exactAddress: "Exact address",
+            addressText: "Visible location text",
+            sellerInfo: "Seller information",
+            sellerName: "Name",
+            sellerPhone: "Phone",
+            sellerEmail: "Email",
+            sellerRole: "Visible role",
+            photos: "Photos",
+            photosHelp:
+              "Upload multiple images and choose a primary one for cards and property detail.",
+            photosSaveHint:
+              "Uploading images does not save the property by itself. After uploading them, use Save property.",
+            uploadImages: "Upload images",
+            uploading: "Uploading...",
+            noPhotos:
+              "You can publish without photos, but the experience improves a lot when you add several.",
+            primary: "Primary",
+            makePrimary: "Set as primary",
+            remove: "Remove",
+            videos: "Videos",
+            videosHint:
+              "The schema already supports multimedia. Real video upload only needs external storage.",
+            finalSaveTitle: "Save changes",
+            finalSaveDescription:
+              "Use this final button to save the property after reviewing photos, location, and details.",
+            feedbackUploadSuccess:
+              "Photos uploaded successfully. Now click Save property to persist the changes.",
+            feedbackLocationSuccess:
+              "Location detected successfully. You can now save your property.",
+            feedbackLocationError: "Your current location could not be obtained.",
+            feedbackCreateSuccess: "Listing created successfully. Redirecting...",
+            feedbackUpdateSuccess: "Listing updated successfully. Redirecting...",
+            dashboardFlashCreate:
+              "Your listing was saved successfully and already appears in your dashboard.",
+            dashboardFlashUpdate: "Your listing was updated successfully.",
+            feedbackPermission:
+              "Your account needs publishing permissions. If you signed in with another profile, sign in again as owner, agent, or admin.",
+            feedbackSaveError: "The property could not be saved.",
+            feedbackUploadError: "The images could not be uploaded.",
+            invalidNumber: "One of the numeric fields is invalid or empty.",
+            validationRequired: "Please complete this field.",
+            validationTitleMin: "Enter at least 10 characters for the title.",
+            validationDescriptionMin: "Write at least 10 characters in the description.",
+            validationProvince: "Select a province.",
+            validationCanton: "Select a canton.",
+            validationDistrict: "Select a district.",
+            validationCoordinates: "Enter valid latitude and longitude coordinates.",
+            selectCanton: "Select canton",
+            selectDistrict: "Select district",
+            firstProvince: "Choose province first",
+            firstCanton: "Choose canton first"
+          }
+        : {
+            newProperty: "Nueva propiedad",
+            editProperty: "Editar",
+            createProperty: "Crea una publicacion",
+            updateProperty: "Actualiza tu publicacion",
+            saveProperty: "Guardar propiedad",
+            saveChanges: "Guardar cambios",
+            saving: "Guardando...",
+            title: "Titulo",
+            price: "Precio",
+            finalPrice: "Precio final",
+            description: "Descripcion",
+            business: "Negocio",
+            rentalArrangement: "Modalidad de renta",
+            propertyType: "Tipo de propiedad",
+            currency: "Moneda",
+            status: "Estado",
+            marketStatus: "Estado de mercado",
+            features: "Caracteristicas",
+            bedrooms: "Habitaciones",
+            bathrooms: "Banos",
+            parkingSpaces: "Parqueos",
+            constructionArea: "Area construccion",
+            landArea: "Area terreno",
+            furnished: "Amueblado",
+            petsAllowedRent: "Acepta mascotas",
+            petsAllowedSale: "Mascotas permitidas",
+            depositRequired: "Requiere deposito",
+            hideExactLocation: "Ocultar ubicacion exacta",
+            amenities: "Amenidades",
+            amenitiesHint: "Separa cada amenidad con coma.",
+            roommateTitle: "Roomies / alquiler compartido",
+            roommateDescription:
+              "Usa esta seccion para publicar cuartos, alquileres compartidos o espacios comunes para estudiantes y profesionales.",
+            availableRooms: "Cuartos disponibles",
+            currentRoommates: "Roomies actuales",
+            maxRoommates: "Maximo de roomies",
+            genderPreference: "Preferencia",
+            privateRoom: "Cuarto privado",
+            privateBathroom: "Bano privado",
+            utilitiesIncluded: "Servicios incluidos",
+            studentFriendly: "Apto para estudiantes",
+            sharedAreas: "Areas compartidas",
+            location: "Ubicacion",
+            locationDescription:
+              "Usa coordenadas para que la propiedad aparezca en mapa, busquedas cercanas y poligonos.",
+            locationHelp:
+              "Puedes obtener latitud y longitud en Google Maps: abre el mapa, haz clic derecho sobre el punto y copia las coordenadas que aparecen abajo.",
+            openGoogleMaps: "Abrir Google Maps",
+            viewCurrentCoordinates: "Ver coordenadas actuales",
+            useMyLocation: "Usar mi ubicacion",
+            province: "Provincia",
+            canton: "Canton",
+            district: "Distrito",
+            latitude: "Latitud",
+            longitude: "Longitud",
+            neighborhood: "Barrio o zona",
+            exactAddress: "Direccion exacta",
+            addressText: "Ubicacion textual para mostrar",
+            sellerInfo: "Informacion del vendedor",
+            sellerName: "Nombre",
+            sellerPhone: "Telefono",
+            sellerEmail: "Correo",
+            sellerRole: "Rol visible",
+            photos: "Fotos",
+            photosHelp:
+              "Sube multiples imagenes y define una principal para cards y detalle.",
+            photosSaveHint:
+              "Subir imagenes no guarda la propiedad por si solo. Despues de cargarlas, usa Guardar propiedad.",
+            uploadImages: "Subir imagenes",
+            uploading: "Subiendo...",
+            noPhotos:
+              "Puedes publicar sin fotos, pero la experiencia mejora mucho al agregar varias.",
+            primary: "Principal",
+            makePrimary: "Hacer principal",
+            remove: "Quitar",
+            videos: "Videos",
+            videosHint:
+              "El schema ya soporta multimedia. Para upload real de video solo faltaria conectar almacenamiento externo.",
+            finalSaveTitle: "Guardar cambios",
+            finalSaveDescription:
+              "Usa este boton final para guardar la propiedad despues de revisar fotos, ubicacion y detalles.",
+            feedbackUploadSuccess:
+              "Fotos cargadas correctamente. Ahora pulsa Guardar propiedad para guardar los cambios.",
+            feedbackLocationSuccess:
+              "Ubicacion detectada correctamente. Ya puedes guardar tu propiedad.",
+            feedbackLocationError: "No se pudo obtener tu ubicacion actual.",
+            feedbackCreateSuccess: "Publicacion creada correctamente. Redirigiendo...",
+            feedbackUpdateSuccess: "Publicacion actualizada correctamente. Redirigiendo...",
+            dashboardFlashCreate:
+              "Tu publicacion se guardo correctamente y ya aparece en tu panel.",
+            dashboardFlashUpdate: "Tu publicacion se actualizo correctamente.",
+            feedbackPermission:
+              "Tu cuenta debe tener permiso para publicar. Si entraste con otro perfil, vuelve a iniciar sesion como propietario, agente o admin.",
+            feedbackSaveError: "No se pudo guardar la propiedad",
+            feedbackUploadError: "No fue posible subir las imagenes",
+            invalidNumber: "Uno de los campos numericos es invalido o esta vacio.",
+            validationRequired: "Completa este campo.",
+            validationTitleMin: "Ingresa al menos 10 caracteres en el titulo.",
+            validationDescriptionMin: "Ingresa al menos 10 caracteres en la descripcion.",
+            validationProvince: "Selecciona una provincia.",
+            validationCanton: "Selecciona un canton.",
+            validationDistrict: "Selecciona un distrito.",
+            validationCoordinates: "Ingresa coordenadas validas para latitud y longitud.",
+            selectCanton: "Selecciona canton",
+            selectDistrict: "Selecciona distrito",
+            firstProvince: "Primero provincia",
+            firstCanton: "Primero canton"
+          },
+    [isEnglish]
+  );
+  const optionLabelMap = useMemo(
+    () =>
+      isEnglish
+        ? {
+            sale: "Sale",
+            rent: "Rent",
+            house: "House",
+            apartment: "Apartment",
+            condominium: "Condominium",
+            lot: "Lot / Land",
+            room: "Room",
+            commercial: "Commercial",
+            draft: "Draft",
+            published: "Published",
+            paused: "Paused",
+            sold: "Sold",
+            rented: "Rented",
+            available: "Available",
+            reserved: "Reserved",
+            inactive: "Inactive",
+            "full-property": "Entire property",
+            roommate: "Roommates / shared rental",
+            any: "No preference",
+            "female-only": "Women only",
+            "male-only": "Men only"
+          }
+        : {},
+    [isEnglish]
+  );
+  const getOptionLabel = (item) => optionLabelMap[item.value] || item.label;
+  const propertyFormSchema = useMemo(() => createPropertyFormSchema(copy), [copy]);
   const [photos, setPhotos] = useState(property?.photos || []);
   const [feedback, setFeedback] = useState("");
   const [feedbackTone, setFeedbackTone] = useState("info");
@@ -251,11 +539,11 @@ export function PropertyForm({ property, propertyId }) {
 
       setPhotos(nextPhotos);
       setFeedbackTone("info");
-      setFeedback("Fotos cargadas correctamente. Ahora pulsa Guardar propiedad para guardar los cambios.");
+      setFeedback(copy.feedbackUploadSuccess);
     } catch (error) {
       const firstDetail = findFirstMessage(error.response?.data?.details);
       setFeedbackTone("error");
-      setFeedback(firstDetail || error.response?.data?.message || "No fue posible subir las imagenes");
+      setFeedback(firstDetail || error.response?.data?.message || copy.feedbackUploadError);
     } finally {
       setIsUploading(false);
       event.target.value = "";
@@ -289,11 +577,11 @@ export function PropertyForm({ property, propertyId }) {
         setValue("lat", Number(position.coords.latitude.toFixed(6)));
         setValue("lng", Number(position.coords.longitude.toFixed(6)));
         setFeedbackTone("success");
-        setFeedback("Ubicacion detectada correctamente. Ya puedes guardar tu propiedad.");
+        setFeedback(copy.feedbackLocationSuccess);
       },
       () => {
         setFeedbackTone("error");
-        setFeedback("No se pudo obtener tu ubicacion actual.");
+        setFeedback(copy.feedbackLocationError);
       }
     );
   };
@@ -318,15 +606,15 @@ export function PropertyForm({ property, propertyId }) {
         window.sessionStorage.setItem(
           "alquiventascr-property-flash",
           propertyId
-            ? "Tu publicacion se actualizo correctamente."
-            : "Tu publicacion se guardo correctamente y ya aparece en tu panel."
+            ? copy.dashboardFlashUpdate
+            : copy.dashboardFlashCreate
         );
       }
 
       setFeedback(
         propertyId
-          ? "Publicacion actualizada correctamente. Redirigiendo..."
-          : "Publicacion creada correctamente. Redirigiendo..."
+          ? copy.feedbackUpdateSuccess
+          : copy.feedbackCreateSuccess
       );
       setFeedbackTone("success");
 
@@ -336,17 +624,19 @@ export function PropertyForm({ property, propertyId }) {
       }, 700);
     } catch (error) {
       const firstDetail = findFirstMessage(error.response?.data?.details);
+      const normalizedDetail =
+        firstDetail === "Expected number, received null" ? copy.invalidNumber : firstDetail;
       const permissionMessage =
         error.response?.status === 403
-          ? "Tu cuenta debe tener permiso para publicar. Si entraste con otro perfil, vuelve a iniciar sesion como propietario, agente o admin."
+          ? copy.feedbackPermission
           : null;
 
       setFeedbackTone("error");
       setFeedback(
-        firstDetail ||
+        normalizedDetail ||
           permissionMessage ||
           error.response?.data?.message ||
-          "No se pudo guardar la propiedad"
+          copy.feedbackSaveError
       );
     }
   };
@@ -354,7 +644,11 @@ export function PropertyForm({ property, propertyId }) {
   const onInvalid = (formErrors) => {
     const firstMessage = findFirstMessage(formErrors);
     setFeedbackTone("error");
-    setFeedback(firstMessage || "Revisa los campos obligatorios antes de guardar.");
+    setFeedback(
+      firstMessage === "Expected number, received null"
+        ? copy.invalidNumber
+        : firstMessage || copy.validationRequired
+    );
   };
 
   const feedbackClassName =
@@ -369,13 +663,13 @@ export function PropertyForm({ property, propertyId }) {
       <section className="surface space-y-5 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <span className="eyebrow">{propertyId ? "Editar" : "Nueva propiedad"}</span>
+            <span className="eyebrow">{propertyId ? copy.editProperty : copy.newProperty}</span>
             <h1 className="mt-4 font-serif text-4xl font-semibold">
-              {propertyId ? "Actualiza tu publicacion" : "Crea una publicacion"}
+              {propertyId ? copy.updateProperty : copy.createProperty}
             </h1>
           </div>
           <Button type="submit" disabled={isSubmitting || isUploading}>
-            {isSubmitting ? "Guardando..." : "Guardar propiedad"}
+            {isSubmitting ? copy.saving : copy.saveProperty}
           </Button>
         </div>
 
@@ -385,25 +679,25 @@ export function PropertyForm({ property, propertyId }) {
 
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <label className="field-label">Titulo</label>
+            <label className="field-label">{copy.title}</label>
             <Input {...register("title")} />
             {errors.title ? <p className="mt-2 text-sm text-red-600">{errors.title.message}</p> : null}
           </div>
           <div className="grid gap-5 md:grid-cols-2">
             <div>
-              <label className="field-label">Precio</label>
+              <label className="field-label">{copy.price}</label>
               <Input type="number" {...register("price")} />
               {errors.price ? <p className="mt-2 text-sm text-red-600">{errors.price.message}</p> : null}
             </div>
             <div>
-              <label className="field-label">Precio final</label>
+              <label className="field-label">{copy.finalPrice}</label>
               <Input type="number" {...register("finalPrice")} />
             </div>
           </div>
         </div>
 
         <div>
-          <label className="field-label">Descripcion</label>
+          <label className="field-label">{copy.description}</label>
           <Textarea {...register("description")} />
           {errors.description ? (
             <p className="mt-2 text-sm text-red-600">{errors.description.message}</p>
@@ -412,37 +706,37 @@ export function PropertyForm({ property, propertyId }) {
 
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-6">
           <div>
-            <label className="field-label">Negocio</label>
+            <label className="field-label">{copy.business}</label>
             <Select {...register("businessType")}>
               {businessTypes.map((item) => (
                 <option key={item.value} value={item.value}>
-                  {item.label}
+                  {getOptionLabel(item)}
                 </option>
               ))}
             </Select>
           </div>
           <div>
-            <label className="field-label">Modalidad de renta</label>
+            <label className="field-label">{copy.rentalArrangement}</label>
             <Select {...register("rentalArrangement")} disabled={businessTypeValue !== "rent"}>
               {rentalArrangements.map((item) => (
                 <option key={item.value} value={item.value}>
-                  {item.label}
+                  {getOptionLabel(item)}
                 </option>
               ))}
             </Select>
           </div>
           <div>
-            <label className="field-label">Tipo de propiedad</label>
+            <label className="field-label">{copy.propertyType}</label>
             <Select {...register("propertyType")}>
               {propertyTypes.map((item) => (
                 <option key={item.value} value={item.value}>
-                  {item.label}
+                  {getOptionLabel(item)}
                 </option>
               ))}
             </Select>
           </div>
           <div>
-            <label className="field-label">Moneda</label>
+            <label className="field-label">{copy.currency}</label>
             <Select {...register("currency")}>
               {currencies.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -452,21 +746,21 @@ export function PropertyForm({ property, propertyId }) {
             </Select>
           </div>
           <div>
-            <label className="field-label">Estado</label>
+            <label className="field-label">{copy.status}</label>
             <Select {...register("status")}>
               {propertyStatuses.map((item) => (
                 <option key={item.value} value={item.value}>
-                  {item.label}
+                  {getOptionLabel(item)}
                 </option>
               ))}
             </Select>
           </div>
           <div>
-            <label className="field-label">Estado de mercado</label>
+            <label className="field-label">{copy.marketStatus}</label>
             <Select {...register("marketStatus")}>
               {marketStatuses.map((item) => (
                 <option key={item.value} value={item.value}>
-                  {item.label}
+                  {getOptionLabel(item)}
                 </option>
               ))}
             </Select>
@@ -475,90 +769,92 @@ export function PropertyForm({ property, propertyId }) {
       </section>
 
       <section className="surface space-y-5 p-6">
-        <h2 className="text-2xl font-semibold">Caracteristicas</h2>
+        <h2 className="text-2xl font-semibold">{copy.features}</h2>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           <div>
-            <label className="field-label">Habitaciones</label>
+            <label className="field-label">{copy.bedrooms}</label>
             <Input type="number" {...register("bedrooms")} />
           </div>
           <div>
-            <label className="field-label">Banos</label>
+            <label className="field-label">{copy.bathrooms}</label>
             <Input type="number" {...register("bathrooms")} />
           </div>
           <div>
-            <label className="field-label">Parqueos</label>
+            <label className="field-label">{copy.parkingSpaces}</label>
             <Input type="number" {...register("parkingSpaces")} />
           </div>
           <div>
-            <label className="field-label">Area construccion</label>
+            <label className="field-label">{copy.constructionArea}</label>
             <Input type="number" {...register("constructionArea")} />
           </div>
           <div>
-            <label className="field-label">Area terreno</label>
+            <label className="field-label">{copy.landArea}</label>
             <Input type="number" {...register("landArea")} />
           </div>
         </div>
         <div className="flex flex-wrap gap-5">
-          <Checkbox label="Amueblado" {...register("furnished")} />
+          <Checkbox label={copy.furnished} {...register("furnished")} />
           <Checkbox
-            label={businessTypeValue === "rent" ? "Acepta mascotas" : "Mascotas permitidas"}
+            label={businessTypeValue === "rent" ? copy.petsAllowedRent : copy.petsAllowedSale}
             {...register("petsAllowed")}
           />
           {businessTypeValue === "rent" ? (
-            <Checkbox label="Requiere deposito" {...register("depositRequired")} />
+            <Checkbox label={copy.depositRequired} {...register("depositRequired")} />
           ) : null}
-          <Checkbox label="Ocultar ubicacion exacta" {...register("hideExactLocation")} />
+          <Checkbox label={copy.hideExactLocation} {...register("hideExactLocation")} />
         </div>
         <div>
-          <label className="field-label">Amenidades</label>
+          <label className="field-label">{copy.amenities}</label>
           <Input
-            placeholder={`Ejemplo: ${amenitySuggestions.slice(0, 4).join(", ")}`}
+            placeholder={`${isEnglish ? "Example" : "Ejemplo"}: ${amenitySuggestions.slice(0, 4).join(", ")}`}
             {...register("amenities")}
           />
-          <p className="mt-2 text-xs text-ink/45">Separa cada amenidad con coma.</p>
+          <p className="mt-2 text-xs text-ink/45">{copy.amenitiesHint}</p>
         </div>
       </section>
 
       {showRoommateSection ? (
         <section className="surface space-y-5 p-6">
-          <h2 className="text-2xl font-semibold">Roomies / alquiler compartido</h2>
-          <p className="text-sm text-ink/60">
-            Usa esta seccion para publicar cuartos, alquileres compartidos o espacios comunes para estudiantes y profesionales.
-          </p>
+          <h2 className="text-2xl font-semibold">{copy.roommateTitle}</h2>
+          <p className="text-sm text-ink/60">{copy.roommateDescription}</p>
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label className="field-label">Cuartos disponibles</label>
+              <label className="field-label">{copy.availableRooms}</label>
               <Input type="number" {...register("availableRooms")} />
             </div>
             <div>
-              <label className="field-label">Roomies actuales</label>
+              <label className="field-label">{copy.currentRoommates}</label>
               <Input type="number" {...register("currentRoommates")} />
             </div>
             <div>
-              <label className="field-label">Maximo de roomies</label>
+              <label className="field-label">{copy.maxRoommates}</label>
               <Input type="number" {...register("maxRoommates")} />
             </div>
             <div>
-              <label className="field-label">Preferencia</label>
+              <label className="field-label">{copy.genderPreference}</label>
               <Select {...register("genderPreference")}>
                 {roommateGenderPreferences.map((item) => (
                   <option key={item.value} value={item.value}>
-                    {item.label}
+                    {getOptionLabel(item)}
                   </option>
                 ))}
               </Select>
             </div>
           </div>
           <div className="flex flex-wrap gap-5">
-            <Checkbox label="Cuarto privado" {...register("privateRoom")} />
-            <Checkbox label="Bano privado" {...register("privateBathroom")} />
-            <Checkbox label="Servicios incluidos" {...register("utilitiesIncluded")} />
-            <Checkbox label="Apto para estudiantes" {...register("studentFriendly")} />
+            <Checkbox label={copy.privateRoom} {...register("privateRoom")} />
+            <Checkbox label={copy.privateBathroom} {...register("privateBathroom")} />
+            <Checkbox label={copy.utilitiesIncluded} {...register("utilitiesIncluded")} />
+            <Checkbox label={copy.studentFriendly} {...register("studentFriendly")} />
           </div>
           <div>
-            <label className="field-label">Areas compartidas</label>
+            <label className="field-label">{copy.sharedAreas}</label>
             <Input
-              placeholder="Ejemplo: Cocina, sala, lavanderia, terraza"
+              placeholder={
+                isEnglish
+                  ? "Example: Kitchen, living room, laundry, terrace"
+                  : "Ejemplo: Cocina, sala, lavanderia, terraza"
+              }
               {...register("sharedAreas")}
             />
           </div>
@@ -568,13 +864,9 @@ export function PropertyForm({ property, propertyId }) {
       <section className="surface space-y-5 p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold">Ubicacion</h2>
-            <p className="mt-2 text-sm text-ink/60">
-              Usa coordenadas para que la propiedad aparezca en mapa, busquedas cercanas y poligonos.
-            </p>
-            <p className="mt-2 text-sm text-ink/50">
-              Puedes obtener latitud y longitud en Google Maps: abre el mapa, haz clic derecho sobre el punto y copia las coordenadas que aparecen abajo.
-            </p>
+            <h2 className="text-2xl font-semibold">{copy.location}</h2>
+            <p className="mt-2 text-sm text-ink/60">{copy.locationDescription}</p>
+            <p className="mt-2 text-sm text-ink/50">{copy.locationHelp}</p>
             <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
               <a
                 href="https://www.google.com/maps"
@@ -582,7 +874,7 @@ export function PropertyForm({ property, propertyId }) {
                 rel="noreferrer"
                 className="text-lagoon transition hover:text-terracotta"
               >
-                Abrir Google Maps
+                {copy.openGoogleMaps}
               </a>
               <a
                 href={googleMapsCoordinatesUrl}
@@ -590,7 +882,7 @@ export function PropertyForm({ property, propertyId }) {
                 rel="noreferrer"
                 className="text-lagoon transition hover:text-terracotta"
               >
-                Ver coordenadas actuales
+                {copy.viewCurrentCoordinates}
               </a>
             </div>
           </div>
@@ -600,12 +892,12 @@ export function PropertyForm({ property, propertyId }) {
             onClick={useCurrentLocation}
           >
             <MapPinned className="mr-2 h-4 w-4" />
-            Usar mi ubicacion
+            {copy.useMyLocation}
           </Button>
         </div>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           <div>
-            <label className="field-label">Provincia</label>
+            <label className="field-label">{copy.province}</label>
             <Select
               {...register("province")}
               onChange={(event) => {
@@ -622,7 +914,7 @@ export function PropertyForm({ property, propertyId }) {
             </Select>
           </div>
           <div>
-            <label className="field-label">Canton</label>
+            <label className="field-label">{copy.canton}</label>
             <Select
               {...register("canton")}
               disabled={!provinceValue}
@@ -631,7 +923,7 @@ export function PropertyForm({ property, propertyId }) {
                 setValue("district", "", { shouldValidate: true, shouldDirty: true });
               }}
             >
-              <option value="">{provinceValue ? "Selecciona canton" : "Primero provincia"}</option>
+              <option value="">{provinceValue ? copy.selectCanton : copy.firstProvince}</option>
               {cantonOptions.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -641,10 +933,10 @@ export function PropertyForm({ property, propertyId }) {
             {errors.canton ? <p className="mt-2 text-sm text-red-600">{errors.canton.message}</p> : null}
           </div>
           <div>
-            <label className="field-label">Distrito</label>
+            <label className="field-label">{copy.district}</label>
             <Select {...register("district")} disabled={!provinceValue || !cantonValue}>
               <option value="">
-                {provinceValue && cantonValue ? "Selecciona distrito" : "Primero canton"}
+                {provinceValue && cantonValue ? copy.selectDistrict : copy.firstCanton}
               </option>
               {districtOptions.map((item) => (
                 <option key={item} value={item}>
@@ -655,47 +947,47 @@ export function PropertyForm({ property, propertyId }) {
             {errors.district ? <p className="mt-2 text-sm text-red-600">{errors.district.message}</p> : null}
           </div>
           <div>
-            <label className="field-label">Latitud</label>
+            <label className="field-label">{copy.latitude}</label>
             <Input type="number" step="0.000001" {...register("lat")} />
           </div>
           <div>
-            <label className="field-label">Longitud</label>
+            <label className="field-label">{copy.longitude}</label>
             <Input type="number" step="0.000001" {...register("lng")} />
           </div>
         </div>
         <div className="grid gap-5 md:grid-cols-2">
           <div>
-            <label className="field-label">Barrio o zona</label>
+            <label className="field-label">{copy.neighborhood}</label>
             <Input {...register("neighborhood")} />
           </div>
           <div>
-            <label className="field-label">Direccion exacta</label>
+            <label className="field-label">{copy.exactAddress}</label>
             <Input {...register("exactAddress")} />
           </div>
         </div>
         <div>
-          <label className="field-label">Ubicacion textual para mostrar</label>
+          <label className="field-label">{copy.addressText}</label>
           <Input {...register("addressText")} />
         </div>
       </section>
 
       <section className="surface space-y-5 p-6">
-        <h2 className="text-2xl font-semibold">Seller info</h2>
+        <h2 className="text-2xl font-semibold">{copy.sellerInfo}</h2>
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           <div>
-            <label className="field-label">Nombre</label>
+            <label className="field-label">{copy.sellerName}</label>
             <Input {...register("sellerName")} />
           </div>
           <div>
-            <label className="field-label">Telefono</label>
+            <label className="field-label">{copy.sellerPhone}</label>
             <Input {...register("sellerPhone")} />
           </div>
           <div>
-            <label className="field-label">Correo</label>
+            <label className="field-label">{copy.sellerEmail}</label>
             <Input {...register("sellerEmail")} />
           </div>
           <div>
-            <label className="field-label">Rol visible</label>
+            <label className="field-label">{copy.sellerRole}</label>
             <Input {...register("sellerRole")} />
           </div>
         </div>
@@ -704,16 +996,12 @@ export function PropertyForm({ property, propertyId }) {
       <section className="surface space-y-5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold">Fotos</h2>
-            <p className="mt-2 text-sm text-ink/60">
-              Sube multiples imagenes y define una principal para cards y detalle.
-            </p>
-            <p className="mt-2 text-xs text-ink/45">
-              Subir imagenes no guarda la propiedad por si solo. Despues de cargarlas, usa Guardar propiedad.
-            </p>
+            <h2 className="text-2xl font-semibold">{copy.photos}</h2>
+            <p className="mt-2 text-sm text-ink/60">{copy.photosHelp}</p>
+            <p className="mt-2 text-xs text-ink/45">{copy.photosSaveHint}</p>
           </div>
           <label className="inline-flex cursor-pointer items-center rounded-2xl bg-ink px-4 py-3 text-sm font-semibold text-white">
-            {isUploading ? "Subiendo..." : "Subir imagenes"}
+            {isUploading ? copy.uploading : copy.uploadImages}
             <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
           </label>
         </div>
@@ -739,39 +1027,37 @@ export function PropertyForm({ property, propertyId }) {
                     className="flex-1"
                     onClick={() => markAsPrimary(index)}
                   >
-                    {photo.isPrimary ? "Principal" : "Hacer principal"}
+                    {photo.isPrimary ? copy.primary : copy.makePrimary}
                   </Button>
                   <Button variant="ghost" onClick={() => removePhoto(index)}>
-                    Quitar
+                    {copy.remove}
                   </Button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-ink/60">
-            Puedes publicar sin fotos, pero la experiencia mejora mucho al agregar varias.
-          </p>
+          <p className="text-sm text-ink/60">{copy.noPhotos}</p>
         )}
 
         <div className="border-t border-ink/10 pt-5">
-          <label className="field-label">Videos</label>
+          <label className="field-label">{copy.videos}</label>
           <Textarea
-            placeholder="Pega una URL de video por linea. Ejemplo: https://..."
+            placeholder={
+              isEnglish
+                ? "Paste one video URL per line. Example: https://..."
+                : "Pega una URL de video por linea. Ejemplo: https://..."
+            }
             {...register("videoUrls")}
           />
-          <p className="mt-2 text-xs text-ink/45">
-            El schema ya soporta multimedia. Para upload real de video solo faltaria conectar almacenamiento externo.
-          </p>
+          <p className="mt-2 text-xs text-ink/45">{copy.videosHint}</p>
         </div>
       </section>
 
       <section className="surface flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
-          <h2 className="text-xl font-semibold">Guardar cambios</h2>
-          <p className="mt-2 text-sm text-ink/60">
-            Usa este boton final para guardar la propiedad despues de revisar fotos, ubicacion y detalles.
-          </p>
+          <h2 className="text-xl font-semibold">{copy.finalSaveTitle}</h2>
+          <p className="mt-2 text-sm text-ink/60">{copy.finalSaveDescription}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button
@@ -780,7 +1066,7 @@ export function PropertyForm({ property, propertyId }) {
             disabled={isSubmitting || isUploading}
           >
             <CheckCircle2 className="mr-2 h-4 w-4" />
-            {isSubmitting ? "Guardando..." : propertyId ? "Guardar cambios" : "Guardar propiedad"}
+            {isSubmitting ? copy.saving : propertyId ? copy.saveChanges : copy.saveProperty}
           </Button>
         </div>
       </section>
