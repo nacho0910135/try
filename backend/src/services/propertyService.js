@@ -379,7 +379,8 @@ export const propertyService = {
       throw new ApiError(404, "Property not found");
     }
 
-    const canView = property.isApproved && property.status === "published";
+    const canView =
+      property.isApproved && ["published", "sold", "rented"].includes(property.status);
 
     if (!canView && !isOwnerOrAdmin(property, user)) {
       throw new ApiError(404, "Property not found");
@@ -505,7 +506,16 @@ export const propertyService = {
       throw new ApiError(403, "You do not have access to this property");
     }
 
-    property.status = status;
+    if (status === "sold") {
+      property.status = "published";
+      property.marketStatus = "sold";
+    } else if (status === "rented") {
+      property.status = "published";
+      property.marketStatus = "rented";
+    } else {
+      property.status = status;
+    }
+
     makePropertyPublicWhenPublished(property, user);
 
     if (status === "published" && property.isApproved && !property.publishedAt) {

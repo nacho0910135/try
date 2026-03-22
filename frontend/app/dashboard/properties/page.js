@@ -22,6 +22,7 @@ export default function DashboardPropertiesPage() {
   const [loading, setLoading] = useState(true);
   const [flashMessage, setFlashMessage] = useState("");
   const [savingPropertyId, setSavingPropertyId] = useState("");
+  const [rowFeedback, setRowFeedback] = useState({});
 
   const loadProperties = async () => {
     try {
@@ -33,8 +34,18 @@ export default function DashboardPropertiesPage() {
           nextItems.map((item) => [
             item._id,
             {
-              status: item.status || "draft",
-              marketStatus: item.marketStatus || "available"
+              status:
+                item.status === "sold" || item.status === "rented"
+                  ? "published"
+                  : item.status || "draft",
+              marketStatus:
+                item.marketStatus && item.marketStatus !== "available"
+                  ? item.marketStatus
+                  : item.status === "sold"
+                    ? "sold"
+                    : item.status === "rented"
+                      ? "rented"
+                      : item.marketStatus || "available"
             }
           ])
         )
@@ -95,11 +106,26 @@ export default function DashboardPropertiesPage() {
         marketStatus: draft.marketStatus
       });
       setFlashMessage("El estado de la propiedad se actualizo correctamente.");
+      setRowFeedback((current) => ({
+        ...current,
+        [propertyId]: {
+          tone: "success",
+          message: "Estado guardado correctamente."
+        }
+      }));
       await loadProperties();
     } catch (error) {
       setFlashMessage(
         error.response?.data?.message || "No se pudo actualizar el estado de la propiedad."
       );
+      setRowFeedback((current) => ({
+        ...current,
+        [propertyId]: {
+          tone: "error",
+          message:
+            error.response?.data?.message || "No se pudo actualizar el estado."
+        }
+      }));
     } finally {
       setSavingPropertyId("");
     }
@@ -218,6 +244,17 @@ export default function DashboardPropertiesPage() {
                       Eliminar
                     </Button>
                   </div>
+                  {rowFeedback[item._id] ? (
+                    <p
+                      className={`mt-2 text-xs font-medium ${
+                        rowFeedback[item._id].tone === "success"
+                          ? "text-pine"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {rowFeedback[item._id].message}
+                    </p>
+                  ) : null}
                 </td>
               </tr>
             ))}

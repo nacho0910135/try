@@ -177,6 +177,7 @@ export const costaRicaLocations = {
   },
   Puntarenas: {
     Puntarenas: ["Puntarenas", "Pitahaya", "Chomes", "Lepanto", "Paquera", "Manzanillo", "Guacimal", "Barranca", "Cobano", "Chacarita", "Chira", "Acapulco", "El Roble", "Arancibia"],
+    Cobano: ["Cobano"],
     Esparza: ["Espiritu Santo", "San Juan Grande", "Macacona", "San Rafael", "San Jeronimo", "Caldera"],
     "Buenos Aires": ["Buenos Aires", "Volcan", "Potrero Grande", "Boruca", "Pilas", "Colinas", "Changuena", "Biolley", "Brunka"],
     "Montes de Oro": ["Miramar", "Union", "San Isidro"],

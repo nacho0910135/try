@@ -102,24 +102,24 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
   };
 
   return (
-    <div className="surface overflow-hidden p-4">
+    <div className="surface overflow-hidden p-3">
       <div className="overflow-hidden rounded-[30px] border border-white/80 bg-[#c3e6f0] shadow-soft">
-        <div className="border-b border-white/60 bg-white/55 px-5 py-4 backdrop-blur">
+        <div className="border-b border-white/60 bg-white/55 px-4 py-3 backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.28em] text-lagoon/75">
                 Atlas interactivo
               </div>
-              <div className="mt-2 text-2xl font-semibold text-ink">Costa Rica por provincia</div>
+              <div className="mt-1 text-xl font-semibold text-ink sm:text-2xl">Costa Rica por provincia</div>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-xs font-semibold text-ink/70">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[11px] font-semibold text-ink/70 sm:text-xs">
               <MapPinned className="h-4 w-4 text-terracotta" />
               Toca una provincia para explorarla
             </div>
           </div>
         </div>
 
-        <div className="relative overflow-hidden bg-[radial-gradient(circle_at_24%_28%,rgba(255,255,255,0.45),transparent_18%),radial-gradient(circle_at_76%_22%,rgba(255,255,255,0.3),transparent_16%),linear-gradient(180deg,#a5d9e8_0%,#9ed2e3_48%,#98cfe0_100%)] px-4 pb-4 pt-2">
+        <div className="relative overflow-hidden bg-[radial-gradient(circle_at_24%_28%,rgba(255,255,255,0.45),transparent_18%),radial-gradient(circle_at_76%_22%,rgba(255,255,255,0.3),transparent_16%),linear-gradient(180deg,#a5d9e8_0%,#9ed2e3_48%,#98cfe0_100%)] px-3 pb-3 pt-2">
           <div className="absolute inset-0 opacity-60">
             <div className="absolute inset-x-12 top-5 h-16 rounded-full bg-white/15 blur-2xl" />
             <div className="absolute -left-10 bottom-8 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
@@ -158,7 +158,7 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
                 onSelectProvince?.(provinceName);
                 router.push(`/search?province=${encodeURIComponent(provinceName)}`);
               }}
-              style={{ width: "100%", minHeight: 640 }}
+              style={{ width: "100%", minHeight: 760 }}
             >
               <NavigationControl position="top-right" />
               {interactiveProvinceGeoJson ? (
@@ -170,20 +170,20 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
             </Map>
           </div>
 
-          <div className="relative z-10 mt-4 grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-            <div className="rounded-[26px] bg-white/80 px-5 py-4 shadow-soft backdrop-blur">
+          <div className="relative z-10 mt-3 grid gap-3 lg:grid-cols-[1.15fr_auto] lg:items-end">
+            <div className="rounded-[26px] bg-white/80 px-4 py-3 shadow-soft backdrop-blur">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-lagoon/75">
                 Provincia activa
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-3">
-                <h3 className="text-2xl font-semibold text-ink">{focusProvince.name}</h3>
+                <h3 className="text-xl font-semibold text-ink sm:text-2xl">{focusProvince.name}</h3>
                 <span className="inline-flex items-center gap-2 rounded-full bg-mist px-3 py-1.5 text-xs font-semibold text-ink/70">
                   <Sparkles className="h-3.5 w-3.5 text-terracotta" />
                   Exploracion visual
                 </span>
               </div>
-              <p className="mt-3 text-sm leading-7 text-ink/68">{focusProvince.blurb}</p>
-              <p className="mt-2 text-sm font-medium text-ink/55">{focusProvince.spotlight}</p>
+              <p className="mt-2 text-sm leading-6 text-ink/68">{focusProvince.blurb}</p>
+              <p className="mt-1.5 text-sm font-medium text-ink/55">{focusProvince.spotlight}</p>
             </div>
 
             <div className="flex flex-wrap justify-end gap-2">

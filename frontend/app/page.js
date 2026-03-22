@@ -42,20 +42,20 @@ export default function HomePage() {
   return (
     <div className="section-pad">
       <section className="app-shell">
-        <div className="surface overflow-hidden bg-hero-grid p-8 sm:p-12 lg:p-16">
-          <div className="grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-            <div>
-              <BrandLogo className="mb-6" />
+        <div className="surface overflow-hidden bg-hero-grid p-6 sm:p-10 lg:p-12">
+          <div className="grid gap-8 lg:grid-cols-[0.62fr_1.38fr] lg:items-start">
+            <div className="max-w-2xl">
+              <BrandLogo className="mb-5" />
               <span className="eyebrow">Mapa protagonista</span>
-              <h1 className="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.05] sm:text-6xl">
+              <h1 className="mt-4 max-w-3xl font-serif text-4xl font-semibold leading-[1.06] sm:text-5xl">
                 Descubre oportunidades desde la geografía, no desde un listado genérico.
               </h1>
-              <p className="mt-6 max-w-2xl text-lg text-ink/70">
+              <p className="mt-4 max-w-xl text-base leading-7 text-ink/68">
                 Selecciona una provincia, entra al territorio y usa el mapa como la pieza central de exploración para venta, renta y lotes en Costa Rica.
               </p>
 
-              <div className="mt-8 grid gap-5 lg:grid-cols-[1fr_auto]">
-                <div className="surface space-y-4 p-5">
+              <div className="mt-7 grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
+                <div className="surface space-y-3 p-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <label className="field-label">Busca por zona o estilo</label>
@@ -86,12 +86,12 @@ export default function HomePage() {
                     </Button>
                   </Link>
                 </div>
-                <div className="surface p-5">
+                <div className="surface p-4">
                   <div className="text-sm uppercase tracking-[0.18em] text-ink/40">
                     Provincia activa
                   </div>
-                  <div className="mt-3 text-2xl font-semibold">{selectedProvinceMeta?.name}</div>
-                  <p className="mt-3 text-sm leading-7 text-ink/65">
+                  <div className="mt-2 text-xl font-semibold">{selectedProvinceMeta?.name}</div>
+                  <p className="mt-2 text-sm leading-6 text-ink/65">
                     {selectedProvinceMeta?.blurb}
                   </p>
                 </div>
@@ -104,21 +104,21 @@ export default function HomePage() {
             />
           </div>
 
-          <div className="mt-12 grid gap-4 md:grid-cols-3">
-            <div className="surface p-5">
-              <MapPinned className="h-6 w-6 text-terracotta" />
-              <h3 className="mt-4 text-lg font-semibold">Mapa interactivo</h3>
-              <p className="mt-2 text-sm text-ink/60">Bounds, dibujo de zonas y busqueda por coordenadas.</p>
+          <div className="mt-8 grid gap-3 md:grid-cols-3">
+            <div className="surface p-4">
+              <MapPinned className="h-5 w-5 text-terracotta" />
+              <h3 className="mt-3 text-base font-semibold">Mapa interactivo</h3>
+              <p className="mt-1 text-sm leading-6 text-ink/60">Bounds, dibujo de zonas y busqueda por coordenadas.</p>
             </div>
-            <div className="surface p-5">
-              <Compass className="h-6 w-6 text-lagoon" />
-              <h3 className="mt-4 text-lg font-semibold">Busqueda local</h3>
-              <p className="mt-2 text-sm text-ink/60">Provincia, canton, distrito, barrio y cerca de mi.</p>
+            <div className="surface p-4">
+              <Compass className="h-5 w-5 text-lagoon" />
+              <h3 className="mt-3 text-base font-semibold">Busqueda local</h3>
+              <p className="mt-1 text-sm leading-6 text-ink/60">Provincia, canton, distrito, barrio y cerca de mi.</p>
             </div>
-            <div className="surface p-5">
-              <ArrowRight className="h-6 w-6 text-pine" />
-              <h3 className="mt-4 text-lg font-semibold">Publicacion simple</h3>
-              <p className="mt-2 text-sm text-ink/60">Dashboard para agentes, propietarios y moderacion admin.</p>
+            <div className="surface p-4">
+              <ArrowRight className="h-5 w-5 text-pine" />
+              <h3 className="mt-3 text-base font-semibold">Publicacion simple</h3>
+              <p className="mt-1 text-sm leading-6 text-ink/60">Dashboard para agentes, propietarios y moderacion admin.</p>
             </div>
           </div>
 

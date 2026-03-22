@@ -463,6 +463,16 @@ propertySchema.pre("save", function syncDerivedFields(next) {
     this.serviceDistances = undefined;
   }
 
+  if (this.status === "sold") {
+    this.marketStatus = "sold";
+    this.status = "published";
+  }
+
+  if (this.status === "rented") {
+    this.marketStatus = "rented";
+    this.status = "published";
+  }
+
   if (this.businessType !== "rent") {
     this.rentalArrangement = "full-property";
     this.depositRequired = false;
