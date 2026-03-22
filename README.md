@@ -34,6 +34,8 @@ Se eligio Next.js sobre React + Vite porque encaja bien con un frontend de produ
 - Dashboard para agente/propietario
 - Panel admin con metricas, usuarios, moderacion e inteligencia de mercado base
 - Pestaña `Analisis Interactivo` con dashboards, proyecciones heuristicas y chat protegido
+- Rutas SEO por provincia, canton y distrito bajo `/zona/...`
+- Deteccion interna de posibles duplicados y contenido sospechoso
 - Seed con propiedades de ejemplo de Costa Rica
 
 ## Lo que no incluye
@@ -102,6 +104,7 @@ Copia `frontend/.env.example` a `frontend/.env.local`.
 Variables principales:
 
 - `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_MAPBOX_TOKEN`
 - `NEXT_PUBLIC_MAPBOX_STYLE`
 
@@ -226,6 +229,7 @@ Rutas destacadas:
 - `GET /api/properties`
 - `GET /api/properties/featured`
 - `GET /api/properties/slug/:slug`
+- `GET /api/properties/seo/zone`
 - `POST /api/properties`
 - `PATCH /api/properties/:propertyId`
 - `GET /api/favorites`

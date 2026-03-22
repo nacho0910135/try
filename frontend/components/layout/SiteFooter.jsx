@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useLanguage } from "./LanguageProvider";
 import { BrandLogo } from "./BrandLogo";
+import { buildZonePath, getProvinces } from "@/lib/zone-seo";
 
 export function SiteFooter() {
   const { t } = useLanguage();
+  const provinceLinks = getProvinces().slice(0, 7);
 
   return (
     <footer className="border-t border-ink/10 bg-white/70">
@@ -37,6 +39,17 @@ export function SiteFooter() {
             {t("footer.coverage")}
           </h4>
           <p className="mt-4 text-sm text-ink/70">{t("footer.coverageText")}</p>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-ink/70">
+            {provinceLinks.map((province) => (
+              <Link
+                key={province}
+                href={buildZonePath({ province })}
+                className="rounded-full bg-mist px-3 py-1.5 font-semibold transition hover:text-pine"
+              >
+                {province}
+              </Link>
+            ))}
+          </div>
         </div>
         <div>
           <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">

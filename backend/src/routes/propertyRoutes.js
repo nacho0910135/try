@@ -4,6 +4,7 @@ import {
   deleteProperty,
   getManageProperty,
   getPropertyBySlug,
+  getZoneSeoData,
   listFeaturedProperties,
   listMyProperties,
   listProperties,
@@ -20,12 +21,14 @@ import {
   propertyIdSchema,
   propertySlugSchema,
   propertyStatusSchema,
-  updatePropertySchema
+  updatePropertySchema,
+  zoneSeoSchema
 } from "../validators/propertyValidators.js";
 
 export const propertyRoutes = Router();
 
 propertyRoutes.get("/", validate(listPropertiesSchema), listProperties);
+propertyRoutes.get("/seo/zone", validate(zoneSeoSchema), getZoneSeoData);
 propertyRoutes.get("/featured", listFeaturedProperties);
 propertyRoutes.get("/my/listings", requireAuth, authorize("agent", "owner", "admin"), listMyProperties);
 propertyRoutes.get("/slug/:slug", optionalAuth, validate(propertySlugSchema), getPropertyBySlug);

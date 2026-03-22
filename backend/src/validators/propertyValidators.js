@@ -194,3 +194,12 @@ export const listPropertiesSchema = z.object({
     sort: z.enum(["relevance", "recent", "price-asc", "price-desc", "distance"]).optional()
   })
 });
+
+export const zoneSeoSchema = z.object({
+  query: z.object({
+    province: z.string().min(2).optional(),
+    canton: z.string().min(2).optional(),
+    district: z.string().min(2).optional(),
+    limit: integerField()
+  })
+});

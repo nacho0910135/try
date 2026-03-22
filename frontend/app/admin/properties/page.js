@@ -21,6 +21,17 @@ const scoreLabels = {
   "above-market": "Por encima del mercado"
 };
 
+const moderationLabels = {
+  clean: { label: "Limpia", className: "text-pine" },
+  watch: { label: "Observar", className: "text-terracotta" },
+  review: { label: "Revisar", className: "text-red-600" }
+};
+
+const formatFlagLabel = (value = "") =>
+  String(value || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+
 export default function AdminPropertiesPage() {
   const [properties, setProperties] = useState(null);
   const [intelligence, setIntelligence] = useState(null);
@@ -62,6 +73,28 @@ export default function AdminPropertiesPage() {
                   <div className="text-sm text-ink/55">
                     {property.owner?.name} • {formatCurrency(property.price, property.currency)} •{" "}
                     {formatPropertyStatus(property.status)} • {formatMarketStatus(property.marketStatus)}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                    <span
+                      className={
+                        moderationLabels[property.moderationSignals?.reviewStatus || "clean"].className
+                      }
+                    >
+                      {moderationLabels[property.moderationSignals?.reviewStatus || "clean"].label}
+                    </span>
+                    {property.moderationSignals?.duplicateCandidateCount ? (
+                      <span className="text-terracotta">
+                        {property.moderationSignals.duplicateCandidateCount} posible(s) duplicado(s)
+                      </span>
+                    ) : null}
+                    {property.moderationSignals?.suspiciousFlags?.length ? (
+                      <span className="text-ink/55">
+                        {property.moderationSignals.suspiciousFlags
+                          .slice(0, 3)
+                          .map(formatFlagLabel)
+                          .join(", ")}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">

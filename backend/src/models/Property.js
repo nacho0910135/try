@@ -217,6 +217,58 @@ const serviceDistancesSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const duplicateCandidateSchema = new mongoose.Schema(
+  {
+    propertyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Property"
+    },
+    slug: String,
+    title: String,
+    score: {
+      type: Number,
+      default: 0
+    },
+    reasons: {
+      type: [String],
+      default: []
+    }
+  },
+  { _id: false }
+);
+
+const moderationSignalsSchema = new mongoose.Schema(
+  {
+    duplicateScore: {
+      type: Number,
+      default: 0
+    },
+    duplicateCandidateCount: {
+      type: Number,
+      default: 0
+    },
+    duplicateCandidates: {
+      type: [duplicateCandidateSchema],
+      default: []
+    },
+    suspiciousFlags: {
+      type: [String],
+      default: []
+    },
+    contentQualityScore: {
+      type: Number,
+      default: 100
+    },
+    reviewStatus: {
+      type: String,
+      enum: ["clean", "watch", "review"],
+      default: "clean"
+    },
+    lastAnalyzedAt: Date
+  },
+  { _id: false }
+);
+
 const propertySchema = new mongoose.Schema(
   {
     title: {
@@ -398,6 +450,10 @@ const propertySchema = new mongoose.Schema(
     },
     sellerInfo: sellerInfoSchema,
     serviceDistances: serviceDistancesSchema,
+    moderationSignals: {
+      type: moderationSignalsSchema,
+      default: () => ({})
+    },
     nearestHospital: nearbyPlaceSchema,
     nearestSchool: nearbyPlaceSchema,
     nearestHighSchool: nearbyPlaceSchema,

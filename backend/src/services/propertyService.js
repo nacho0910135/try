@@ -1,6 +1,7 @@
 import { Property } from "../models/Property.js";
 import { ApiError } from "../utils/apiError.js";
 import { buildBoundsPolygon, normalizePolygonCoordinates } from "../utils/geo.js";
+import { analyzeListingModeration } from "../utils/listingModeration.js";
 import { buildPagination } from "../utils/pagination.js";
 import { enrichPropertyCollection, enrichPropertyForClient } from "../utils/propertyInsights.js";
 import { createSlug } from "../utils/slug.js";
@@ -33,6 +34,8 @@ const buildPublicFilter = () => ({
   marketStatus: { $in: ["available", "reserved"] }
 });
 
+const getPublicMarketStatuses = () => ["available", "reserved"];
+
 const buildSort = (sort, query = {}) => {
   if (!sort && query.lat !== undefined && query.lng !== undefined) {
     return {};
@@ -50,6 +53,54 @@ const buildSort = (sort, query = {}) => {
     default:
       return { featured: -1, publishedAt: -1, createdAt: -1 };
   }
+};
+
+const buildZoneFilter = ({ province, canton, district }) => {
+  const filter = buildPublicFilter();
+
+  if (province) {
+    filter["address.province"] = new RegExp(`^${escapeRegex(province)}$`, "i");
+  }
+
+  if (canton) {
+    filter["address.canton"] = new RegExp(`^${escapeRegex(canton)}$`, "i");
+  }
+
+  if (district) {
+    filter["address.district"] = new RegExp(`^${escapeRegex(district)}$`, "i");
+  }
+
+  return filter;
+};
+
+const buildZoneLabel = ({ province, canton, district }) => {
+  if (district && canton && province) {
+    return `${district}, ${canton}, ${province}`;
+  }
+
+  if (canton && province) {
+    return `${canton}, ${province}`;
+  }
+
+  return province || "Costa Rica";
+};
+
+const buildZoneLevel = ({ province, canton, district }) => {
+  if (district) return "district";
+  if (canton) return "canton";
+  if (province) return "province";
+  return "country";
+};
+
+const buildZoneSearchPath = ({ province, canton, district }) => {
+  const params = new URLSearchParams();
+
+  if (province) params.set("province", province);
+  if (canton) params.set("canton", canton);
+  if (district) params.set("district", district);
+
+  const query = params.toString();
+  return query ? `/search?${query}` : "/search";
 };
 
 const buildFilterQuery = (query) => {
@@ -326,9 +377,43 @@ const countPromotedListings = (ownerId, excludePropertyId) =>
     owner: ownerId,
     featured: true,
     status: "published",
-    marketStatus: { $in: ["available", "reserved"] },
+    marketStatus: { $in: getPublicMarketStatuses() },
     ...(excludePropertyId ? { _id: { $ne: excludePropertyId } } : {})
   });
+
+const findPotentialDuplicates = (ownerId, candidate, excludePropertyId) => {
+  const filter = {
+    owner: ownerId,
+    _id: excludePropertyId ? { $ne: excludePropertyId } : { $exists: true },
+    status: { $in: ["draft", "published", "paused"] },
+    propertyType: candidate.propertyType,
+    businessType: candidate.businessType,
+    "address.province": candidate.address?.province
+  };
+
+  if (candidate.address?.canton) {
+    filter["address.canton"] = candidate.address.canton;
+  }
+
+  return Property.find(filter)
+    .select(
+      "title slug description price propertyType businessType bedrooms bathrooms constructionArea lotArea landArea photos location address"
+    )
+    .sort({ updatedAt: -1 })
+    .limit(15)
+    .lean();
+};
+
+const buildModerationSignalsForPayload = async (payload, ownerId, excludePropertyId) => {
+  const candidate = {
+    ...payload,
+    photos: payload.photos || [],
+    location: payload.location || { coordinates: [] }
+  };
+  const existingListings = await findPotentialDuplicates(ownerId, candidate, excludePropertyId);
+
+  return analyzeListingModeration(candidate, existingListings);
+};
 
 const pushPriceHistorySnapshot = (property, user, note) => {
   property.priceHistory.push({
@@ -387,6 +472,71 @@ export const propertyService = {
       .limit(limit);
 
     return enrichPropertyCollection(items);
+  },
+
+  async getZoneSeoData(query) {
+    const limit = Math.min(Math.max(Number(query.limit || 9), 3), 18);
+    const zone = {
+      province: query.province || "",
+      canton: query.canton || "",
+      district: query.district || ""
+    };
+    const filter = buildZoneFilter(zone);
+
+    const [items, total, saleCount, rentCount, featuredCount, propertyTypeBreakdown, currencyBreakdown] =
+      await Promise.all([
+        Property.find(filter)
+          .populate("owner", "name phone avatar role verification")
+          .sort({ featured: -1, publishedAt: -1, createdAt: -1 })
+          .limit(limit),
+        Property.countDocuments(filter),
+        Property.countDocuments({ ...filter, operationType: "sale" }),
+        Property.countDocuments({ ...filter, operationType: "rent" }),
+        Property.countDocuments({ ...filter, featured: true }),
+        Property.aggregate([
+          { $match: filter },
+          { $group: { _id: "$propertyType", count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+          { $limit: 6 }
+        ]),
+        Property.aggregate([
+          { $match: filter },
+          {
+            $group: {
+              _id: "$currency",
+              averagePrice: { $avg: "$price" },
+              minPrice: { $min: "$price" },
+              maxPrice: { $max: "$price" }
+            }
+          }
+        ])
+      ]);
+
+    return {
+      zone: {
+        ...zone,
+        label: buildZoneLabel(zone),
+        level: buildZoneLevel(zone),
+        searchPath: buildZoneSearchPath(zone)
+      },
+      summary: {
+        totalListings: total,
+        saleListings: saleCount,
+        rentListings: rentCount,
+        featuredListings: featuredCount,
+        propertyTypes: propertyTypeBreakdown.map((item) => ({
+          type: item._id,
+          count: item.count
+        })),
+        pricesByCurrency: currencyBreakdown.map((item) => ({
+          currency: item._id,
+          averagePrice: Math.round(item.averagePrice || 0),
+          minPrice: Math.round(item.minPrice || 0),
+          maxPrice: Math.round(item.maxPrice || 0)
+        }))
+      },
+      items: enrichPropertyCollection(items)
+    };
   },
 
   async getBySlug(slug, user) {
@@ -488,6 +638,8 @@ export const propertyService = {
       normalized.featured = false;
     }
 
+    normalized.moderationSignals = await buildModerationSignalsForPayload(normalized, user._id);
+
     makePropertyPublicWhenPublished(normalized, user);
 
     const property = await Property.create(normalized);
@@ -519,6 +671,12 @@ export const propertyService = {
     }
 
     Object.assign(property, normalized);
+
+    property.moderationSignals = await buildModerationSignalsForPayload(
+      property.toObject(),
+      property.owner,
+      property._id
+    );
 
     makePropertyPublicWhenPublished(property, user);
 

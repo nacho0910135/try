@@ -213,6 +213,32 @@ export default function DashboardPropertiesPage() {
     };
   };
 
+  const getModerationCopy = (signals = {}) => {
+    if (signals.reviewStatus === "review") {
+      return {
+        label: "Revisar",
+        className: "text-red-600"
+      };
+    }
+
+    if (signals.reviewStatus === "watch") {
+      return {
+        label: "Observar",
+        className: "text-terracotta"
+      };
+    }
+
+    return {
+      label: "Limpia",
+      className: "text-pine"
+    };
+  };
+
+  const formatFlagLabel = (value = "") =>
+    String(value || "")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (character) => character.toUpperCase());
+
   if (loading) {
     return <LoadingState label="Cargando propiedades..." />;
   }
@@ -321,6 +347,11 @@ export default function DashboardPropertiesPage() {
                       Trust score {item.trustProfile.score}/100
                     </div>
                   ) : null}
+                  {item.moderationSignals?.duplicateCandidateCount ? (
+                    <div className="mt-2 text-xs font-semibold text-terracotta">
+                      Posible duplicado con {item.moderationSignals.duplicateCandidateCount} anuncio(s)
+                    </div>
+                  ) : null}
                 </td>
                 <td className="py-4 pr-4 text-ink/65">{formatLocation(item)}</td>
                 <td className="py-4 pr-4">{formatCurrency(item.price, item.currency)}</td>
@@ -348,6 +379,22 @@ export default function DashboardPropertiesPage() {
                       item.listingInsights?.strengths?.[0] ||
                       "Sin acciones prioritarias por ahora."}
                   </div>
+                  <div
+                    className={`mt-2 text-xs font-semibold ${
+                      getModerationCopy(item.moderationSignals).className
+                    }`}
+                  >
+                    {getModerationCopy(item.moderationSignals).label}
+                  </div>
+                  {item.moderationSignals?.suspiciousFlags?.length ? (
+                    <div className="mt-1 max-w-[220px] text-xs leading-5 text-ink/55">
+                      Flags:{" "}
+                      {item.moderationSignals.suspiciousFlags
+                        .slice(0, 2)
+                        .map(formatFlagLabel)
+                        .join(", ")}
+                    </div>
+                  ) : null}
                 </td>
                 <td className="py-4 pr-4">
                   <select
