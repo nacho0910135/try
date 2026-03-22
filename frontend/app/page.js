@@ -76,35 +76,7 @@ export default function HomePage() {
                 {t("homePage.description")}
               </p>
 
-              <div className="mt-6 grid gap-4 xl:grid-cols-[1fr_0.9fr]">
-                <div className="surface-soft p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-pine/70">
-                    {language === "en" ? "Explore from the map" : "Explora desde el mapa"}
-                  </div>
-                  <h3 className="mt-2 text-xl font-semibold text-ink">
-                    {language === "en"
-                      ? "Choose a province directly on the map"
-                      : "Elige una provincia directamente en el mapa"}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-ink/65">
-                    {language === "en"
-                      ? "The map is now the main selector. Pick a province and jump straight into the live search."
-                      : "El mapa ahora es el selector principal. Elige una provincia y entra directo a la busqueda en vivo."}
-                  </p>
-                  <div className="mt-4 rounded-[22px] bg-white/75 px-3 py-2 text-xs font-medium text-ink/60">
-                    {language === "en"
-                      ? "Tap any province shape to update the spotlight and open its listings."
-                      : "Toca cualquier provincia en el mapa para actualizar el enfoque y abrir sus propiedades."}
-                  </div>
-                  <div className="mt-4">
-                    <Link href={`/search?province=${encodeURIComponent(province)}`}>
-                      <Button className="w-full gap-2">
-                        <ArrowRight className="mr-2 h-4 w-4" />
-                        {t("homePage.exploreButton")}
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
+              <div className="mt-6">
                 <div className="surface-soft p-4">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-ink/40">
                     {t("homePage.activeProvince")}
@@ -119,6 +91,14 @@ export default function HomePage() {
                     {language === "en"
                       ? selectedProvinceMeta?.spotlightEn || selectedProvinceMeta?.spotlight
                       : selectedProvinceMeta?.spotlight}
+                  </div>
+                  <div className="mt-4">
+                    <Link href={`/search?province=${encodeURIComponent(province)}`}>
+                      <Button className="w-full gap-2">
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                        {t("homePage.exploreButton")}
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>

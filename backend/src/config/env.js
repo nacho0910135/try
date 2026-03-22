@@ -24,6 +24,7 @@ const parseBoolean = (value) => {
 };
 
 const envSchema = z.object({
+  HOST: z.string().default("0.0.0.0"),
   PORT: z.coerce.number().default(5000),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   MONGODB_URI: z.string().default("mongodb://127.0.0.1:27017/casa-cr"),

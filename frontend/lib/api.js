@@ -3,6 +3,7 @@ import { serializePropertyQuery } from "./utils";
 
 const AUTH_STORAGE_KEYS = ["alquiventascr-auth", "casa-cr-auth"];
 const LOCAL_API_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
+const DEV_TUNNEL_HOST_PATTERN = /\.devtunnels\.ms$/i;
 
 const stripTrailingSlash = (value = "") => value.replace(/\/+$/, "");
 
@@ -10,31 +11,28 @@ const resolveApiBaseUrl = () => {
   const configuredBaseUrl = stripTrailingSlash(process.env.NEXT_PUBLIC_API_URL || "");
 
   if (typeof window === "undefined") {
-    return configuredBaseUrl || "http://localhost:5000/api";
+    return configuredBaseUrl || "/backend-api";
   }
 
   const { protocol, hostname } = window.location;
+  const useProxy =
+    !LOCAL_API_HOSTS.has(hostname) || DEV_TUNNEL_HOST_PATTERN.test(hostname);
 
   if (!configuredBaseUrl) {
-    return LOCAL_API_HOSTS.has(hostname)
-      ? "http://localhost:5000/api"
-      : `${protocol}//${hostname}:5000/api`;
+    return useProxy ? "/backend-api" : "http://localhost:5000/api";
   }
 
   try {
     const parsedUrl = new URL(configuredBaseUrl);
-    const appIsRemoteDevice = !LOCAL_API_HOSTS.has(hostname);
     const apiPointsToLocalhost = LOCAL_API_HOSTS.has(parsedUrl.hostname);
 
-    if (appIsRemoteDevice && apiPointsToLocalhost) {
-      parsedUrl.protocol = protocol;
-      parsedUrl.hostname = hostname;
-      parsedUrl.port = parsedUrl.port || "5000";
+    if (useProxy && apiPointsToLocalhost) {
+      return "/backend-api";
     }
 
     return stripTrailingSlash(parsedUrl.toString());
   } catch (_error) {
-    return configuredBaseUrl;
+    return useProxy ? "/backend-api" : configuredBaseUrl;
   }
 };
 

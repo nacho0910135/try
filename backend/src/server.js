@@ -7,8 +7,9 @@ import { logger } from "./utils/logger.js";
 const startServer = async () => {
   await connectDatabase();
 
-  app.listen(env.PORT, () => {
+  app.listen(env.PORT, env.HOST, () => {
     logger.info("server_started", {
+      host: env.HOST,
       port: env.PORT,
       environment: env.NODE_ENV
     });
