@@ -2,6 +2,7 @@ import { Router } from "express";
 import { analysisRoutes } from "./analysisRoutes.js";
 import { adminRoutes } from "./adminRoutes.js";
 import { authRoutes } from "./authRoutes.js";
+import { billingRoutes } from "./billingRoutes.js";
 import { favoriteRoutes } from "./favoriteRoutes.js";
 import { leadRoutes } from "./leadRoutes.js";
 import { offerRoutes } from "./offerRoutes.js";
@@ -14,6 +15,7 @@ export const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/analysis", analysisRoutes);
+router.use("/billing", billingRoutes);
 router.use("/properties", propertyRoutes);
 router.use("/favorites", favoriteRoutes);
 router.use("/saved-searches", savedSearchRoutes);

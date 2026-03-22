@@ -39,6 +39,19 @@ const subscriptionSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    stripeCustomerId: {
+      type: String,
+      default: ""
+    },
+    stripeSubscriptionId: {
+      type: String,
+      default: ""
+    },
+    currentPeriodEnd: Date,
+    cancelAtPeriodEnd: {
+      type: Boolean,
+      default: false
+    },
     startedAt: Date,
     trialEndsAt: Date
   },

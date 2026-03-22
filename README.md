@@ -86,6 +86,14 @@ Variables principales:
 - `DEEPSEEK_API_KEY`
 - `DEEPSEEK_BASE_URL`
 - `DEEPSEEK_MODEL`
+- `EMAIL_FROM`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
 
 ### Frontend
 
@@ -143,6 +151,7 @@ npm run dev
 npm run dev:backend
 npm run dev:frontend
 npm run seed
+npm run alerts:send
 ```
 
 ## Credenciales demo del seed
@@ -182,6 +191,21 @@ Para habilitar la comparacion AI y el chat de `Analisis Interactivo`:
 
 La integracion se hace solo desde backend para no exponer la key al navegador. El contexto enviado al modelo excluye datos sensibles del propietario y solo comparte senales de inventario como precio, ubicacion general, cuartos, banos, area, score de mercado y distancias opcionales.
 
+## Stripe Checkout
+
+Para habilitar checkout real de planes:
+
+1. Coloca `STRIPE_SECRET_KEY` en `backend/.env`.
+2. Crea y escucha webhooks locales con Stripe CLI.
+3. Usa `STRIPE_WEBHOOK_SECRET` con el valor que te entregue `stripe listen`.
+4. El endpoint local del webhook es `http://localhost:5000/api/billing/webhook`.
+
+La app ya incluye:
+
+- Checkout Session para planes pagos
+- Customer Portal para gestionar suscripcion
+- Webhook para activar, actualizar o degradar el plan automaticamente
+
 ## Modelo geoespacial
 
 El backend usa GeoJSON y `2dsphere` en propiedades:
@@ -207,6 +231,9 @@ Rutas destacadas:
 - `GET /api/favorites`
 - `POST /api/favorites/:propertyId`
 - `GET /api/saved-searches`
+- `POST /api/billing/checkout-session`
+- `POST /api/billing/portal-session`
+- `POST /api/billing/webhook`
 - `POST /api/leads`
 - `GET /api/leads/received`
 - `GET /api/admin/metrics`

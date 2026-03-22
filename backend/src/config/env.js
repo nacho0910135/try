@@ -41,7 +41,9 @@ const envSchema = z.object({
   SMTP_PORT: z.preprocess(emptyToUndefined, z.coerce.number().optional()),
   SMTP_SECURE: z.preprocess(parseBoolean, z.boolean().optional()),
   SMTP_USER: z.preprocess(emptyToUndefined, z.string().optional()),
-  SMTP_PASS: z.preprocess(emptyToUndefined, z.string().optional())
+  SMTP_PASS: z.preprocess(emptyToUndefined, z.string().optional()),
+  STRIPE_SECRET_KEY: z.preprocess(emptyToUndefined, z.string().optional()),
+  STRIPE_WEBHOOK_SECRET: z.preprocess(emptyToUndefined, z.string().optional())
 });
 
 const parsed = envSchema.safeParse(process.env);

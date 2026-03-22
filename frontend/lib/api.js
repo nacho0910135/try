@@ -71,6 +71,11 @@ export const compareInteractiveProperties = (propertyIds, language = "es") =>
 export const askInteractiveAnalysis = (payload) =>
   unwrap(api.post("/analysis/chat", payload));
 
+export const createBillingCheckoutSession = (payload) =>
+  unwrap(api.post("/billing/checkout-session", payload));
+export const createBillingPortalSession = () =>
+  unwrap(api.post("/billing/portal-session"));
+
 export const getSavedSearches = () => unwrap(api.get("/saved-searches"));
 export const createSavedSearch = (payload) => unwrap(api.post("/saved-searches", payload));
 export const updateSavedSearch = (searchId, payload) =>

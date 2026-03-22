@@ -20,6 +20,7 @@ export default function DashboardSavedSearchesPage() {
   const [items, setItems] = useState(null);
   const [busyId, setBusyId] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [feedbackTone, setFeedbackTone] = useState("success");
 
   const loadSavedSearches = async () => {
     const data = await getSavedSearches();
@@ -33,6 +34,7 @@ export default function DashboardSavedSearchesPage() {
   const handleDelete = async (searchId) => {
     setBusyId(searchId);
     setFeedback("");
+    setFeedbackTone("success");
 
     try {
       await deleteSavedSearch(searchId);
@@ -46,6 +48,7 @@ export default function DashboardSavedSearchesPage() {
   const handleToggleAlerts = async (item) => {
     setBusyId(item._id);
     setFeedback("");
+    setFeedbackTone("success");
 
     try {
       await updateSavedSearch(item._id, {
@@ -65,6 +68,7 @@ export default function DashboardSavedSearchesPage() {
   const handleOpenSearch = async (item) => {
     setBusyId(item._id);
     setFeedback("");
+    setFeedbackTone("success");
 
     try {
       await updateSavedSearch(item._id, {
@@ -81,6 +85,7 @@ export default function DashboardSavedSearchesPage() {
   const handleSendAlertEmail = async (item) => {
     setBusyId(item._id);
     setFeedback("");
+    setFeedbackTone("success");
 
     try {
       const data = await sendSavedSearchAlert(item._id);
@@ -92,6 +97,7 @@ export default function DashboardSavedSearchesPage() {
       );
       await loadSavedSearches();
     } catch (error) {
+      setFeedbackTone("error");
       setFeedback(
         error.response?.data?.message || "No se pudo enviar la alerta por correo ahora mismo."
       );
@@ -122,7 +128,13 @@ export default function DashboardSavedSearchesPage() {
           Activa alertas, detecta coincidencias nuevas y vuelve rapido a las zonas que sigues.
         </p>
         {feedback ? (
-          <div className="mt-4 rounded-2xl bg-pine/10 px-4 py-3 text-sm font-medium text-pine">
+          <div
+            className={`mt-4 rounded-2xl px-4 py-3 text-sm font-medium ${
+              feedbackTone === "error"
+                ? "bg-red-50 text-red-600"
+                : "bg-pine/10 text-pine"
+            }`}
+          >
             {feedback}
           </div>
         ) : null}

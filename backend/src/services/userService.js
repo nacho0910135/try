@@ -10,6 +10,7 @@ import {
   resolveEffectiveSubscription
 } from "../constants/plans.js";
 import { buildAlertPreview } from "./savedSearchService.js";
+import { billingService } from "./billingService.js";
 import { enrichPropertyCollection } from "../utils/propertyInsights.js";
 import { ApiError } from "../utils/apiError.js";
 
@@ -336,6 +337,7 @@ export const userService = {
       conversionRate: percent(totalLeadsOnListings + totalOffersOnListings, totalViews),
       plan: subscription,
       planUsage,
+      billing: billingService.getPublicStatus(user),
       alertCenter: {
         newSearchMatches: sumBy(highlightedSearches, (item) => item.newMatches),
         searchesWithAlerts: highlightedSearches.length,
@@ -543,6 +545,7 @@ export const userService = {
     return {
       plan: subscription,
       planUsage,
+      billing: billingService.getPublicStatus(user),
       availablePlans: getCommercialPlanCatalog(),
       summary: {
         activeListings,

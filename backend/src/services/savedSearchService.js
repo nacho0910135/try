@@ -252,8 +252,10 @@ export const savedSearchService = {
       searchUrl: buildSavedSearchUrl(savedSearch)
     });
 
-    savedSearch.lastAlertSentAt = new Date();
-    await savedSearch.save();
+    if (emailResult.delivered) {
+      savedSearch.lastAlertSentAt = new Date();
+      await savedSearch.save();
+    }
 
     return {
       savedSearchId: savedSearch._id,
@@ -301,8 +303,10 @@ export const savedSearchService = {
         searchUrl: buildSavedSearchUrl(savedSearch)
       });
 
-      savedSearch.lastAlertSentAt = new Date();
-      await savedSearch.save();
+      if (emailResult.delivered) {
+        savedSearch.lastAlertSentAt = new Date();
+        await savedSearch.save();
+      }
 
       results.push({
         savedSearchId: savedSearch._id.toString(),

@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { BarChart3, BriefcaseBusiness, Megaphone, TrendingUp } from "lucide-react";
-import { getCommercialOverview, updateMySubscription } from "@/lib/api";
+import {
+  createBillingCheckoutSession,
+  createBillingPortalSession,
+  getCommercialOverview,
+  updateMySubscription
+} from "@/lib/api";
 import { MiniLineChart, HorizontalBarList, VerticalBarChart } from "@/components/analysis/VisualCharts";
 import { Button } from "@/components/ui/Button";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -12,6 +18,7 @@ import { formatCurrency } from "@/lib/utils";
 const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
 
 export default function DashboardBusinessPage() {
+  const searchParams = useSearchParams();
   const [overview, setOverview] = useState(null);
   const [flashMessage, setFlashMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -21,24 +28,77 @@ export default function DashboardBusinessPage() {
     loadOverview();
   }, []);
 
+  useEffect(() => {
+    const checkoutState = searchParams.get("checkout");
+
+    if (checkoutState === "success") {
+      setFlashMessage("Stripe confirmo tu checkout. Estamos actualizando tu plan comercial.");
+      setErrorMessage("");
+      loadOverview();
+    } else if (checkoutState === "cancel") {
+      setErrorMessage("El checkout fue cancelado. Tu plan sigue igual por ahora.");
+    }
+  }, [searchParams]);
+
   const loadOverview = async () => {
     const data = await getCommercialOverview();
     setOverview(data.overview);
   };
 
-  const handlePlanChange = async (planId) => {
+  const handlePlanChange = async (planId, billingCycle = "monthly") => {
     try {
-      setUpdatingPlanId(planId);
+      setUpdatingPlanId(`${planId}-${billingCycle}`);
       setErrorMessage("");
-      await updateMySubscription({ plan: planId, billingCycle: "monthly" });
-      await loadOverview();
-      setFlashMessage("Tu plan comercial se actualizo correctamente.");
+      setFlashMessage("");
+
+      if (planId === "free" && overview?.billing?.configured && overview?.billing?.hasActivePaidPlan) {
+        await handleOpenBillingPortal();
+        return;
+      }
+
+      if (planId === "free" || !overview?.billing?.configured) {
+        await updateMySubscription({ plan: planId, billingCycle });
+        await loadOverview();
+        setFlashMessage(
+          overview?.billing?.configured
+            ? "Tu plan comercial se actualizo correctamente."
+            : "Plan actualizado en modo local. Configura Stripe para checkout real."
+        );
+        return;
+      }
+
+      const data = await createBillingCheckoutSession({ plan: planId, billingCycle });
+
+      if (data.session?.url) {
+        window.location.href = data.session.url;
+        return;
+      }
+
+      throw new Error("Stripe no devolvio una URL de checkout.");
     } catch (error) {
       setErrorMessage(
         error.response?.data?.message || "No se pudo actualizar el plan en este momento."
       );
     } finally {
       setUpdatingPlanId("");
+    }
+  };
+
+  const handleOpenBillingPortal = async () => {
+    try {
+      setErrorMessage("");
+      const data = await createBillingPortalSession();
+
+      if (data.session?.url) {
+        window.location.href = data.session.url;
+        return;
+      }
+
+      throw new Error("No se pudo abrir el portal de billing.");
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "No se pudo abrir el portal de cobro."
+      );
     }
   };
 
@@ -61,7 +121,8 @@ export default function DashboardBusinessPage() {
     recentLeads,
     recentOffers,
     availablePlans,
-    planUsage
+    planUsage,
+    billing
   } =
     overview;
 
@@ -116,6 +177,28 @@ export default function DashboardBusinessPage() {
               <div>Espacios destacados: {plan.promotedSlots}</div>
               <div>Inbox de leads: {plan.leadInbox ? "Incluido" : "No incluido"}</div>
               <div>Ofertas y analitica: {plan.analytics ? "Incluidas" : "No incluidas"}</div>
+              {plan.currentPeriodEnd ? (
+                <div>
+                  Vigencia actual: {new Date(plan.currentPeriodEnd).toLocaleDateString("es-CR")}
+                  {plan.cancelAtPeriodEnd ? " · cancelacion programada" : ""}
+                </div>
+              ) : null}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {billing?.configured ? (
+                <span className="rounded-full bg-pine px-3 py-1 text-xs font-semibold text-white">
+                  Stripe activo
+                </span>
+              ) : (
+                <span className="rounded-full bg-mist px-3 py-1 text-xs font-semibold text-ink/65">
+                  Stripe no configurado
+                </span>
+              )}
+              {billing?.hasStripeCustomer ? (
+                <Button variant="secondary" className="px-3 py-2 text-xs" onClick={handleOpenBillingPortal}>
+                  Gestionar cobro
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -343,20 +426,53 @@ export default function DashboardBusinessPage() {
                         {formatCurrency(item.monthlyPrice, "USD")} / mes - {item.propertyLimit} propiedades -{" "}
                         {item.promotedSlots} destacados
                       </div>
+                      <div className="mt-1 text-xs text-ink/45">
+                        {item.yearlyPrice
+                          ? `${formatCurrency(item.yearlyPrice, "USD")} / ano`
+                          : "Facturacion flexible"}
+                      </div>
                     </div>
                     {active ? (
                       <span className="rounded-full bg-pine px-3 py-1 text-xs font-semibold text-white">
                         Activo
                       </span>
                     ) : (
-                      <Button
-                        variant={item.promotedSlots > plan.promotedSlots ? "success" : "secondary"}
-                        onClick={() => handlePlanChange(item.id)}
-                        disabled={Boolean(updatingPlanId)}
-                        className="px-3 py-2 text-xs"
-                      >
-                        {updatingPlanId === item.id ? "Actualizando..." : "Activar plan"}
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        {billing?.hasActivePaidPlan && billing?.configured ? (
+                          <Button
+                            variant="secondary"
+                            onClick={handleOpenBillingPortal}
+                            className="px-3 py-2 text-xs"
+                          >
+                            Gestionar en portal
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              variant={item.promotedSlots > plan.promotedSlots ? "success" : "secondary"}
+                              onClick={() => handlePlanChange(item.id, "monthly")}
+                              disabled={Boolean(updatingPlanId)}
+                              className="px-3 py-2 text-xs"
+                            >
+                              {updatingPlanId === `${item.id}-monthly`
+                                ? "Abriendo..."
+                                : item.monthlyPrice
+                                  ? "Mensual"
+                                  : "Activar"}
+                            </Button>
+                            {item.yearlyPrice ? (
+                              <Button
+                                variant="secondary"
+                                onClick={() => handlePlanChange(item.id, "yearly")}
+                                disabled={Boolean(updatingPlanId)}
+                                className="px-3 py-2 text-xs"
+                              >
+                                {updatingPlanId === `${item.id}-yearly` ? "Abriendo..." : "Anual"}
+                              </Button>
+                            ) : null}
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-ink/60">
