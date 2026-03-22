@@ -1,42 +1,45 @@
+"use client";
+
 import Link from "next/link";
+import { useLanguage } from "./LanguageProvider";
 import { BrandLogo } from "./BrandLogo";
 
 export function SiteFooter() {
+  const { t } = useLanguage();
+
   return (
     <footer className="border-t border-ink/10 bg-white/70">
       <div className="app-shell grid gap-8 py-10 md:grid-cols-4">
         <div>
           <BrandLogo />
           <p className="mt-3 text-sm text-ink/65">
-            Plataforma inmobiliaria para explorar, publicar y conectar propiedades en Costa Rica.
+            {t("footer.description")}
           </p>
         </div>
         <div>
           <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">
-            Explorar
+            {t("footer.explore")}
           </h4>
           <div className="mt-4 space-y-2 text-sm text-ink/70">
-            <Link href="/search">Buscar propiedades</Link>
+            <Link href="/search">{t("footer.searchProperties")}</Link>
             <br />
-            <Link href="/favorites">Favoritos</Link>
+            <Link href="/favorites">{t("footer.favorites")}</Link>
             <br />
-            <Link href="/dashboard">Publicar propiedad</Link>
+            <Link href="/dashboard">{t("footer.publishProperty")}</Link>
           </div>
         </div>
         <div>
           <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">
-            Cobertura
+            {t("footer.coverage")}
           </h4>
-          <p className="mt-4 text-sm text-ink/70">
-            San Jose, Escazu, Santa Ana, Heredia, Alajuela, Cartago, Tamarindo, Jaco, Liberia y Nosara.
-          </p>
+          <p className="mt-4 text-sm text-ink/70">{t("footer.coverageText")}</p>
         </div>
         <div>
           <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-ink/45">
-            Contacto
+            {t("footer.contact")}
           </h4>
           <p className="mt-4 text-sm text-ink/70">
-            Si necesitas ayuda o soporte con la plataforma, puedes escribir a:
+            {t("footer.contactHelp")}
           </p>
           <a
             href="mailto:jose17mp@hotmail.com"

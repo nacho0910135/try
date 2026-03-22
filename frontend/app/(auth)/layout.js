@@ -1,7 +1,12 @@
+"use client";
+
 import { BrandLogo } from "@/components/layout/BrandLogo";
+import { useLanguage } from "@/components/layout/LanguageProvider";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 export default function AuthLayout({ children }) {
+  const { t } = useLanguage();
+
   return (
     <div className="app-shell section-pad">
       <div className="mb-6 flex justify-end">
@@ -11,13 +16,12 @@ export default function AuthLayout({ children }) {
         <section className="surface bg-hero-grid p-8 sm:p-12">
           <BrandLogo />
           <div className="mt-8">
-            <span className="eyebrow">Costa Rica</span>
+            <span className="eyebrow">{t("authLayout.eyebrow")}</span>
             <h2 className="mt-5 max-w-xl font-serif text-5xl font-semibold leading-tight">
-              Publica, explora y conecta propiedades con una experiencia clara y moderna.
+              {t("authLayout.title")}
             </h2>
             <p className="mt-5 max-w-2xl text-base text-ink/70">
-              AlquiVentasCR concentra compra, renta y lotes con enfoque geoespacial:
-              mapa, GPS, favoritos, leads y panel de publicacion.
+              {t("authLayout.description")}
             </p>
           </div>
         </section>

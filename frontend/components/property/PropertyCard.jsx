@@ -3,19 +3,42 @@
 import Link from "next/link";
 import { Bath, BedDouble, Car, Heart, MapPin, Square } from "lucide-react";
 import { addFavorite, removeFavorite } from "@/lib/api";
+import { useLanguage } from "@/components/layout/LanguageProvider";
 import {
   formatArea,
-  formatBusinessType,
   formatCurrency,
   formatLocation,
-  formatMarketStatus,
-  formatPropertyType,
-  formatRentalArrangement,
-  formatYesNo,
   getMainPhoto
 } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { Badge } from "../ui/Badge";
+
+const BUSINESS_LABELS = {
+  sale: { es: "Venta", en: "Sale" },
+  rent: { es: "Renta", en: "Rent" }
+};
+
+const TYPE_LABELS = {
+  house: { es: "Casa", en: "House" },
+  apartment: { es: "Apartamento", en: "Apartment" },
+  condominium: { es: "Condominio", en: "Condominium" },
+  lot: { es: "Lote / Terreno", en: "Lot / Land" },
+  room: { es: "Habitacion", en: "Room" },
+  commercial: { es: "Comercial", en: "Commercial" }
+};
+
+const MARKET_LABELS = {
+  available: { es: "Disponible", en: "Available" },
+  reserved: { es: "Reservada", en: "Reserved" },
+  sold: { es: "Vendida", en: "Sold" },
+  rented: { es: "Alquilada", en: "Rented" },
+  inactive: { es: "Inactiva", en: "Inactive" }
+};
+
+const RENTAL_LABELS = {
+  "full-property": { es: "Propiedad completa", en: "Full property" },
+  roommate: { es: "Roomies / alquiler compartido", en: "Roommates / shared rental" }
+};
 
 export function PropertyCard({
   property,
@@ -25,6 +48,7 @@ export function PropertyCard({
   onFavoriteChange
 }) {
   const { token } = useAuthStore();
+  const { language, t } = useLanguage();
   const mainPhoto = getMainPhoto(property);
   const fallbackSrc = "/property-placeholder.svg";
 
@@ -47,6 +71,14 @@ export function PropertyCard({
     onFavoriteChange?.(property._id, true);
   };
 
+  const boolLabel = (value) => (value ? t("common.yes") : t("common.no"));
+  const businessLabel = BUSINESS_LABELS[property.businessType]?.[language] || property.businessType;
+  const typeLabel = TYPE_LABELS[property.propertyType]?.[language] || property.propertyType;
+  const marketLabel =
+    MARKET_LABELS[property.marketStatus]?.[language] || property.marketStatus;
+  const rentalLabel =
+    RENTAL_LABELS[property.rentalArrangement]?.[language] || property.rentalArrangement;
+
   return (
     <Link
       href={`/properties/${property.slug}`}
@@ -66,20 +98,20 @@ export function PropertyCard({
           }}
         />
         <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-          <Badge variant="accent">{formatBusinessType(property.businessType)}</Badge>
+          <Badge variant="accent">{businessLabel}</Badge>
           {property.rentalArrangement === "roommate" ? (
-            <Badge variant="success">{formatRentalArrangement(property.rentalArrangement)}</Badge>
+            <Badge variant="success">{rentalLabel}</Badge>
           ) : null}
           {property.marketStatus && property.marketStatus !== "available" ? (
-            <Badge variant="info">{formatMarketStatus(property.marketStatus)}</Badge>
+            <Badge variant="info">{marketLabel}</Badge>
           ) : null}
-          {property.featured ? <Badge variant="info">Destacada</Badge> : null}
+          {property.featured ? <Badge variant="info">{t("propertyCard.featured")}</Badge> : null}
         </div>
         <button
           type="button"
           onClick={toggleFavorite}
           className="absolute right-3 top-3 rounded-full bg-white/90 p-2.5 shadow-soft"
-          aria-label="Guardar en favoritos"
+          aria-label={t("propertyCard.favoriteAria")}
         >
           <Heart className={`h-4 w-4 ${isFavorite ? "fill-terracotta text-terracotta" : ""}`} />
         </button>
@@ -91,7 +123,7 @@ export function PropertyCard({
             <div className="text-xl font-semibold">{formatCurrency(property.price, property.currency)}</div>
             <h3 className="mt-1.5 text-base font-semibold leading-snug">{property.title}</h3>
           </div>
-          <span className="text-sm text-ink/45">{formatPropertyType(property.propertyType)}</span>
+          <span className="text-sm text-ink/45">{typeLabel}</span>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-ink/60">
@@ -103,14 +135,14 @@ export function PropertyCard({
           <span className="data-pill">
             <BedDouble className="h-4 w-4" />
             {property.rentalArrangement === "roommate"
-              ? `${property.roommateDetails?.availableRooms || property.bedrooms || 1} cuarto`
-              : `${property.bedrooms || 0} hab`}
+              ? `${property.roommateDetails?.availableRooms || property.bedrooms || 1} ${t("propertyCard.room")}`
+              : `${property.bedrooms || 0} ${t("propertyCard.roomsShort")}`}
           </span>
           <span className="data-pill">
             <Bath className="h-4 w-4" />
             {property.rentalArrangement === "roommate" && property.roommateDetails?.privateBathroom
-              ? "Bano privado"
-              : `${property.bathrooms || 0} banos`}
+              ? t("propertyCard.privateBath")
+              : `${property.bathrooms || 0} ${t("propertyCard.bathroomsShort")}`}
           </span>
           <span className="data-pill">
             <Car className="h-4 w-4" />
@@ -124,8 +156,12 @@ export function PropertyCard({
 
         {property.businessType === "rent" ? (
           <div className="flex flex-wrap gap-2 text-xs text-ink/60">
-            <span className="data-pill">Mascotas: {formatYesNo(property.petsAllowed)}</span>
-            <span className="data-pill">Depos.: {formatYesNo(property.depositRequired)}</span>
+            <span className="data-pill">
+              {t("propertyCard.pets")}: {boolLabel(property.petsAllowed)}
+            </span>
+            <span className="data-pill">
+              {t("propertyCard.deposit")}: {boolLabel(property.depositRequired)}
+            </span>
           </div>
         ) : null}
       </div>

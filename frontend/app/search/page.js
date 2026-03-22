@@ -9,6 +9,7 @@ import { serializePropertyQuery } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { useSearchStore } from "@/store/search-store";
 import { SearchFilters } from "@/components/forms/SearchFilters";
+import { useLanguage } from "@/components/layout/LanguageProvider";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -18,7 +19,7 @@ const SearchMap = dynamic(
   () => import("@/components/map/SearchMap").then((module) => module.SearchMap),
   {
     ssr: false,
-    loading: () => <LoadingState label="Cargando mapa..." />
+    loading: () => <LoadingState label="..." />
   }
 );
 
@@ -57,6 +58,7 @@ export default function SearchPage() {
   const searchParams = useSearchParams();
   const initializedRef = useRef(false);
   const { token } = useAuthStore();
+  const { t } = useLanguage();
   const { filters, replaceFilters, setFilters, selectedPropertyId, setSelectedPropertyId } =
     useSearchStore();
   const [properties, setProperties] = useState([]);
@@ -90,14 +92,14 @@ export default function SearchPage() {
         setPagination(data.pagination);
         router.replace(`/search?${serializePropertyQuery(filters)}`, { scroll: false });
       } catch (error) {
-        setMessage(error.response?.data?.message || "No se pudo cargar la busqueda");
+        setMessage(error.response?.data?.message || t("searchPage.searchFailed"));
       } finally {
         setLoading(false);
       }
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [filters, page, router]);
+  }, [filters, page, router, t]);
 
   useEffect(() => {
     if (!token) {
@@ -135,7 +137,7 @@ export default function SearchPage() {
           polygon: undefined
         });
       },
-      () => setMessage("No fue posible acceder a tu ubicacion.")
+      () => setMessage(t("searchPage.geoError"))
     );
   };
 
@@ -148,33 +150,35 @@ export default function SearchPage() {
         mapArea: toPolygonGeometry(filters.polygon),
         bounds: filters.bounds
       });
-      setMessage("Busqueda guardada correctamente.");
+      setMessage(t("searchPage.saveSearchSuccess"));
     } catch (error) {
-      setMessage(error.response?.data?.message || "No se pudo guardar la busqueda");
+      setMessage(error.response?.data?.message || t("searchPage.saveSearchFailed"));
     }
   };
 
   return (
     <div className="app-shell section-pad space-y-6">
       <div>
-        <span className="eyebrow">Exploracion</span>
+        <span className="eyebrow">{t("searchPage.eyebrow")}</span>
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="font-serif text-5xl font-semibold">Busca propiedades en Costa Rica</h1>
+            <h1 className="font-serif text-5xl font-semibold">{t("searchPage.title")}</h1>
             <p className="mt-3 max-w-3xl text-base text-ink/65">
-              Usa filtros avanzados, mapa visible, dibujo de zona y busqueda por GPS para encontrar oportunidades reales.
+              {t("searchPage.description")}
             </p>
           </div>
           <div className="surface min-w-[280px] border border-pine/15 bg-pine/10 p-4">
             <p className="text-sm font-semibold text-pine">
               {token
-                ? "Tienes una propiedad? Publicala para vender o alquilar desde el mapa."
-                : "Quieres vender o alquilar una propiedad? Inicia sesion para publicarla."}
+                ? t("searchPage.publishPromptLoggedIn")
+                : t("searchPage.publishPromptLoggedOut")}
             </p>
             <div className="mt-3">
               <Link href={token ? "/dashboard/properties/new" : "/login"}>
                 <Button variant="success" className="w-full shadow-soft">
-                  {token ? "Vender o alquilar mi propiedad" : "Iniciar sesion para publicar"}
+                  {token
+                    ? t("searchPage.publishButtonLoggedIn")
+                    : t("searchPage.publishButtonLoggedOut")}
                 </Button>
               </Link>
             </div>
@@ -197,18 +201,22 @@ export default function SearchPage() {
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <p className="text-sm text-ink/55">
-              {loading ? "Buscando..." : `${pagination.total} propiedades encontradas`}
+              {loading
+                ? t("searchPage.searching")
+                : t("searchPage.resultsFound", { count: pagination.total })}
             </p>
             <Link
               href={token ? "/dashboard/properties/new" : "/login"}
               className="text-sm font-semibold text-pine"
             >
-              {token ? "Publicar propiedad" : "Inicia sesion para publicar"}
+              {token
+                ? t("searchPage.publishLinkLoggedIn")
+                : t("searchPage.publishLinkLoggedOut")}
             </Link>
           </div>
 
           {loading && page === 1 ? (
-            <LoadingState label="Buscando propiedades..." />
+            <LoadingState label={t("searchPage.loadingProperties")} />
           ) : properties.length ? (
             <div className="space-y-5">
               {properties.map((property) => (
@@ -229,15 +237,15 @@ export default function SearchPage() {
               ))}
               {page < pagination.totalPages ? (
                 <Button variant="secondary" onClick={() => setPage((current) => current + 1)}>
-                  Cargar mas
+                  {t("searchPage.loadMore")}
                 </Button>
               ) : null}
             </div>
           ) : (
             <EmptyState
-              title="No encontramos propiedades"
-              description="Prueba ajustar tus filtros, mover el mapa o usar una busqueda mas amplia."
-              actionLabel="Limpiar filtros"
+              title={t("searchPage.noResultsTitle")}
+              description={t("searchPage.noResultsDescription")}
+              actionLabel={t("searchPage.clearFilters")}
               onAction={handleReset}
             />
           )}

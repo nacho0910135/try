@@ -17,9 +17,9 @@ export function SiteHeader() {
   const { user, logout } = useAuthStore();
   const { t } = useLanguage();
   const navItems = [
-    { href: "/", label: t("home") },
-    { href: "/search", label: t("explore") },
-    { href: "/favorites", label: t("favorites") }
+    { href: "/", label: t("nav.home") },
+    { href: "/search", label: t("nav.explore") },
+    { href: "/favorites", label: t("nav.favorites") }
   ];
 
   const handleLogout = async () => {
@@ -63,20 +63,20 @@ export function SiteHeader() {
               <Link href="/dashboard">
                 <Button variant="secondary" className="hidden sm:inline-flex">
                   <LayoutDashboard className="mr-2 h-4 w-4" />
-                  {t("dashboard")}
+                  {t("nav.dashboard")}
                 </Button>
               </Link>
               {user.role === "admin" ? (
                 <Link href="/admin">
                   <Button variant="ghost" className="hidden sm:inline-flex">
                     <Shield className="mr-2 h-4 w-4" />
-                    {t("admin")}
+                    {t("nav.admin")}
                   </Button>
                 </Link>
               ) : null}
               <Button variant="ghost" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                {t("logout")}
+                {t("nav.logout")}
               </Button>
             </>
           ) : (
@@ -84,11 +84,11 @@ export function SiteHeader() {
               <Link href="/search">
                 <Button variant="secondary" className="hidden sm:inline-flex">
                   <Search className="mr-2 h-4 w-4" />
-                  {t("search")}
+                  {t("nav.search")}
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="primary">{t("login")}</Button>
+                <Button variant="primary">{t("nav.login")}</Button>
               </Link>
             </>
           )}

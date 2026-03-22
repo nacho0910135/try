@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import Map, { GeolocateControl, Layer, Marker, NavigationControl, Source } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
+import { useLanguage } from "@/components/layout/LanguageProvider";
 import { formatCompactCurrency, formatCurrency } from "@/lib/utils";
 import { mapDefaultCenter } from "@/lib/constants";
 import { getProvinceCode } from "@/lib/costa-rica-geo";
@@ -39,6 +40,7 @@ export function SearchMap({
   onPolygonChange
 }) {
   const router = useRouter();
+  const { t } = useLanguage();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/light-v11";
   const mapRef = useRef(null);
@@ -136,10 +138,8 @@ export function SearchMap({
   if (!token) {
     return (
       <div className="surface flex min-h-[680px] flex-col items-center justify-center gap-3 p-8 text-center">
-        <h3 className="text-lg font-semibold">Activa Mapbox para ver el mapa interactivo</h3>
-        <p className="max-w-md text-sm text-ink/60">
-          Configura `NEXT_PUBLIC_MAPBOX_TOKEN` en el frontend para usar bounds, pines y dibujo de zonas.
-        </p>
+        <h3 className="text-lg font-semibold">{t("map.enableMapboxTitle")}</h3>
+        <p className="max-w-md text-sm text-ink/60">{t("map.enableMapboxDescription")}</p>
       </div>
     );
   }
@@ -248,10 +248,10 @@ export function SearchMap({
                   ? "border-terracotta bg-terracotta text-white"
                   : "border-white/80 bg-white/95 text-ink hover:-translate-y-0.5"
               }`}
-              aria-label={`Seleccionar ${property.title} por ${formatCurrency(
-                property.price,
-                property.currency
-              )}`}
+              aria-label={t("map.selectedAria", {
+                title: property.title,
+                price: formatCurrency(property.price, property.currency)
+              })}
             >
               {formatCompactCurrency(property.price, property.currency)}
             </button>
@@ -261,7 +261,7 @@ export function SearchMap({
 
       {selectedProvince ? (
         <div className="border-t border-ink/10 bg-white/88 px-4 py-3 text-xs font-medium text-ink/65">
-          Distritos interactivos de {selectedProvince}: toca un distrito en el mapa para filtrar propiedades de esa zona.
+          {t("map.districtsHint", { province: selectedProvince })}
         </div>
       ) : null}
     </div>

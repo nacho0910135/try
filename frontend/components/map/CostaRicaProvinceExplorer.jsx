@@ -6,6 +6,7 @@ import { MapPinned, Sparkles } from "lucide-react";
 import Map, { Layer, NavigationControl, Source } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
 import { costaRicaProvinces } from "@/lib/costa-rica-provinces";
+import { useLanguage } from "@/components/layout/LanguageProvider";
 import { getProvinceByName } from "@/lib/costa-rica-geo";
 import { mapDefaultCenter } from "@/lib/constants";
 
@@ -52,6 +53,7 @@ const getGeoJsonBounds = (featureCollection) => {
 
 export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }) {
   const router = useRouter();
+  const { language, t } = useLanguage();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/light-v11";
   const mapRef = useRef(null);
@@ -126,10 +128,10 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
 
   if (!token) {
     return (
-      <div className="surface p-6 text-sm text-ink/65">
-        Activa `NEXT_PUBLIC_MAPBOX_TOKEN` para ver las provincias interactivas con tus GeoJSON.
-      </div>
-    );
+        <div className="surface p-6 text-sm text-ink/65">
+          {t("provinceExplorer.enableMapbox")}
+        </div>
+      );
   }
 
   const provinceFillLayer = {
@@ -173,13 +175,13 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.28em] text-lagoon/75">
-                Atlas interactivo
+                {t("provinceExplorer.atlas")}
               </div>
-              <div className="mt-1 text-xl font-semibold text-ink sm:text-2xl">Costa Rica por provincia</div>
+              <div className="mt-1 text-xl font-semibold text-ink sm:text-2xl">{t("provinceExplorer.title")}</div>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[11px] font-semibold text-ink/70 sm:text-xs">
               <MapPinned className="h-4 w-4 text-terracotta" />
-              Toca una provincia para explorarla
+              {t("provinceExplorer.tapProvince")}
             </div>
           </div>
         </div>
@@ -238,17 +240,23 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
           <div className="relative z-10 mt-3 grid gap-3 lg:grid-cols-[1.15fr_auto] lg:items-end">
             <div className="rounded-[26px] bg-white/80 px-4 py-3 shadow-soft backdrop-blur">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-lagoon/75">
-                Provincia activa
+                {t("provinceExplorer.activeProvince")}
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <h3 className="text-xl font-semibold text-ink sm:text-2xl">{focusProvince.name}</h3>
                 <span className="inline-flex items-center gap-2 rounded-full bg-mist px-3 py-1.5 text-xs font-semibold text-ink/70">
                   <Sparkles className="h-3.5 w-3.5 text-terracotta" />
-                  Exploracion visual
+                  {t("provinceExplorer.visualExploration")}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-6 text-ink/68">{focusProvince.blurb}</p>
-              <p className="mt-1.5 text-sm font-medium text-ink/55">{focusProvince.spotlight}</p>
+              <p className="mt-2 text-sm leading-6 text-ink/68">
+                {language === "en" ? focusProvince.blurbEn || focusProvince.blurb : focusProvince.blurb}
+              </p>
+              <p className="mt-1.5 text-sm font-medium text-ink/55">
+                {language === "en"
+                  ? focusProvince.spotlightEn || focusProvince.spotlight
+                  : focusProvince.spotlight}
+              </p>
             </div>
 
             <div className="flex flex-wrap justify-end gap-2">

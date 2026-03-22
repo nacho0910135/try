@@ -13,7 +13,7 @@ export function LanguageSwitcher({ className = "" }) {
   return (
     <div
       className={`inline-flex items-center gap-1 rounded-full border border-ink/10 bg-white/80 p-1 shadow-soft ${className}`.trim()}
-      aria-label="Selector de idioma"
+      aria-label={language === "en" ? "Language switcher" : "Selector de idioma"}
     >
       {options.map((option) => (
         <button

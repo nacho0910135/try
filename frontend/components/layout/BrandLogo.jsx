@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "@/components/layout/LanguageProvider";
 import { cn } from "@/lib/utils";
 
 export function BrandLogo({
@@ -10,6 +11,8 @@ export function BrandLogo({
   compact = false,
   showTagline = true
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <svg
@@ -78,7 +81,7 @@ export function BrandLogo({
         </div>
         {showTagline ? (
           <div className="mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.34em] text-ink/45 sm:text-[0.74rem]">
-            Compra | Renta | Lotes
+            {t("brand.tagline")}
           </div>
         ) : null}
       </div>

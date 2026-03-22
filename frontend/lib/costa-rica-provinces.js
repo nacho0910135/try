@@ -9,7 +9,9 @@ export const costaRicaProvinces = [
     activeFill: "#f4bf4d",
     stroke: "#fff4ca",
     blurb: "Playas, lotes amplios y alquiler vacacional con alta demanda.",
-    spotlight: "Tamarindo, Liberia y zonas costeras del norte."
+    blurbEn: "Beaches, larger lots, and vacation rentals with strong demand.",
+    spotlight: "Tamarindo, Liberia y zonas costeras del norte.",
+    spotlightEn: "Tamarindo, Liberia, and northern coastal areas."
   },
   {
     code: "2",
@@ -21,7 +23,9 @@ export const costaRicaProvinces = [
     activeFill: "#f3ab57",
     stroke: "#ffe6bd",
     blurb: "Casas familiares, inversion urbana y cercania al aeropuerto.",
-    spotlight: "Alajuela centro, Grecia y corredores logísticos."
+    blurbEn: "Family homes, urban investment, and proximity to the airport.",
+    spotlight: "Alajuela centro, Grecia y corredores logisticos.",
+    spotlightEn: "Downtown Alajuela, Grecia, and logistics corridors."
   },
   {
     code: "4",
@@ -33,7 +37,9 @@ export const costaRicaProvinces = [
     activeFill: "#efc34d",
     stroke: "#fff1b8",
     blurb: "Condominios, renta ejecutiva y zonas de alta absorcion.",
-    spotlight: "Heredia, Ulloa y corredores corporativos."
+    blurbEn: "Condominiums, executive rentals, and high-absorption zones.",
+    spotlight: "Heredia, Ulloa y corredores corporativos.",
+    spotlightEn: "Heredia, Ulloa, and corporate corridors."
   },
   {
     code: "1",
@@ -45,7 +51,9 @@ export const costaRicaProvinces = [
     activeFill: "#2cae8f",
     stroke: "#cdf7e9",
     blurb: "Mercado premium, urbano y universitario con mucha rotacion.",
-    spotlight: "Escazu, Santa Ana, San Pedro y el GAM."
+    blurbEn: "Premium, urban, and student-driven market with strong turnover.",
+    spotlight: "Escazu, Santa Ana, San Pedro y el GAM.",
+    spotlightEn: "Escazu, Santa Ana, San Pedro, and the Greater Metro Area."
   },
   {
     code: "3",
@@ -57,7 +65,9 @@ export const costaRicaProvinces = [
     activeFill: "#ef9f45",
     stroke: "#ffe3b9",
     blurb: "Lotes residenciales, clima fresco y oportunidades de plusvalia.",
-    spotlight: "Cartago, Tres Rios y desarrollos suburbanos."
+    blurbEn: "Residential lots, cooler climate, and appreciation opportunities.",
+    spotlight: "Cartago, Tres Rios y desarrollos suburbanos.",
+    spotlightEn: "Cartago, Tres Rios, and suburban developments."
   },
   {
     code: "7",
@@ -69,7 +79,9 @@ export const costaRicaProvinces = [
     activeFill: "#e67984",
     stroke: "#ffd6d7",
     blurb: "Caribe, naturaleza y terrenos con potencial de crecimiento.",
-    spotlight: "Limon centro, Caribe sur y nuevos corredores."
+    blurbEn: "Caribbean lifestyle, nature, and land with growth potential.",
+    spotlight: "Limon centro, Caribe sur y nuevos corredores.",
+    spotlightEn: "Downtown Limon, the southern Caribbean, and emerging corridors."
   },
   {
     code: "6",
@@ -81,6 +93,8 @@ export const costaRicaProvinces = [
     activeFill: "#9fd444",
     stroke: "#e8f6bf",
     blurb: "Costa, lifestyle y mezcla fuerte entre renta y segunda vivienda.",
-    spotlight: "Jaco, Puntarenas central y litoral pacifico."
+    blurbEn: "Coastal lifestyle with a strong mix of rentals and second homes.",
+    spotlight: "Jaco, Puntarenas central y litoral pacifico.",
+    spotlightEn: "Jaco, central Puntarenas, and the Pacific coast."
   }
 ];

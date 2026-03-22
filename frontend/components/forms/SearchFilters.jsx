@@ -13,10 +13,38 @@ import {
   getCantonsByProvince,
   getDistrictsByProvinceAndCanton
 } from "@/lib/costa-rica-locations";
+import { useLanguage } from "@/components/layout/LanguageProvider";
 import { Button } from "../ui/Button";
 import { Checkbox } from "../ui/Checkbox";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
+
+const BUSINESS_LABELS = {
+  sale: "options.sale",
+  rent: "options.rent"
+};
+
+const PROPERTY_LABELS = {
+  house: "options.house",
+  apartment: "options.apartment",
+  condominium: "options.condominium",
+  lot: "options.lot",
+  room: "options.room",
+  commercial: "options.commercial"
+};
+
+const RENTAL_LABELS = {
+  "full-property": "options.fullProperty",
+  roommate: "options.roommate"
+};
+
+const MARKET_LABELS = {
+  available: "options.available",
+  reserved: "options.reserved",
+  sold: "options.sold",
+  rented: "options.rented",
+  inactive: "options.inactive"
+};
 
 export function SearchFilters({
   values,
@@ -26,6 +54,7 @@ export function SearchFilters({
   onSaveSearch,
   canSave
 }) {
+  const { t } = useLanguage();
   const update = (key, value) => onChange({ [key]: value });
   const cantonOptions = ensureOptionInList(getCantonsByProvince(values.province), values.canton);
   const districtOptions = ensureOptionInList(
@@ -37,51 +66,51 @@ export function SearchFilters({
     <div className="surface space-y-5 p-5">
       <div className="grid gap-4 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <label className="field-label">Buscar por texto</label>
+          <label className="field-label">{t("filters.searchText")}</label>
           <Input
             value={values.q || ""}
             onChange={(event) => update("q", event.target.value)}
-            placeholder="Escazu, Tamarindo, vista al mar, jardin..."
+            placeholder={t("filters.searchPlaceholder")}
           />
         </div>
         <div>
-          <label className="field-label">Negocio</label>
+          <label className="field-label">{t("filters.business")}</label>
           <Select
             value={values.businessType || ""}
             onChange={(event) => update("businessType", event.target.value)}
           >
-            <option value="">Todos</option>
+            <option value="">{t("common.all")}</option>
             {businessTypes.map((item) => (
               <option key={item.value} value={item.value}>
-                {item.label}
+                {t(BUSINESS_LABELS[item.value])}
               </option>
             ))}
           </Select>
         </div>
         <div>
-          <label className="field-label">Tipo</label>
+          <label className="field-label">{t("filters.propertyType")}</label>
           <Select
             value={values.propertyType || ""}
             onChange={(event) => update("propertyType", event.target.value)}
           >
-            <option value="">Todos</option>
+            <option value="">{t("common.all")}</option>
             {propertyTypes.map((item) => (
               <option key={item.value} value={item.value}>
-                {item.label}
+                {t(PROPERTY_LABELS[item.value])}
               </option>
             ))}
           </Select>
         </div>
         <div>
-          <label className="field-label">Modalidad</label>
+          <label className="field-label">{t("filters.rentalArrangement")}</label>
           <Select
             value={values.rentalArrangement || ""}
             onChange={(event) => update("rentalArrangement", event.target.value)}
           >
-            <option value="">Todas</option>
+            <option value="">{t("common.allFeminine")}</option>
             {rentalArrangements.map((item) => (
               <option key={item.value} value={item.value}>
-                {item.label}
+                {t(RENTAL_LABELS[item.value])}
               </option>
             ))}
           </Select>
@@ -90,7 +119,7 @@ export function SearchFilters({
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <div>
-          <label className="field-label">Precio min</label>
+          <label className="field-label">{t("filters.minPrice")}</label>
           <Input
             type="number"
             value={values.minPrice || ""}
@@ -99,7 +128,7 @@ export function SearchFilters({
           />
         </div>
         <div>
-          <label className="field-label">Precio max</label>
+          <label className="field-label">{t("filters.maxPrice")}</label>
           <Input
             type="number"
             value={values.maxPrice || ""}
@@ -108,9 +137,9 @@ export function SearchFilters({
           />
         </div>
         <div>
-          <label className="field-label">Moneda</label>
+          <label className="field-label">{t("filters.currency")}</label>
           <Select value={values.currency || ""} onChange={(event) => update("currency", event.target.value)}>
-            <option value="">Ambas</option>
+            <option value="">{t("common.both")}</option>
             {currencies.map((item) => (
               <option key={item.value} value={item.value}>
                 {item.label}
@@ -119,21 +148,21 @@ export function SearchFilters({
           </Select>
         </div>
         <div>
-          <label className="field-label">Estado</label>
+          <label className="field-label">{t("filters.status")}</label>
           <Select
             value={values.marketStatus || ""}
             onChange={(event) => update("marketStatus", event.target.value)}
           >
-            <option value="">Activas</option>
+            <option value="">{t("common.active")}</option>
             {marketStatuses.map((item) => (
               <option key={item.value} value={item.value}>
-                {item.label}
+                {t(MARKET_LABELS[item.value])}
               </option>
             ))}
           </Select>
         </div>
         <div>
-          <label className="field-label">Habitaciones</label>
+          <label className="field-label">{t("filters.bedrooms")}</label>
           <Input
             type="number"
             value={values.bedrooms || ""}
@@ -142,7 +171,7 @@ export function SearchFilters({
           />
         </div>
         <div>
-          <label className="field-label">Banos</label>
+          <label className="field-label">{t("filters.bathrooms")}</label>
           <Input
             type="number"
             value={values.bathrooms || ""}
@@ -151,7 +180,7 @@ export function SearchFilters({
           />
         </div>
         <div>
-          <label className="field-label">Parqueos</label>
+          <label className="field-label">{t("filters.parkingSpaces")}</label>
           <Input
             type="number"
             value={values.parkingSpaces || ""}
@@ -163,7 +192,7 @@ export function SearchFilters({
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <div>
-          <label className="field-label">Provincia</label>
+          <label className="field-label">{t("filters.province")}</label>
           <Select
             value={values.province || ""}
             onChange={(event) =>
@@ -174,7 +203,7 @@ export function SearchFilters({
               })
             }
           >
-            <option value="">Todas</option>
+            <option value="">{t("common.allFeminine")}</option>
             {provinces.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -183,7 +212,7 @@ export function SearchFilters({
           </Select>
         </div>
         <div>
-          <label className="field-label">Canton</label>
+          <label className="field-label">{t("filters.canton")}</label>
           <Select
             value={values.canton || ""}
             disabled={!values.province}
@@ -194,7 +223,7 @@ export function SearchFilters({
               })
             }
           >
-            <option value="">{values.province ? "Todos" : "Selecciona provincia"}</option>
+            <option value="">{values.province ? t("common.all") : t("filters.selectProvince")}</option>
             {cantonOptions.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -203,14 +232,14 @@ export function SearchFilters({
           </Select>
         </div>
         <div>
-          <label className="field-label">Distrito</label>
+          <label className="field-label">{t("filters.district")}</label>
           <Select
             value={values.district || ""}
             disabled={!values.province || !values.canton}
             onChange={(event) => update("district", event.target.value || undefined)}
           >
             <option value="">
-              {values.province && values.canton ? "Todos" : "Selecciona canton"}
+              {values.province && values.canton ? t("common.all") : t("filters.selectCanton")}
             </option>
             {districtOptions.map((item) => (
               <option key={item} value={item}>
@@ -220,7 +249,7 @@ export function SearchFilters({
           </Select>
         </div>
         <div>
-          <label className="field-label">Radio (km)</label>
+          <label className="field-label">{t("filters.radius")}</label>
           <Input
             type="number"
             value={values.radiusKm || ""}
@@ -230,54 +259,54 @@ export function SearchFilters({
         </div>
         <div className="flex items-end">
           <Button variant="secondary" className="w-full" onClick={onUseCurrentLocation}>
-            Cerca de mi
+            {t("filters.nearMe")}
           </Button>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
         <Checkbox
-          label="Amueblado"
+          label={t("filters.furnished")}
           checked={Boolean(values.furnished)}
           onChange={(event) => update("furnished", event.target.checked ? true : undefined)}
         />
         <Checkbox
-          label="Acepta mascotas"
+          label={t("filters.petsAllowed")}
           checked={Boolean(values.petsAllowed)}
           onChange={(event) => update("petsAllowed", event.target.checked ? true : undefined)}
         />
         <Checkbox
-          label="Con deposito"
+          label={t("filters.depositRequired")}
           checked={Boolean(values.depositRequired)}
           onChange={(event) => update("depositRequired", event.target.checked ? true : undefined)}
         />
         <Checkbox
-          label="Destacadas"
+          label={t("filters.featured")}
           checked={Boolean(values.featured)}
           onChange={(event) => update("featured", event.target.checked ? true : undefined)}
         />
         <Checkbox
-          label="Recientes"
+          label={t("filters.recent")}
           checked={Boolean(values.recent)}
           onChange={(event) => update("recent", event.target.checked ? true : undefined)}
         />
         <Checkbox
-          label="Cuarto privado"
+          label={t("filters.privateRoom")}
           checked={Boolean(values.privateRoom)}
           onChange={(event) => update("privateRoom", event.target.checked ? true : undefined)}
         />
         <Checkbox
-          label="Bano privado"
+          label={t("filters.privateBathroom")}
           checked={Boolean(values.privateBathroom)}
           onChange={(event) => update("privateBathroom", event.target.checked ? true : undefined)}
         />
         <Checkbox
-          label="Servicios incluidos"
+          label={t("filters.utilitiesIncluded")}
           checked={Boolean(values.utilitiesIncluded)}
           onChange={(event) => update("utilitiesIncluded", event.target.checked ? true : undefined)}
         />
         <Checkbox
-          label="Estudiantil"
+          label={t("filters.studentFriendly")}
           checked={Boolean(values.studentFriendly)}
           onChange={(event) => update("studentFriendly", event.target.checked ? true : undefined)}
         />
@@ -286,11 +315,11 @@ export function SearchFilters({
       <div className="grid gap-4 border-t border-ink/10 pt-5 md:grid-cols-[1fr_auto]">
         <div>
           <Button variant="accent" onClick={onSaveSearch} disabled={!canSave}>
-            Guardar busqueda
+            {t("filters.saveSearch")}
           </Button>
         </div>
         <Button variant="ghost" onClick={onReset}>
-          Limpiar filtros
+          {t("filters.clear")}
         </Button>
       </div>
     </div>
