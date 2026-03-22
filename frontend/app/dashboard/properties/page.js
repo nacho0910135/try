@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { deleteProperty, getMyProperties, updatePropertyStatus } from "@/lib/api";
-import { formatCurrency, formatLocation, formatPropertyStatus } from "@/lib/utils";
+import { deleteProperty, getMyProperties, updateProperty } from "@/lib/api";
+import {
+  formatCurrency,
+  formatLocation,
+  formatMarketStatus,
+  formatPropertyStatus
+} from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -13,13 +18,27 @@ export default function DashboardPropertiesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [items, setItems] = useState([]);
+  const [draftStates, setDraftStates] = useState({});
   const [loading, setLoading] = useState(true);
   const [flashMessage, setFlashMessage] = useState("");
+  const [savingPropertyId, setSavingPropertyId] = useState("");
 
   const loadProperties = async () => {
     try {
       const data = await getMyProperties();
-      setItems(data.items || []);
+      const nextItems = data.items || [];
+      setItems(nextItems);
+      setDraftStates(
+        Object.fromEntries(
+          nextItems.map((item) => [
+            item._id,
+            {
+              status: item.status || "draft",
+              marketStatus: item.marketStatus || "available"
+            }
+          ])
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -52,9 +71,38 @@ export default function DashboardPropertiesPage() {
     }
   }, [router, searchParams]);
 
-  const handleStatusChange = async (propertyId, status) => {
-    await updatePropertyStatus(propertyId, status);
-    await loadProperties();
+  const handleDraftChange = (propertyId, key, value) => {
+    setDraftStates((current) => ({
+      ...current,
+      [propertyId]: {
+        ...(current[propertyId] || {}),
+        [key]: value
+      }
+    }));
+  };
+
+  const handleSaveStatus = async (propertyId) => {
+    const draft = draftStates[propertyId];
+
+    if (!draft) {
+      return;
+    }
+
+    try {
+      setSavingPropertyId(propertyId);
+      await updateProperty(propertyId, {
+        status: draft.status,
+        marketStatus: draft.marketStatus
+      });
+      setFlashMessage("El estado de la propiedad se actualizo correctamente.");
+      await loadProperties();
+    } catch (error) {
+      setFlashMessage(
+        error.response?.data?.message || "No se pudo actualizar el estado de la propiedad."
+      );
+    } finally {
+      setSavingPropertyId("");
+    }
   };
 
   const handleDelete = async (propertyId) => {
@@ -109,6 +157,7 @@ export default function DashboardPropertiesPage() {
               <th className="pb-4">Precio</th>
               <th className="pb-4">Visualizaciones</th>
               <th className="pb-4">Estado</th>
+              <th className="pb-4">Mercado</th>
               <th className="pb-4">Acciones</th>
             </tr>
           </thead>
@@ -127,19 +176,41 @@ export default function DashboardPropertiesPage() {
                 </td>
                 <td className="py-4 pr-4">
                   <select
-                    value={item.status}
-                    onChange={(event) => handleStatusChange(item._id, event.target.value)}
+                    value={draftStates[item._id]?.status || item.status}
+                    onChange={(event) => handleDraftChange(item._id, "status", event.target.value)}
                     className="rounded-xl border border-ink/10 px-3 py-2"
                   >
-                    {["draft", "published", "paused", "sold", "rented"].map((status) => (
+                    {["draft", "published", "paused"].map((status) => (
                       <option key={status} value={status}>
                         {formatPropertyStatus(status)}
                       </option>
                     ))}
                   </select>
                 </td>
+                <td className="py-4 pr-4">
+                  <select
+                    value={draftStates[item._id]?.marketStatus || item.marketStatus || "available"}
+                    onChange={(event) =>
+                      handleDraftChange(item._id, "marketStatus", event.target.value)
+                    }
+                    className="rounded-xl border border-ink/10 px-3 py-2"
+                  >
+                    {["available", "reserved", "sold", "rented", "inactive"].map((marketStatus) => (
+                      <option key={marketStatus} value={marketStatus}>
+                        {formatMarketStatus(marketStatus)}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <td className="py-4">
                   <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="accent"
+                      onClick={() => handleSaveStatus(item._id)}
+                      disabled={savingPropertyId === item._id}
+                    >
+                      {savingPropertyId === item._id ? "Guardando..." : "Guardar estado"}
+                    </Button>
                     <Link href={`/dashboard/properties/${item._id}/edit`}>
                       <Button variant="secondary">Editar</Button>
                     </Link>

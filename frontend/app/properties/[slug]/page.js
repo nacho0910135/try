@@ -171,7 +171,7 @@ export default function PropertyDetailPage({ params }) {
 
       <PropertyGallery photos={property.photos} title={property.title} />
 
-      <div className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid gap-8 xl:grid-cols-[1.02fr_0.98fr]">
         <div className="space-y-6">
           <div className="surface p-6">
             <h2 className="text-2xl font-semibold">Resumen</h2>
@@ -315,14 +315,16 @@ export default function PropertyDetailPage({ params }) {
         </div>
 
         <div className="space-y-6">
-          <div className="surface space-y-4 p-6">
+          <div className="surface space-y-5 p-7">
             <h2 className="text-2xl font-semibold">Anunciante</h2>
-            <p className="text-sm text-ink/70">{seller.name}</p>
-            {sellerRoleLabel ? <p className="text-sm text-ink/55">{sellerRoleLabel}</p> : null}
+            <div className="rounded-[24px] bg-mist p-5">
+              <p className="text-lg font-semibold text-ink">{seller.name}</p>
+              {sellerRoleLabel ? <p className="mt-1 text-sm text-ink/55">{sellerRoleLabel}</p> : null}
+            </div>
             {seller.phone ? (
               <a
                 href={`tel:${seller.phone}`}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-lagoon"
+                className="inline-flex w-full items-center gap-2 rounded-2xl border border-ink/10 bg-white px-4 py-3 text-sm font-semibold text-lagoon"
               >
                 <PhoneCall className="h-4 w-4" />
                 {seller.phone}
@@ -332,7 +334,7 @@ export default function PropertyDetailPage({ params }) {
               <a
                 href={whatsappLink}
                 target="_blank"
-                className="inline-flex items-center gap-2 rounded-2xl bg-pine px-4 py-3 text-sm font-semibold text-white"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-pine px-4 py-3 text-sm font-semibold text-white"
                 rel="noreferrer"
               >
                 <MessageCircleMore className="h-4 w-4" />
@@ -344,7 +346,7 @@ export default function PropertyDetailPage({ params }) {
                 href={streetViewUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-2xl bg-lagoon px-4 py-3 text-sm font-semibold text-white"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-lagoon px-4 py-3 text-sm font-semibold text-white"
               >
                 <Eye className="h-4 w-4" />
                 Ver Street View
