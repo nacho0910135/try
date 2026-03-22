@@ -591,6 +591,5 @@ propertySchema.index({
   publishedAt: -1
 });
 propertySchema.index({ soldAt: -1, rentedAt: -1 });
-propertySchema.index({ slug: 1 });
 
 export const Property = mongoose.model("Property", propertySchema);
