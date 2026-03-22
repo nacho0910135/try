@@ -39,7 +39,7 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
         {summary.layerCounts.map((layer) => (
           <div
             key={layer.id}
-            className="rounded-[26px] border border-white/70 bg-white/96 p-4 shadow-soft"
+            className="rounded-[26px] border border-white/70 bg-white/[0.96] p-4 shadow-soft"
           >
             <div className="flex items-center gap-3">
               <div className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: layer.color }} />
@@ -57,7 +57,7 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
         ))}
 
         {focusedPoint ? (
-          <div className="rounded-[26px] border border-lagoon/15 bg-lagoon/7 p-4 shadow-soft">
+          <div className="rounded-[26px] border border-lagoon/15 bg-lagoon/[0.07] p-4 shadow-soft">
             <div className="flex items-center gap-2 text-sm font-semibold text-lagoon">
               <Compass className="h-4 w-4" />
               {language === "en" ? "Focused point" : "Punto enfocado"}
@@ -74,7 +74,7 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[26px] border border-white/70 bg-white/96 p-4 shadow-soft">
+        <div className="rounded-[26px] border border-white/70 bg-white/[0.96] p-4 shadow-soft">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
             <MapPinned className="h-4 w-4 text-pine" />
             {language === "en" ? "Top districts in this view" : "Distritos mas fuertes en esta vista"}

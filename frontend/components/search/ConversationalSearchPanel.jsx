@@ -67,7 +67,7 @@ export function ConversationalSearchPanel({ onApply }) {
             ? "Example: Pet-friendly rental near UCR with 2 bedrooms under $900"
             : "Ejemplo: Alquiler pet friendly cerca de la UCR con 2 habitaciones por menos de $900"
         }
-        className="min-h-[118px] bg-white/92 shadow-soft"
+        className="min-h-[118px] bg-white/[0.92] shadow-soft"
       />
 
       <div className="surface-soft flex flex-wrap gap-2 p-3">

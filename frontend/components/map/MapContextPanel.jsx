@@ -69,7 +69,7 @@ export function MapContextPanel({
             <div
               key={layer.id}
               className={`rounded-[26px] border p-4 shadow-soft transition ${
-                active ? "border-pine/20 bg-pine/6" : "border-white/70 bg-white/96"
+                active ? "border-pine/20 bg-pine/[0.06]" : "border-white/70 bg-white/[0.96]"
               }`}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -116,7 +116,7 @@ export function MapContextPanel({
                       className={`rounded-[20px] px-4 py-3 text-left transition ${
                           pointActive
                             ? "bg-white shadow-soft ring-2 ring-pine/20"
-                            : "bg-mist/85 hover:bg-white"
+                            : "bg-mist/[0.85] hover:bg-white"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-3">
@@ -147,7 +147,7 @@ export function MapContextPanel({
       </div>
 
       {focusedPoint ? (
-        <div className="surface-soft border border-lagoon/15 bg-lagoon/7 p-4">
+        <div className="surface-soft border border-lagoon/15 bg-lagoon/[0.07] p-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-lagoon/75">
