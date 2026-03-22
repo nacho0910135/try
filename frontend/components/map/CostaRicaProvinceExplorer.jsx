@@ -271,16 +271,18 @@ export function CostaRicaProvinceExplorer({
 
                 handleProvinceSelection(provinceFeature.properties.name);
               }}
-              style={{
-                width: "100%",
-                minHeight:
-                  typeof mapMinHeight === "number"
-                    ? mapMinHeight
-                    : compact
-                      ? 220
-                      : 760
-              }}
-            >
+        style={{
+          width: "100%",
+          height:
+            typeof mapMinHeight === "number"
+              ? compact
+                ? `clamp(208px, 30svh, ${mapMinHeight}px)`
+                : `clamp(360px, 58svh, ${mapMinHeight}px)`
+              : compact
+                ? "clamp(208px, 30svh, 280px)"
+                : "clamp(360px, 58svh, 760px)"
+        }}
+      >
               <NavigationControl position="top-right" />
               {interactiveProvinceGeoJson ? (
                 <Source id="cr-provinces" type="geojson" data={interactiveProvinceGeoJson}>

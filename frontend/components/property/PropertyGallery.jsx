@@ -169,18 +169,18 @@ export function PropertyGallery({ media = [], photos = [], title }) {
   return (
     <div className="space-y-4">
       <div className="relative overflow-hidden rounded-[30px] border border-white/60 bg-[#0f1720] shadow-[0_28px_60px_rgba(15,23,32,0.18)]">
-        <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 px-4 py-4">
-          <div className="inline-flex items-center gap-2 rounded-full bg-black/45 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur">
+        <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 px-3 py-3 sm:px-4 sm:py-4">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur sm:gap-2 sm:px-3 sm:text-[11px] sm:tracking-[0.18em]">
             <Images className="h-3.5 w-3.5" />
             {imageCount} fotos
-            {videoCount ? <span className="text-white/75">• {videoCount} videos</span> : null}
+            {videoCount ? <span className="text-white/75">{"\u00b7"} {videoCount} videos</span> : null}
           </div>
-          <div className="rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-ink shadow-soft backdrop-blur">
+          <div className="rounded-full bg-white/85 px-2.5 py-1.5 text-[10px] font-semibold text-ink shadow-soft backdrop-blur sm:px-3 sm:text-[11px]">
             {activeItem.type === "video" ? "Video destacado" : "Portada visual"}
           </div>
         </div>
 
-        <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[16/9]">
+        <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[16/9]">
           <GalleryViewer item={activeItem} title={title} />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 via-black/8 to-transparent" />
         </div>
@@ -190,7 +190,7 @@ export function PropertyGallery({ media = [], photos = [], title }) {
             <button
               type="button"
               onClick={() => goTo(activeIndex - 1)}
-              className="absolute left-4 top-1/2 z-10 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-white/88 p-2.5 text-ink shadow-soft transition hover:bg-white"
+              className="absolute left-2.5 top-1/2 z-10 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-white/88 p-2 text-ink shadow-soft transition hover:bg-white sm:left-4 sm:p-2.5"
               aria-label="Anterior"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -198,7 +198,7 @@ export function PropertyGallery({ media = [], photos = [], title }) {
             <button
               type="button"
               onClick={() => goTo(activeIndex + 1)}
-              className="absolute right-4 top-1/2 z-10 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-white/88 p-2.5 text-ink shadow-soft transition hover:bg-white"
+              className="absolute right-2.5 top-1/2 z-10 inline-flex -translate-y-1/2 items-center justify-center rounded-full bg-white/88 p-2 text-ink shadow-soft transition hover:bg-white sm:right-4 sm:p-2.5"
               aria-label="Siguiente"
             >
               <ChevronRight className="h-4 w-4" />
@@ -208,7 +208,7 @@ export function PropertyGallery({ media = [], photos = [], title }) {
       </div>
 
       {items.length > 1 ? (
-        <div className="flex snap-x gap-3 overflow-x-auto pb-1">
+        <div className="flex snap-x gap-2.5 overflow-x-auto pb-1 sm:gap-3">
           {items.map((item, index) => {
             const selected = index === activeIndex;
 
@@ -217,7 +217,7 @@ export function PropertyGallery({ media = [], photos = [], title }) {
                 key={item.id}
                 type="button"
                 onClick={() => setActiveIndex(index)}
-                className={`group relative aspect-[4/3] min-w-[112px] snap-start overflow-hidden rounded-[22px] border bg-white shadow-soft transition sm:min-w-[132px] ${
+                className={`group relative aspect-[4/3] min-w-[92px] snap-start overflow-hidden rounded-[20px] border bg-white shadow-soft transition sm:min-w-[132px] ${
                   selected
                     ? "border-terracotta ring-2 ring-terracotta/18"
                     : "border-white/70 hover:-translate-y-0.5 hover:border-ink/10"
@@ -253,7 +253,7 @@ export function PropertyGallery({ media = [], photos = [], title }) {
                   />
                 )}
                 <div className="absolute inset-x-2 bottom-2">
-                  <span className="rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur">
+                  <span className="rounded-full bg-black/50 px-2 py-1 text-[9px] font-semibold text-white backdrop-blur sm:px-2.5 sm:text-[10px]">
                     {item.type === "video" ? "Video" : `Foto ${index + 1}`}
                   </span>
                 </div>

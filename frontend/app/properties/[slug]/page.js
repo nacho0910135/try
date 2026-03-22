@@ -171,8 +171,8 @@ export default function PropertyDetailPage({ params }) {
   const streetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${property.location.coordinates[1]},${property.location.coordinates[0]}`;
 
   return (
-    <div className="app-shell section-pad space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-6">
+    <div className="app-shell section-pad space-y-6 sm:space-y-8">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
         <div>
           <div className="flex flex-wrap gap-3">
             <Badge variant="accent">{formatBusinessType(property.businessType)}</Badge>
@@ -184,26 +184,34 @@ export default function PropertyDetailPage({ params }) {
             {property.featured ? <Badge variant="info">Destacada</Badge> : null}
             {trustProfile.level === "high" ? <Badge variant="success">Verificada</Badge> : null}
           </div>
-          <h1 className="mt-5 max-w-4xl font-serif text-5xl font-semibold">{property.title}</h1>
-          <p className="mt-3 text-base text-ink/60">{formatLocation(property)}</p>
+          <h1 className="mt-4 max-w-4xl font-serif text-[2.2rem] font-semibold leading-tight sm:mt-5 sm:text-4xl lg:text-5xl">
+            {property.title}
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-ink/60 sm:text-base">{formatLocation(property)}</p>
         </div>
 
-        <div className="surface min-w-[300px] p-5">
-          <div className="text-3xl font-semibold">{formatCurrency(property.price, property.currency)}</div>
+        <div className="surface w-full min-w-0 p-4 sm:p-5 lg:max-w-[380px]">
+          <div className="text-2xl font-semibold sm:text-3xl">
+            {formatCurrency(property.price, property.currency)}
+          </div>
           {property.finalPrice ? (
-            <div className="mt-2 text-sm text-ink/55">
+            <div className="mt-2 text-sm leading-6 text-ink/55">
               Precio final registrado: {formatCurrency(property.finalPrice, property.currency)}
             </div>
           ) : null}
           <div className="mt-2 text-sm text-ink/55">Publicado por {seller.name}</div>
           {sellerRoleLabel ? <div className="mt-1 text-sm text-ink/55">{sellerRoleLabel}</div> : null}
-          <div className="mt-5 flex gap-3">
-            <Button variant={favorite ? "accent" : "secondary"} onClick={handleFavorite}>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <Button
+              variant={favorite ? "accent" : "secondary"}
+              onClick={handleFavorite}
+              className="w-full"
+            >
               <Heart className={`mr-2 h-4 w-4 ${favorite ? "fill-current" : ""}`} />
               {favorite ? "Guardada" : "Guardar"}
             </Button>
-            <Link href="/search">
-              <Button variant="ghost">Volver a buscar</Button>
+            <Link href="/search" className="block">
+              <Button variant="ghost" className="w-full">Volver a buscar</Button>
             </Link>
           </div>
         </div>
@@ -213,9 +221,9 @@ export default function PropertyDetailPage({ params }) {
 
       <div className="grid gap-8 xl:grid-cols-[1.02fr_0.98fr]">
         <div className="space-y-6">
-          <div className="surface p-6">
+          <div className="surface p-5 sm:p-6">
             <h2 className="text-2xl font-semibold">Resumen</h2>
-            <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <span className="data-pill">
                 {isRoommateListing
                   ? `${property.roommateDetails?.availableRooms || 1} cuarto disponible`
@@ -223,8 +231,8 @@ export default function PropertyDetailPage({ params }) {
               </span>
               <span className="data-pill">
                 {isRoommateListing && property.roommateDetails?.privateBathroom
-                  ? "Baño privado"
-                  : `${property.bathrooms || 0} baños`}
+                  ? "Ba\u00f1o privado"
+                  : `${property.bathrooms || 0} ba\u00f1os`}
               </span>
               <span className="data-pill">{property.parkingSpaces || 0} parqueos</span>
               <span className="data-pill">
@@ -247,12 +255,12 @@ export default function PropertyDetailPage({ params }) {
             </p>
           </div>
 
-          <div className="surface p-6">
+          <div className="surface p-5 sm:p-6">
             <h2 className="text-2xl font-semibold">Lectura rapida para decidir</h2>
             <p className="mt-2 text-sm text-ink/60">
               Un resumen pensado para comprador o inquilino: donde encaja mejor esta propiedad y que conviene revisar antes de avanzar.
             </p>
-            <div className="mt-5 grid gap-5 lg:grid-cols-3">
+            <div className="mt-5 grid gap-4 lg:grid-cols-3 lg:gap-5">
               <div className="rounded-[24px] border border-pine/15 bg-pine/5 p-5">
                 <div className="flex items-center gap-2 text-sm font-semibold text-pine">
                   <Sparkles className="h-4 w-4" />
@@ -312,7 +320,7 @@ export default function PropertyDetailPage({ params }) {
             </div>
           </div>
 
-          <div className="surface p-6">
+          <div className="surface p-5 sm:p-6">
             <h2 className="text-2xl font-semibold">Amenidades y detalles</h2>
             <div className="mt-5 flex flex-wrap gap-3">
               {property.amenities?.length ? (
@@ -328,7 +336,7 @@ export default function PropertyDetailPage({ params }) {
           </div>
 
           {property.businessType === "rent" ? (
-            <div className="surface p-6">
+            <div className="surface p-5 sm:p-6">
               <h2 className="text-2xl font-semibold">Condiciones de alquiler</h2>
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <span className="data-pill">Acepta mascotas: {formatYesNo(property.petsAllowed)}</span>
@@ -340,14 +348,16 @@ export default function PropertyDetailPage({ params }) {
           ) : null}
 
           {isRoommateListing ? (
-            <div className="surface p-6">
+            <div className="surface p-5 sm:p-6">
               <h2 className="text-2xl font-semibold">Detalles para roomies</h2>
               <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 <span className="data-pill">
                   {property.roommateDetails?.privateRoom ? "Cuarto privado" : "Cuarto compartido"}
                 </span>
                 <span className="data-pill">
-                  {property.roommateDetails?.privateBathroom ? "Baño privado" : "Baño compartido"}
+                  {property.roommateDetails?.privateBathroom
+                    ? "Ba\u00f1o privado"
+                    : "Ba\u00f1o compartido"}
                 </span>
                 <span className="data-pill">
                   {property.roommateDetails?.utilitiesIncluded
@@ -379,7 +389,7 @@ export default function PropertyDetailPage({ params }) {
           ) : null}
 
           {serviceDistanceItems.length ? (
-            <div className="surface p-6">
+            <div className="surface p-5 sm:p-6">
               <h2 className="text-2xl font-semibold">Servicios cercanos</h2>
               <div className="mt-5 grid gap-4 md:grid-cols-3">
                 {serviceDistanceItems.map((service) => (
@@ -398,7 +408,7 @@ export default function PropertyDetailPage({ params }) {
         </div>
 
         <div className="space-y-6">
-          <div className="surface space-y-5 p-7">
+          <div className="surface space-y-5 p-5 sm:p-7">
             <h2 className="text-2xl font-semibold">Anunciante</h2>
             <div className="rounded-[24px] bg-mist p-5">
               <p className="text-lg font-semibold text-ink">{seller.name}</p>

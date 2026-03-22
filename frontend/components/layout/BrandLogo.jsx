@@ -18,7 +18,9 @@ function FlagHouseMark({ compact = false, className }) {
       viewBox="0 0 188 148"
       aria-hidden="true"
       className={cn(
-        compact ? "h-[4.3rem] w-[5.5rem]" : "h-[5.8rem] w-[7.4rem] sm:h-[6.4rem] sm:w-[8.1rem]",
+        compact
+          ? "h-[2.7rem] w-[3.45rem] sm:h-[3.8rem] sm:w-[4.85rem]"
+          : "h-[4.6rem] w-[5.9rem] sm:h-[6.1rem] sm:w-[7.8rem]",
         className
       )}
     >
@@ -109,7 +111,9 @@ function BrandWordmark({ compact = false, showTagline = true, className }) {
         <span
           className={cn(
             "font-serif font-semibold text-[#0d3f96]",
-            compact ? "text-[1.8rem] sm:text-[2rem]" : "text-[2.45rem] sm:text-[3rem] lg:text-[3.25rem]"
+            compact
+              ? "text-[1.08rem] sm:text-[1.55rem]"
+              : "text-[2rem] sm:text-[2.75rem] lg:text-[3.25rem]"
           )}
           style={{ textShadow: "0 1px 0 rgba(255,255,255,0.5)" }}
         >
@@ -118,7 +122,9 @@ function BrandWordmark({ compact = false, showTagline = true, className }) {
         <span
           className={cn(
             "font-serif font-bold text-[#e01e2d]",
-            compact ? "text-[1.95rem] sm:text-[2.15rem]" : "text-[2.65rem] sm:text-[3.2rem] lg:text-[3.45rem]"
+            compact
+              ? "text-[1.22rem] sm:text-[1.72rem]"
+              : "text-[2.18rem] sm:text-[2.95rem] lg:text-[3.45rem]"
           )}
           style={{ textShadow: "0 1px 0 rgba(255,255,255,0.35)" }}
         >
@@ -147,7 +153,7 @@ export function BrandLogo({
     <div
       className={cn(
         "inline-flex max-w-full items-center",
-        compact ? "gap-2.5" : "gap-3.5 sm:gap-4",
+        compact ? "gap-1.5 sm:gap-2.5" : "gap-2.5 sm:gap-4",
         className
       )}
     >

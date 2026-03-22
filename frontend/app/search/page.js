@@ -242,12 +242,12 @@ function SearchPageContent() {
   };
 
   return (
-    <div className="app-shell section-pad space-y-7">
+    <div className="app-shell section-pad space-y-6 sm:space-y-7">
       <div>
         <span className="eyebrow">{t("searchPage.eyebrow")}</span>
         <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
+            <div className="hidden flex-wrap gap-2 sm:flex">
               <span className="stat-chip">
                 {language === "en" ? "Map-led exploration" : "Exploracion guiada por mapa"}
               </span>
@@ -255,14 +255,14 @@ function SearchPageContent() {
                 {language === "en" ? "Live price field" : "Campo de precios en vivo"}
               </span>
             </div>
-            <h1 className="font-serif text-4xl font-semibold leading-[1.02] sm:text-[4rem]">
+            <h1 className="font-serif text-[2.4rem] font-semibold leading-[1.02] sm:text-[3.35rem] lg:text-[4rem]">
               {t("searchPage.title")}
             </h1>
-            <p className="max-w-3xl text-sm leading-7 text-ink/65 sm:text-[15px]">
+            <p className="max-w-3xl text-sm leading-6 text-ink/65 sm:text-[15px] sm:leading-7">
               {t("searchPage.description")}
             </p>
           </div>
-          <div className="surface-soft min-w-[280px] border border-pine/15 bg-pine/10 p-4">
+          <div className="surface-soft w-full border border-pine/15 bg-pine/10 p-4 lg:min-w-[280px] lg:max-w-[360px]">
             <p className="text-sm font-semibold text-pine">
               {token
                 ? t("searchPage.publishPromptLoggedIn")
@@ -292,7 +292,7 @@ function SearchPageContent() {
 
       {message ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{message}</p> : null}
 
-      <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)] xl:gap-5">
         <div className="order-2 xl:order-1 xl:sticky xl:top-24 xl:h-fit xl:self-start">
           <CostaRicaProvinceExplorer
             selectedProvince={filters.province}
@@ -310,10 +310,10 @@ function SearchPageContent() {
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pine/70">
                   {language === "en" ? "Main view" : "Vista principal"}
                 </div>
-                <h2 className="mt-2 text-lg font-semibold text-ink sm:text-xl">
+                <h2 className="mt-2 text-base font-semibold text-ink sm:text-xl">
                   {language === "en" ? "Price map" : "Mapa de precios"}
                 </h2>
-                <p className="mt-1 text-sm text-ink/60">
+                <p className="mt-1 text-sm leading-6 text-ink/60">
                   {language === "en"
                     ? "The live price map stays front and center. Tap a price bubble to open the listing."
                     : "El mapa de precios se mantiene como protagonista. Toca una nube de precio para abrir la publicacion."}
@@ -368,7 +368,7 @@ function SearchPageContent() {
                 bounds: undefined
               });
             }}
-            minHeight={820}
+            minHeight={760}
           />
         </div>
       </div>

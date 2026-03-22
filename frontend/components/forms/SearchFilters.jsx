@@ -430,8 +430,8 @@ export function SearchFilters({
       </div>
 
       <div className="grid gap-4 border-t border-ink/10 pt-5 md:grid-cols-[1fr_auto]">
-        <div className="flex flex-wrap gap-3">
-          <Button variant="accent" onClick={onSaveSearch} disabled={!canSave}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Button variant="accent" onClick={onSaveSearch} disabled={!canSave} className="w-full sm:w-auto">
             {t("filters.saveSearch")}
           </Button>
           {!canSave ? (
@@ -440,7 +440,7 @@ export function SearchFilters({
             </span>
           ) : null}
         </div>
-        <Button variant="ghost" onClick={onReset}>
+        <Button variant="ghost" onClick={onReset} className="w-full sm:w-auto">
           {t("filters.clear")}
         </Button>
       </div>

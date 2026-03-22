@@ -28,7 +28,7 @@ export function PropertyMapPreview({ property }) {
           latitude: property.location.coordinates[1],
           zoom: 12
         }}
-        style={{ width: "100%", minHeight: 280 }}
+        style={{ width: "100%", height: "clamp(220px, 34svh, 280px)" }}
       >
         <NavigationControl position="top-right" />
         <Marker
@@ -36,7 +36,7 @@ export function PropertyMapPreview({ property }) {
           latitude={property.location.coordinates[1]}
           anchor="bottom"
         >
-          <div className="rounded-full bg-terracotta p-3 text-white shadow-soft">
+          <div className="rounded-full bg-terracotta p-2.5 text-white shadow-soft sm:p-3">
             <MapPin className="h-4 w-4" />
           </div>
         </Marker>

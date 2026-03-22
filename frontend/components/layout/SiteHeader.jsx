@@ -38,9 +38,10 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/60 bg-sand/80 backdrop-blur">
-      <div className="app-shell flex items-center justify-between gap-4 py-4">
-        <Link href="/" className="flex items-center gap-3">
-          <BrandLogo compact showTagline={false} />
+      <div className="app-shell py-3 sm:py-4">
+        <div className="flex items-center justify-between gap-3">
+        <Link href="/" className="flex min-w-0 items-center gap-3">
+          <BrandLogo compact showTagline={false} className="max-w-[58vw] sm:max-w-none" />
         </Link>
 
         <nav className="hidden items-center gap-2 md:flex">
@@ -58,8 +59,8 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher className="mr-1" />
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <LanguageSwitcher className="mr-0.5 sm:mr-1" />
           {user ? (
             <>
               <Link href="/dashboard">
@@ -76,9 +77,9 @@ export function SiteHeader() {
                   </Button>
                 </Link>
               ) : null}
-              <Button variant="ghost" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                {t("nav.logout")}
+              <Button variant="ghost" onClick={handleLogout} className="px-3 py-2 sm:px-4 sm:py-3">
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t("nav.logout")}</span>
               </Button>
             </>
           ) : (
@@ -90,14 +91,42 @@ export function SiteHeader() {
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="primary">{t("nav.login")}</Button>
+                <Button variant="primary" className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
+                  {t("nav.login")}
+                </Button>
               </Link>
             </>
           )}
-          <Link href="/favorites" className="rounded-full bg-white p-3 shadow-soft md:hidden">
+          <Link href="/favorites" className="rounded-full bg-white p-2.5 shadow-soft md:hidden">
             <Heart className="h-4 w-4" />
           </Link>
         </div>
+      </div>
+        <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 md:hidden">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
+                pathname === item.href ? "bg-white text-ink shadow-soft" : "bg-white/70 text-ink/70"
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+          {user ? (
+            <Link
+              href="/dashboard"
+              className={cn(
+                "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
+                pathname.startsWith("/dashboard") ? "bg-ink text-white shadow-soft" : "bg-pine/10 text-pine"
+              )}
+            >
+              {t("nav.dashboard")}
+            </Link>
+          ) : null}
+        </nav>
       </div>
     </header>
   );

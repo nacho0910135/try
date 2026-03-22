@@ -25,6 +25,7 @@
       radial-gradient(circle at 52% 100%, rgba(228, 93, 53, 0.08), transparent 20%),
       linear-gradient(180deg, #fffdf9 0%, #f8f2ea 45%, #edf4f8 100%);
     background-attachment: fixed;
+    overflow-x: hidden;
   }
 
   a {
@@ -124,5 +125,26 @@
 
   .mapboxgl-canvas {
     filter: saturate(1.08) contrast(1.02);
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    background-attachment: scroll;
+  }
+
+  .surface,
+  .surface-elevated {
+    border-radius: 24px;
+  }
+
+  .surface-soft {
+    border-radius: 20px;
+  }
+
+  .data-pill {
+    gap: 0.375rem;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.72rem;
   }
 }

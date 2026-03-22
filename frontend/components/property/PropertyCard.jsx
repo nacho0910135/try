@@ -193,7 +193,7 @@ export function PropertyCard({
           />
         </button>
         <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1.5 text-[10px] font-semibold text-white backdrop-blur sm:gap-2 sm:px-3 sm:text-[11px]">
             <Images className="h-3.5 w-3.5" />
             {mediaCount}
             {videoCount ? (
@@ -203,7 +203,7 @@ export function PropertyCard({
               </span>
             ) : null}
           </div>
-          <span className="rounded-full bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-ink shadow-soft backdrop-blur">
+          <span className="hidden rounded-full bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-ink shadow-soft backdrop-blur sm:inline-flex">
             {language === "en" ? "Tap to open" : "Toca para abrir"}
           </span>
         </div>
@@ -212,19 +212,19 @@ export function PropertyCard({
       <div className={`${compact ? "space-y-3 p-4 sm:space-y-2.5 sm:p-[14px]" : "space-y-3.5 p-[18px]"}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className={compact ? "text-xl font-semibold text-ink sm:text-lg" : "text-[1.45rem] font-semibold text-ink"}>
+            <div className={compact ? "text-lg font-semibold text-ink sm:text-lg" : "text-[1.3rem] font-semibold text-ink sm:text-[1.45rem]"}>
               {formatCurrency(property.price, property.currency)}
             </div>
-            <h3 className={`font-semibold leading-snug text-ink ${compact ? "mt-1 text-base sm:text-sm" : "mt-1.5 text-base"}`}>
+            <h3 className={`font-semibold leading-snug text-ink ${compact ? "mt-1 text-[15px] sm:text-sm" : "mt-1.5 text-[15px] sm:text-base"}`}>
               {property.title}
             </h3>
           </div>
-          <span className={`rounded-full bg-mist px-2.5 py-1 font-semibold ${compact ? "text-[10px] text-ink/55" : "text-xs text-ink/55"}`}>
+          <span className={`rounded-full bg-mist px-2.5 py-1 font-semibold ${compact ? "text-[10px] text-ink/55" : "text-[11px] text-ink/55 sm:text-xs"}`}>
             {typeLabel}
           </span>
         </div>
 
-        <div className={`flex items-center gap-2 text-ink/60 ${compact ? "text-xs" : "text-sm"}`}>
+        <div className={`flex items-start gap-2 text-ink/60 ${compact ? "text-[11px] sm:text-xs" : "text-xs sm:text-sm"}`}>
           <MapPin className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           <span>{formatLocation(property)}</span>
         </div>
@@ -273,7 +273,7 @@ export function PropertyCard({
           </div>
         ) : null}
 
-        <div className={`grid grid-cols-2 text-xs text-ink/70 sm:grid-cols-4 ${compact ? "gap-1.5" : "gap-2"}`}>
+        <div className={`grid grid-cols-2 text-[11px] text-ink/70 sm:grid-cols-4 sm:text-xs ${compact ? "gap-1.5" : "gap-2"}`}>
           <span className="data-pill">
             <BedDouble className="h-4 w-4" />
             {property.rentalArrangement === "roommate"
@@ -297,7 +297,7 @@ export function PropertyCard({
         </div>
 
         {property.businessType === "rent" ? (
-          <div className={`flex flex-wrap text-xs text-ink/60 ${compact ? "gap-1.5" : "gap-2"}`}>
+          <div className={`flex flex-wrap text-[11px] text-ink/60 sm:text-xs ${compact ? "gap-1.5" : "gap-2"}`}>
             <span className="data-pill">
               {t("propertyCard.pets")}: {boolLabel(property.petsAllowed)}
             </span>

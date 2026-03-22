@@ -117,18 +117,16 @@ export function SearchMap({
       return;
     }
 
-    mapRef.current
-      .getMap()
-      .fitBounds(
-        [
-          [state.minLng, state.minLat],
-          [state.maxLng, state.maxLat]
-        ],
-        {
-          padding: 36,
-          duration: 700
-        }
-      );
+    mapRef.current.getMap().fitBounds(
+      [
+        [state.minLng, state.minLat],
+        [state.maxLng, state.maxLat]
+      ],
+      {
+        padding: 36,
+        duration: 700
+      }
+    );
   }, [districtGeoJson]);
 
   useEffect(() => {
@@ -181,7 +179,7 @@ export function SearchMap({
 
   if (!token) {
     return (
-      <div className="surface flex min-h-[680px] flex-col items-center justify-center gap-3 p-8 text-center">
+      <div className="surface flex min-h-[420px] flex-col items-center justify-center gap-3 p-8 text-center">
         <h3 className="text-lg font-semibold">{t("map.enableMapboxTitle")}</h3>
         <p className="max-w-md text-sm text-ink/60">{t("map.enableMapboxDescription")}</p>
       </div>
@@ -234,10 +232,10 @@ export function SearchMap({
           <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-pine/75">
             {language === "en" ? "Live price field" : "Campo de precios"}
           </div>
-          <div className="mt-1.5 flex items-center gap-2 text-xs font-semibold text-ink sm:text-sm">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-ink sm:text-sm">
             <MapPinned className="h-4 w-4 shrink-0 text-terracotta" />
             {selectedProvince || "Costa Rica"}
-            <span className="text-ink/35">•</span>
+            <span className="text-ink/35">{"\u00b7"}</span>
             {properties.length} {language === "en" ? "results" : "resultados"}
           </div>
         </div>
@@ -246,6 +244,7 @@ export function SearchMap({
           {language === "en" ? "Drag, zoom, draw" : "Arrastra, acerca, dibuja"}
         </div>
       </div>
+
       <Map
         ref={mapRef}
         mapboxAccessToken={token}
@@ -285,10 +284,10 @@ export function SearchMap({
         }}
         style={{
           width: "100%",
-          minHeight:
+          height:
             typeof minHeight === "number"
-              ? `clamp(540px, 72svh, ${minHeight}px)`
-              : "clamp(540px, 72svh, 820px)"
+              ? `clamp(360px, 58svh, ${minHeight}px)`
+              : "clamp(360px, 58svh, 760px)"
         }}
       >
         <NavigationControl position="top-right" />
@@ -301,40 +300,38 @@ export function SearchMap({
           </Source>
         ) : null}
 
-        {properties.map((property) => (
-          (() => {
-            const marketStatus = property.marketStatus || "available";
-            const markerStyle = markerStylesByStatus[marketStatus] || markerStylesByStatus.available;
+        {properties.map((property) => {
+          const marketStatus = property.marketStatus || "available";
+          const markerStyle = markerStylesByStatus[marketStatus] || markerStylesByStatus.available;
 
-            return (
-              <Marker
-                key={property._id}
-                longitude={property.location.coordinates[0]}
-                latitude={property.location.coordinates[1]}
-                anchor="bottom"
+          return (
+            <Marker
+              key={property._id}
+              longitude={property.location.coordinates[0]}
+              latitude={property.location.coordinates[1]}
+              anchor="bottom"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectProperty?.(property._id);
+                  router.push(`/properties/${property.slug}`);
+                }}
+                className={`rounded-full border-2 px-2 py-1.5 text-[10px] font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition sm:px-3 sm:py-1.5 sm:text-[11px] ${
+                  selectedPropertyId === property._id
+                    ? markerStyle.selected
+                    : markerStyle.base
+                }`}
+                aria-label={t("map.selectedAria", {
+                  title: property.title,
+                  price: formatCurrency(property.price, property.currency)
+                })}
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSelectProperty?.(property._id);
-                    router.push(`/properties/${property.slug}`);
-                  }}
-                  className={`rounded-full border-2 px-3 py-2 text-xs font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition sm:px-3 sm:py-1.5 sm:text-[11px] ${
-                    selectedPropertyId === property._id
-                      ? markerStyle.selected
-                      : markerStyle.base
-                  }`}
-                  aria-label={t("map.selectedAria", {
-                    title: property.title,
-                    price: formatCurrency(property.price, property.currency)
-                  })}
-                >
-                  {formatCompactCurrency(property.price, property.currency)}
-                </button>
-              </Marker>
-            );
-          })()
-        ))}
+                {formatCompactCurrency(property.price, property.currency)}
+              </button>
+            </Marker>
+          );
+        })}
 
         {visibleContextPoints.map((point) => {
           const selected = focusedContextPoint?.id === point.id;
@@ -349,8 +346,8 @@ export function SearchMap({
               <button
                 type="button"
                 onClick={() => onSelectContextPoint?.(point)}
-                className={`rounded-full border px-3 py-2 text-[11px] font-semibold text-white shadow-soft transition sm:px-2.5 sm:py-1.5 sm:text-[10px] ${
-                  selected ? "ring-4 ring-white/80 scale-105" : "opacity-90 hover:opacity-100"
+                className={`rounded-full border px-2 py-1.5 text-[9px] font-semibold text-white shadow-soft transition sm:px-2.5 sm:py-1.5 sm:text-[10px] ${
+                  selected ? "scale-105 ring-4 ring-white/80" : "opacity-90 hover:opacity-100"
                 }`}
                 style={{
                   backgroundColor: point.color,
@@ -368,7 +365,7 @@ export function SearchMap({
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0f24301c] via-transparent to-transparent" />
 
       {selectedProvince || activeContextLayers.length ? (
-        <div className="space-y-2 border-t border-ink/10 bg-white/90 px-4 py-3 text-xs font-medium text-ink/65">
+        <div className="space-y-2 border-t border-ink/10 bg-white/90 px-3 py-3 text-xs font-medium text-ink/65 sm:px-4">
           {selectedProvince ? (
             <div className="flex items-start gap-2">
               <Sparkles className="mt-0.5 h-3.5 w-3.5 text-terracotta" />

@@ -44,7 +44,7 @@ export default function HomePage() {
   return (
     <div className="section-pad">
       <section className="app-shell">
-        <div className="surface-elevated overflow-hidden bg-hero-grid p-5 sm:p-8 lg:p-10">
+        <div className="surface-elevated overflow-hidden bg-hero-grid p-4 sm:p-8 lg:p-10">
           <div className="grid gap-8 lg:grid-cols-[minmax(320px,0.52fr)_minmax(0,1.48fr)] lg:items-start">
             <div className="max-w-xl lg:pt-4">
               <BrandLogo className="mb-4" compact showTagline={false} />
@@ -63,15 +63,15 @@ export default function HomePage() {
                   Leads + favoritos
                 </span>
               </div>
-              <h1 className="mt-5 max-w-3xl font-serif text-3xl font-semibold leading-[1.04] sm:text-[3.4rem]">
+              <h1 className="mt-5 max-w-3xl font-serif text-[2.2rem] font-semibold leading-[1.02] sm:text-[3.15rem] lg:text-[3.4rem]">
                 {t("homePage.title")}
               </h1>
-              <p className="mt-4 max-w-lg text-sm leading-7 text-ink/68 sm:text-[15px]">
+              <p className="mt-4 max-w-lg text-sm leading-6 text-ink/68 sm:text-[15px] sm:leading-7">
                 {t("homePage.description")}
               </p>
 
-              <div className="mt-7 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-                <div className="surface-soft space-y-3 p-4">
+              <div className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+                <div className="surface-soft space-y-3 p-4 sm:p-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <label className="field-label">{t("homePage.searchZoneLabel")}</label>
@@ -108,7 +108,7 @@ export default function HomePage() {
                   <div className="text-[11px] uppercase tracking-[0.18em] text-ink/40">
                     {t("homePage.activeProvince")}
                   </div>
-                  <div className="mt-2 text-2xl font-semibold">{selectedProvinceMeta?.name}</div>
+                  <div className="mt-2 text-xl font-semibold sm:text-2xl">{selectedProvinceMeta?.name}</div>
                   <p className="mt-2 text-sm leading-6 text-ink/65">
                     {language === "en"
                       ? selectedProvinceMeta?.blurbEn || selectedProvinceMeta?.blurb
@@ -126,11 +126,11 @@ export default function HomePage() {
             <CostaRicaProvinceExplorer
               selectedProvince={province}
               onSelectProvince={setProvince}
-              mapMinHeight={860}
+              mapMinHeight={760}
             />
           </div>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
             <div className="surface-soft p-5">
               <MapPinned className="h-5 w-5 text-terracotta" />
               <h3 className="mt-3 text-base font-semibold">{t("homePage.interactiveMap")}</h3>
@@ -155,7 +155,7 @@ export default function HomePage() {
           </div>
 
           {featuredForProvince.length ? (
-            <div className="mt-10 grid gap-4 lg:grid-cols-2">
+            <div className="mt-8 grid gap-4 lg:grid-cols-2">
               {featuredForProvince.slice(0, 2).map((property) => {
                 const mainPhoto = getMainPhoto(property);
 
@@ -195,11 +195,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="app-shell mt-14 space-y-6">
+      <section className="app-shell mt-10 space-y-5 sm:mt-14 sm:space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="eyebrow">{t("homePage.featuredEyebrow")}</span>
-            <h2 className="mt-4 font-serif text-4xl font-semibold">
+            <h2 className="mt-4 font-serif text-3xl font-semibold sm:text-4xl">
               {t("homePage.featuredTitle")}
             </h2>
           </div>
@@ -217,7 +217,7 @@ export default function HomePage() {
             }
           />
         ) : (
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
             {featured.map((property) => (
               <PropertyCard key={property._id} property={property} />
             ))}
