@@ -1,14 +1,17 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Bath, BedDouble, Car, Heart, MapPin, Square } from "lucide-react";
 import { addFavorite, removeFavorite } from "@/lib/api";
 import {
+  formatArea,
   formatBusinessType,
   formatCurrency,
   formatLocation,
+  formatMarketStatus,
   formatPropertyType,
+  formatRentalArrangement,
+  formatYesNo,
   getMainPhoto
 } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
@@ -23,6 +26,7 @@ export function PropertyCard({
 }) {
   const { token } = useAuthStore();
   const mainPhoto = getMainPhoto(property);
+  const fallbackSrc = "/property-placeholder.svg";
 
   const toggleFavorite = async (event) => {
     event.preventDefault();
@@ -52,14 +56,23 @@ export function PropertyCard({
       }`}
     >
       <div className="relative aspect-[4/3] overflow-hidden">
-        <Image
-          src={mainPhoto?.url || "https://placehold.co/1200x900/png?text=Casa+CR"}
+        <img
+          src={mainPhoto?.url || fallbackSrc}
           alt={mainPhoto?.alt || property.title}
-          fill
-          className="object-cover transition duration-500 group-hover:scale-[1.03]"
+          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = fallbackSrc;
+          }}
         />
         <div className="absolute left-4 top-4 flex gap-2">
           <Badge variant="accent">{formatBusinessType(property.businessType)}</Badge>
+          {property.rentalArrangement === "roommate" ? (
+            <Badge variant="success">{formatRentalArrangement(property.rentalArrangement)}</Badge>
+          ) : null}
+          {property.marketStatus && property.marketStatus !== "available" ? (
+            <Badge variant="info">{formatMarketStatus(property.marketStatus)}</Badge>
+          ) : null}
           {property.featured ? <Badge variant="info">Destacada</Badge> : null}
         </div>
         <button
@@ -89,11 +102,15 @@ export function PropertyCard({
         <div className="grid grid-cols-2 gap-2 text-sm text-ink/70 sm:grid-cols-4">
           <span className="data-pill">
             <BedDouble className="h-4 w-4" />
-            {property.bedrooms || 0}
+            {property.rentalArrangement === "roommate"
+              ? `${property.roommateDetails?.availableRooms || property.bedrooms || 1} cuarto`
+              : `${property.bedrooms || 0} hab`}
           </span>
           <span className="data-pill">
             <Bath className="h-4 w-4" />
-            {property.bathrooms || 0}
+            {property.rentalArrangement === "roommate" && property.roommateDetails?.privateBathroom
+              ? "Bano privado"
+              : `${property.bathrooms || 0} banos`}
           </span>
           <span className="data-pill">
             <Car className="h-4 w-4" />
@@ -101,11 +118,17 @@ export function PropertyCard({
           </span>
           <span className="data-pill">
             <Square className="h-4 w-4" />
-            {property.constructionArea || property.lotArea || 0} m²
+            {formatArea(property.constructionArea || property.lotArea || 0)}
           </span>
         </div>
+
+        {property.businessType === "rent" ? (
+          <div className="flex flex-wrap gap-2 text-xs text-ink/60">
+            <span className="data-pill">Mascotas: {formatYesNo(property.petsAllowed)}</span>
+            <span className="data-pill">Depos.: {formatYesNo(property.depositRequired)}</span>
+          </div>
+        ) : null}
       </div>
     </Link>
   );
 }
-

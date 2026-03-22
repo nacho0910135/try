@@ -24,18 +24,26 @@ export const favoriteService = {
       throw new ApiError(404, "Property not found");
     }
 
-    await Favorite.findOneAndUpdate(
-      { user: user._id, property: propertyId },
-      { user: user._id, property: propertyId },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    const existing = await Favorite.findOne({ user: user._id, property: propertyId });
+
+    if (!existing) {
+      await Favorite.create({ user: user._id, property: propertyId });
+      await Property.updateOne({ _id: propertyId }, { $inc: { "engagement.favorites": 1 } });
+    }
 
     return { success: true };
   },
 
   async remove(user, propertyId) {
-    await Favorite.findOneAndDelete({ user: user._id, property: propertyId });
+    const deleted = await Favorite.findOneAndDelete({ user: user._id, property: propertyId });
+
+    if (deleted) {
+      await Property.updateOne(
+        { _id: propertyId },
+        { $inc: { "engagement.favorites": -1 } }
+      );
+    }
+
     return { success: true };
   }
 };
-

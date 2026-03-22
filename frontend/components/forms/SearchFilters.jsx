@@ -1,6 +1,18 @@
 "use client";
 
-import { businessTypes, currencies, propertyTypes, provinces } from "@/lib/constants";
+import {
+  businessTypes,
+  currencies,
+  marketStatuses,
+  propertyTypes,
+  provinces,
+  rentalArrangements
+} from "@/lib/constants";
+import {
+  ensureOptionInList,
+  getCantonsByProvince,
+  getDistrictsByProvinceAndCanton
+} from "@/lib/costa-rica-locations";
 import { Button } from "../ui/Button";
 import { Checkbox } from "../ui/Checkbox";
 import { Input } from "../ui/Input";
@@ -11,16 +23,19 @@ export function SearchFilters({
   onChange,
   onReset,
   onUseCurrentLocation,
-  savedSearchName,
-  onSavedSearchNameChange,
   onSaveSearch,
   canSave
 }) {
   const update = (key, value) => onChange({ [key]: value });
+  const cantonOptions = ensureOptionInList(getCantonsByProvince(values.province), values.canton);
+  const districtOptions = ensureOptionInList(
+    getDistrictsByProvinceAndCanton(values.province, values.canton),
+    values.district
+  );
 
   return (
     <div className="surface space-y-5 p-5">
-      <div className="grid gap-4 lg:grid-cols-4">
+      <div className="grid gap-4 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <label className="field-label">Buscar por texto</label>
           <Input
@@ -57,9 +72,23 @@ export function SearchFilters({
             ))}
           </Select>
         </div>
+        <div>
+          <label className="field-label">Modalidad</label>
+          <Select
+            value={values.rentalArrangement || ""}
+            onChange={(event) => update("rentalArrangement", event.target.value)}
+          >
+            <option value="">Todas</option>
+            {rentalArrangements.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </Select>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <div>
           <label className="field-label">Precio min</label>
           <Input
@@ -83,6 +112,20 @@ export function SearchFilters({
           <Select value={values.currency || ""} onChange={(event) => update("currency", event.target.value)}>
             <option value="">Ambas</option>
             {currencies.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <label className="field-label">Estado</label>
+          <Select
+            value={values.marketStatus || ""}
+            onChange={(event) => update("marketStatus", event.target.value)}
+          >
+            <option value="">Activas</option>
+            {marketStatuses.map((item) => (
               <option key={item.value} value={item.value}>
                 {item.label}
               </option>
@@ -121,7 +164,16 @@ export function SearchFilters({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <div>
           <label className="field-label">Provincia</label>
-          <Select value={values.province || ""} onChange={(event) => update("province", event.target.value)}>
+          <Select
+            value={values.province || ""}
+            onChange={(event) =>
+              onChange({
+                province: event.target.value || undefined,
+                canton: undefined,
+                district: undefined
+              })
+            }
+          >
             <option value="">Todas</option>
             {provinces.map((item) => (
               <option key={item} value={item}>
@@ -132,19 +184,40 @@ export function SearchFilters({
         </div>
         <div>
           <label className="field-label">Canton</label>
-          <Input
+          <Select
             value={values.canton || ""}
-            onChange={(event) => update("canton", event.target.value)}
-            placeholder="Escazu"
-          />
+            disabled={!values.province}
+            onChange={(event) =>
+              onChange({
+                canton: event.target.value || undefined,
+                district: undefined
+              })
+            }
+          >
+            <option value="">{values.province ? "Todos" : "Selecciona provincia"}</option>
+            {cantonOptions.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
         </div>
         <div>
           <label className="field-label">Distrito</label>
-          <Input
+          <Select
             value={values.district || ""}
-            onChange={(event) => update("district", event.target.value)}
-            placeholder="San Rafael"
-          />
+            disabled={!values.province || !values.canton}
+            onChange={(event) => update("district", event.target.value || undefined)}
+          >
+            <option value="">
+              {values.province && values.canton ? "Todos" : "Selecciona canton"}
+            </option>
+            {districtOptions.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
         </div>
         <div>
           <label className="field-label">Radio (km)</label>
@@ -169,9 +242,14 @@ export function SearchFilters({
           onChange={(event) => update("furnished", event.target.checked ? true : undefined)}
         />
         <Checkbox
-          label="Mascotas"
+          label="Acepta mascotas"
           checked={Boolean(values.petsAllowed)}
           onChange={(event) => update("petsAllowed", event.target.checked ? true : undefined)}
+        />
+        <Checkbox
+          label="Con deposito"
+          checked={Boolean(values.depositRequired)}
+          onChange={(event) => update("depositRequired", event.target.checked ? true : undefined)}
         />
         <Checkbox
           label="Destacadas"
@@ -183,15 +261,30 @@ export function SearchFilters({
           checked={Boolean(values.recent)}
           onChange={(event) => update("recent", event.target.checked ? true : undefined)}
         />
+        <Checkbox
+          label="Cuarto privado"
+          checked={Boolean(values.privateRoom)}
+          onChange={(event) => update("privateRoom", event.target.checked ? true : undefined)}
+        />
+        <Checkbox
+          label="Bano privado"
+          checked={Boolean(values.privateBathroom)}
+          onChange={(event) => update("privateBathroom", event.target.checked ? true : undefined)}
+        />
+        <Checkbox
+          label="Servicios incluidos"
+          checked={Boolean(values.utilitiesIncluded)}
+          onChange={(event) => update("utilitiesIncluded", event.target.checked ? true : undefined)}
+        />
+        <Checkbox
+          label="Estudiantil"
+          checked={Boolean(values.studentFriendly)}
+          onChange={(event) => update("studentFriendly", event.target.checked ? true : undefined)}
+        />
       </div>
 
       <div className="grid gap-4 border-t border-ink/10 pt-5 md:grid-cols-[1fr_auto]">
-        <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-          <Input
-            value={savedSearchName}
-            onChange={(event) => onSavedSearchNameChange(event.target.value)}
-            placeholder="Nombre para guardar esta busqueda"
-          />
+        <div>
           <Button variant="accent" onClick={onSaveSearch} disabled={!canSave}>
             Guardar busqueda
           </Button>

@@ -64,7 +64,6 @@ export default function SearchPage() {
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [savedSearchName, setSavedSearchName] = useState("");
   const [favoriteIds, setFavoriteIds] = useState([]);
 
   useEffect(() => {
@@ -141,16 +140,14 @@ export default function SearchPage() {
   };
 
   const handleSaveSearch = async () => {
-    if (!token || !savedSearchName.trim()) return;
+    if (!token) return;
 
     try {
       await createSavedSearch({
-        name: savedSearchName,
         filters,
         mapArea: toPolygonGeometry(filters.polygon),
         bounds: filters.bounds
       });
-      setSavedSearchName("");
       setMessage("Busqueda guardada correctamente.");
     } catch (error) {
       setMessage(error.response?.data?.message || "No se pudo guardar la busqueda");
@@ -172,15 +169,13 @@ export default function SearchPage() {
         onChange={updateFilters}
         onReset={handleReset}
         onUseCurrentLocation={handleUseCurrentLocation}
-        savedSearchName={savedSearchName}
-        onSavedSearchNameChange={setSavedSearchName}
         onSaveSearch={handleSaveSearch}
-        canSave={Boolean(token && savedSearchName.trim())}
+        canSave={Boolean(token)}
       />
 
       {message ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{message}</p> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <p className="text-sm text-ink/55">
@@ -227,11 +222,22 @@ export default function SearchPage() {
           )}
         </div>
 
-        <div className="xl:sticky xl:top-24 xl:h-fit">
+        <div className="xl:sticky xl:top-24 xl:h-fit xl:self-start">
           <SearchMap
             properties={properties}
             selectedPropertyId={selectedPropertyId}
+            selectedProvince={filters.province}
+            selectedDistrict={filters.district}
             onSelectProperty={setSelectedPropertyId}
+            onSelectDistrict={({ province, canton, district }) =>
+              updateFilters({
+                province,
+                canton,
+                district,
+                bounds: undefined,
+                polygon: undefined
+              })
+            }
             onBoundsChange={(bounds) => updateFilters({ bounds, polygon: undefined })}
             onPolygonChange={(polygon) => updateFilters({ polygon, bounds: undefined })}
           />
@@ -240,4 +246,3 @@ export default function SearchPage() {
     </div>
   );
 }
-

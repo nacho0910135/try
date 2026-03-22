@@ -6,6 +6,7 @@ const variants = {
   primary: "bg-ink text-white hover:bg-[#18324b]",
   secondary: "bg-white text-ink hover:bg-mist",
   accent: "bg-terracotta text-white hover:bg-[#9d502f]",
+  success: "bg-pine text-white hover:bg-[#2c6847]",
   ghost: "bg-transparent text-ink hover:bg-white/70",
   danger: "bg-red-600 text-white hover:bg-red-700"
 };

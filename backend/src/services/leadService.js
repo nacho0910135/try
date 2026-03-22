@@ -11,7 +11,7 @@ export const leadService = {
       throw new ApiError(404, "Property not found");
     }
 
-    return Lead.create({
+    const lead = await Lead.create({
       property: property._id,
       fromUser: user?._id,
       toUser: property.owner._id,
@@ -21,6 +21,10 @@ export const leadService = {
       message: payload.message,
       source: payload.source || "property-page"
     });
+
+    await Property.updateOne({ _id: property._id }, { $inc: { "engagement.leads": 1 } });
+
+    return lead;
   },
 
   async listReceived(user, query) {
@@ -90,4 +94,3 @@ export const leadService = {
     return lead;
   }
 };
-

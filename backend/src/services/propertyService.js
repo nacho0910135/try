@@ -1,6 +1,5 @@
-import { Favorite } from "../models/Favorite.js";
-import { Lead } from "../models/Lead.js";
 import { Property } from "../models/Property.js";
+import { proximityService } from "./proximityService.js";
 import { ApiError } from "../utils/apiError.js";
 import { buildBoundsPolygon, normalizePolygonCoordinates } from "../utils/geo.js";
 import { buildPagination } from "../utils/pagination.js";
@@ -29,7 +28,8 @@ const makePrimaryPhotoSet = (photos = []) => {
 
 const buildPublicFilter = () => ({
   status: "published",
-  isApproved: true
+  isApproved: true,
+  marketStatus: { $in: ["available", "reserved"] }
 });
 
 const buildSort = (sort) => {
@@ -40,6 +40,8 @@ const buildSort = (sort) => {
       return { price: -1, featured: -1 };
     case "recent":
       return { featured: -1, publishedAt: -1, createdAt: -1 };
+    case "distance":
+      return {};
     default:
       return { featured: -1, publishedAt: -1, createdAt: -1 };
   }
@@ -60,15 +62,32 @@ const buildFilterQuery = (query) => {
     ];
   }
 
-  if (query.businessType) filter.businessType = query.businessType;
+  if (query.businessType) filter.operationType = query.businessType;
+  if (query.rentalArrangement) filter.rentalArrangement = query.rentalArrangement;
   if (query.propertyType) filter.propertyType = query.propertyType;
   if (query.currency) filter.currency = query.currency;
+  if (query.marketStatus) {
+    filter.marketStatus = query.marketStatus;
+  }
   if (query.province) filter["address.province"] = new RegExp(`^${escapeRegex(query.province)}$`, "i");
   if (query.canton) filter["address.canton"] = new RegExp(`^${escapeRegex(query.canton)}$`, "i");
   if (query.district) filter["address.district"] = new RegExp(`^${escapeRegex(query.district)}$`, "i");
   if (query.featured !== undefined) filter.featured = query.featured;
   if (query.furnished !== undefined) filter.furnished = query.furnished;
   if (query.petsAllowed !== undefined) filter.petsAllowed = query.petsAllowed;
+  if (query.depositRequired !== undefined) filter.depositRequired = query.depositRequired;
+  if (query.privateRoom !== undefined) {
+    filter["roommateDetails.privateRoom"] = query.privateRoom;
+  }
+  if (query.privateBathroom !== undefined) {
+    filter["roommateDetails.privateBathroom"] = query.privateBathroom;
+  }
+  if (query.utilitiesIncluded !== undefined) {
+    filter["roommateDetails.utilitiesIncluded"] = query.utilitiesIncluded;
+  }
+  if (query.studentFriendly !== undefined) {
+    filter["roommateDetails.studentFriendly"] = query.studentFriendly;
+  }
 
   if (query.minPrice !== undefined || query.maxPrice !== undefined) {
     filter.price = {};
@@ -132,8 +151,68 @@ const buildFilterQuery = (query) => {
   return filter;
 };
 
-const normalizePropertyPayload = (payload = {}) => {
+const normalizeMediaPayload = (payload = {}) => {
+  if (payload.media?.length) {
+    const normalizedMedia = payload.media
+      .map((item, index) => ({
+        order: index,
+        ...item,
+        isPrimary: item.isPrimary ?? index === 0
+      }))
+      .sort((first, second) => (first.order || 0) - (second.order || 0));
+
+    const photos = normalizedMedia
+      .filter((item) => item.type === "image")
+      .map((item, index) => ({
+        url: item.url,
+        publicId: item.publicId,
+        isPrimary: item.isPrimary ?? index === 0,
+        alt: item.alt,
+        width: item.width,
+        height: item.height
+      }));
+
+    return {
+      media: normalizedMedia,
+      photos: makePrimaryPhotoSet(photos)
+    };
+  }
+
+  if (payload.photos?.length) {
+    const photos = makePrimaryPhotoSet(payload.photos);
+
+    return {
+      photos,
+      media: photos.map((item, index) => ({
+        type: "image",
+        url: item.url,
+        publicId: item.publicId,
+        isPrimary: item.isPrimary,
+        order: index,
+        alt: item.alt,
+        width: item.width,
+        height: item.height
+      }))
+    };
+  }
+
+  return {};
+};
+
+const normalizePropertyPayload = (payload = {}, currentProperty = null) => {
   const normalized = { ...payload };
+  const nextBusinessType =
+    payload.businessType ??
+    payload.operationType ??
+    currentProperty?.businessType ??
+    currentProperty?.operationType;
+  const nextPropertyType = payload.propertyType ?? currentProperty?.propertyType;
+  const nextRentalArrangement =
+    nextBusinessType === "rent"
+      ? payload.rentalArrangement ??
+        currentProperty?.rentalArrangement ??
+        (nextPropertyType === "room" ? "roommate" : "full-property")
+      : "full-property";
 
   if (payload.location) {
     normalized.location = {
@@ -142,8 +221,68 @@ const normalizePropertyPayload = (payload = {}) => {
     };
   }
 
-  if (payload.photos) {
-    normalized.photos = makePrimaryPhotoSet(payload.photos);
+  const normalizedMedia = normalizeMediaPayload(payload);
+
+  if (Object.keys(normalizedMedia).length) {
+    normalized.media = normalizedMedia.media;
+    normalized.photos = normalizedMedia.photos;
+  }
+
+  normalized.operationType = nextBusinessType;
+  normalized.businessType = nextBusinessType;
+  normalized.rentalArrangement = nextRentalArrangement;
+  normalized.depositRequired =
+    nextBusinessType === "rent"
+      ? Boolean(payload.depositRequired ?? currentProperty?.depositRequired)
+      : false;
+  normalized.landArea =
+    payload.landArea ?? payload.lotArea ?? currentProperty?.landArea ?? currentProperty?.lotArea ?? 0;
+  normalized.lotArea =
+    payload.lotArea ?? payload.landArea ?? currentProperty?.lotArea ?? currentProperty?.landArea ?? 0;
+  normalized.addressText =
+    payload.addressText ??
+    payload.address?.exactAddress ??
+    currentProperty?.addressText ??
+    currentProperty?.address?.exactAddress ??
+    "";
+
+  if (nextBusinessType === "rent" && (nextRentalArrangement === "roommate" || nextPropertyType === "room")) {
+    normalized.roommateDetails = {
+      privateRoom: Boolean(
+        payload.roommateDetails?.privateRoom ??
+          currentProperty?.roommateDetails?.privateRoom ??
+          nextPropertyType === "room"
+      ),
+      privateBathroom: Boolean(
+        payload.roommateDetails?.privateBathroom ?? currentProperty?.roommateDetails?.privateBathroom
+      ),
+      utilitiesIncluded: Boolean(
+        payload.roommateDetails?.utilitiesIncluded ??
+          currentProperty?.roommateDetails?.utilitiesIncluded
+      ),
+      studentFriendly: Boolean(
+        payload.roommateDetails?.studentFriendly ?? currentProperty?.roommateDetails?.studentFriendly
+      ),
+      availableRooms: Number(
+        payload.roommateDetails?.availableRooms ?? currentProperty?.roommateDetails?.availableRooms ?? 1
+      ),
+      currentRoommates: Number(
+        payload.roommateDetails?.currentRoommates ??
+          currentProperty?.roommateDetails?.currentRoommates ??
+          0
+      ),
+      maxRoommates: Number(
+        payload.roommateDetails?.maxRoommates ?? currentProperty?.roommateDetails?.maxRoommates ?? 0
+      ),
+      genderPreference:
+        payload.roommateDetails?.genderPreference ||
+        currentProperty?.roommateDetails?.genderPreference ||
+        "any",
+      sharedAreas:
+        payload.roommateDetails?.sharedAreas ?? currentProperty?.roommateDetails?.sharedAreas ?? []
+    };
+  } else if (currentProperty) {
+    normalized.roommateDetails = undefined;
   }
 
   return normalized;
@@ -175,6 +314,27 @@ const getPropertyOrThrow = async (propertyId) => {
   }
 
   return property;
+};
+
+const pushPriceHistorySnapshot = (property, user, note) => {
+  property.priceHistory.push({
+    price: property.price,
+    finalPrice: property.finalPrice,
+    marketStatus: property.marketStatus,
+    note,
+    changedBy: user?._id
+  });
+};
+
+const makePropertyPublicWhenPublished = (property, user) => {
+  if (property.status !== "published") {
+    return;
+  }
+
+  property.isApproved = true;
+  property.approvedAt = property.approvedAt || new Date();
+  property.approvedBy = property.approvedBy || user._id;
+  property.publishedAt = property.publishedAt || new Date();
 };
 
 export const propertyService = {
@@ -227,7 +387,10 @@ export const propertyService = {
     }
 
     if (canView) {
-      await Property.updateOne({ _id: property._id }, { $inc: { views: 1 } });
+      await Property.updateOne(
+        { _id: property._id },
+        { $inc: { views: 1, "engagement.views": 1 } }
+      );
       property.views += 1;
     }
 
@@ -255,7 +418,27 @@ export const propertyService = {
   async create(user, payload) {
     const normalized = normalizePropertyPayload(payload);
     normalized.owner = user._id;
+    normalized.status = normalized.status || "published";
     normalized.slug = await ensureUniqueSlug(payload.title, payload.address?.canton);
+    normalized.sellerInfo = payload.sellerInfo || {
+      name: user.name,
+      phone: user.phone,
+      email: user.email,
+      role: user.role
+    };
+    const serviceStubs = proximityService.buildDefaultStubs();
+    normalized.nearestHospital = payload.nearestHospital || serviceStubs.nearestHospital;
+    normalized.nearestSchool = payload.nearestSchool || serviceStubs.nearestSchool;
+    normalized.nearestHighSchool = payload.nearestHighSchool || serviceStubs.nearestHighSchool;
+    normalized.priceHistory = [
+      {
+        price: normalized.price,
+        finalPrice: normalized.finalPrice,
+        marketStatus: normalized.marketStatus || "available",
+        note: "created",
+        changedBy: user._id
+      }
+    ];
 
     if (user.role === "admin") {
       normalized.isApproved = true;
@@ -264,6 +447,8 @@ export const propertyService = {
     } else {
       normalized.featured = false;
     }
+
+    makePropertyPublicWhenPublished(normalized, user);
 
     const property = await Property.create(normalized);
     return Property.findById(property._id).populate("owner", "name phone avatar role");
@@ -276,7 +461,10 @@ export const propertyService = {
       throw new ApiError(403, "You do not have access to this property");
     }
 
-    const normalized = normalizePropertyPayload(payload);
+    const previousPrice = property.price;
+    const previousFinalPrice = property.finalPrice;
+    const previousMarketStatus = property.marketStatus;
+    const normalized = normalizePropertyPayload(payload, property);
 
     if (user.role !== "admin") {
       delete normalized.featured;
@@ -288,6 +476,8 @@ export const propertyService = {
 
     Object.assign(property, normalized);
 
+    makePropertyPublicWhenPublished(property, user);
+
     if (payload.title || payload.address?.canton) {
       property.slug = await ensureUniqueSlug(
         payload.title || property.title,
@@ -298,6 +488,14 @@ export const propertyService = {
 
     if (property.status === "published" && property.isApproved && !property.publishedAt) {
       property.publishedAt = new Date();
+    }
+
+    if (
+      previousPrice !== property.price ||
+      previousFinalPrice !== property.finalPrice ||
+      previousMarketStatus !== property.marketStatus
+    ) {
+      pushPriceHistorySnapshot(property, user, "updated");
     }
 
     await property.save();
@@ -313,6 +511,7 @@ export const propertyService = {
     }
 
     property.status = status;
+    makePropertyPublicWhenPublished(property, user);
 
     if (status === "published" && property.isApproved && !property.publishedAt) {
       property.publishedAt = new Date();
@@ -329,10 +528,11 @@ export const propertyService = {
       throw new ApiError(403, "You do not have access to this property");
     }
 
-    await Promise.all([
-      Favorite.deleteMany({ property: property._id }),
-      Lead.deleteMany({ property: property._id }),
-      property.deleteOne()
-    ]);
+    property.status = "paused";
+    if (property.marketStatus === "available") {
+      property.marketStatus = "inactive";
+    }
+    pushPriceHistorySnapshot(property, user, "archived");
+    await property.save();
   }
 };

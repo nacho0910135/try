@@ -1,4 +1,4 @@
-# Casa CR
+# AlquiVentasCR
 
 Plataforma inmobiliaria full stack estilo portal moderno para Costa Rica, enfocada en publicacion, exploracion y contacto de propiedades con mapa interactivo, filtros avanzados y busqueda geoespacial.
 
@@ -23,13 +23,15 @@ Se eligio Next.js sobre React + Vite porque encaja bien con un frontend de produ
 - Roles: `user`, `agent`, `owner`, `admin`
 - CRUD de propiedades
 - Estados de propiedad: `draft`, `published`, `paused`, `sold`, `rented`
+- Estado de mercado independiente: `available`, `reserved`, `sold`, `rented`, `inactive`
 - Busqueda por texto, provincia, canton, distrito, coordenadas, radio, bounds y poligono
-- Mapa interactivo con pines, geolocalizacion y dibujo de zona
+- Home geografica con selector visual de provincias
+- Mapa interactivo con marcadores enriquecidos, preview expandido, geolocalizacion y dibujo de zona
 - Favoritos
 - Busquedas guardadas
 - Leads recibidos y enviados
 - Dashboard para agente/propietario
-- Panel admin con metricas, usuarios y moderacion
+- Panel admin con metricas, usuarios, moderacion e inteligencia de mercado base
 - Seed con propiedades de ejemplo de Costa Rica
 
 ## Lo que no incluye
@@ -193,6 +195,8 @@ Rutas destacadas:
 - `POST /api/leads`
 - `GET /api/leads/received`
 - `GET /api/admin/metrics`
+- `GET /api/admin/analytics/overview`
+- `GET /api/admin/analytics/properties/:propertyId`
 
 ## Notas de MVP
 
@@ -200,6 +204,8 @@ Rutas destacadas:
 - La aprobacion admin es simple: una propiedad publica solo entra a la exploracion publica si esta `published` e `isApproved`.
 - El frontend esta listo para despliegue separado del backend.
 - No se incluyeron tests automatizados en esta entrega.
+- La carga real de video quedo preparada a nivel de schema/UI; para produccion falta conectar almacenamiento externo.
+- La proximidad a hospital, escuela y colegio usa stubs controlados listos para reemplazar via `backend/src/services/proximityService.js`.
 
 ## Siguientes mejoras recomendadas
 

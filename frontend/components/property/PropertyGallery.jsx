@@ -1,22 +1,25 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 
 export function PropertyGallery({ photos = [], title }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const fallbackSrc = "/property-placeholder.svg";
   const safePhotos = photos.length
     ? photos
-    : [{ url: "https://placehold.co/1400x900/png?text=Casa+CR", alt: title }];
+    : [{ url: fallbackSrc, alt: title }];
 
   return (
     <div className="space-y-4">
       <div className="relative aspect-[16/9] overflow-hidden rounded-[28px]">
-        <Image
-          src={safePhotos[activeIndex]?.url}
+        <img
+          src={safePhotos[activeIndex]?.url || fallbackSrc}
           alt={safePhotos[activeIndex]?.alt || title}
-          fill
-          className="object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = fallbackSrc;
+          }}
         />
       </div>
       <div className="grid grid-cols-4 gap-3">
@@ -29,11 +32,18 @@ export function PropertyGallery({ photos = [], title }) {
               activeIndex === index ? "border-terracotta" : "border-white/70"
             }`}
           >
-            <Image src={photo.url} alt={photo.alt || title} fill className="object-cover" />
+            <img
+              src={photo.url || fallbackSrc}
+              alt={photo.alt || title}
+              className="absolute inset-0 h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = fallbackSrc;
+              }}
+            />
           </button>
         ))}
       </div>
     </div>
   );
 }
-

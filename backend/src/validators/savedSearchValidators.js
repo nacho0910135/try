@@ -12,7 +12,7 @@ const boundsSchema = z
 
 export const createSavedSearchSchema = z.object({
   body: z.object({
-    name: z.string().min(2).max(120),
+    name: z.string().min(2).max(120).optional(),
     filters: z.record(z.any()).default({}),
     mapArea: z
       .object({
@@ -41,4 +41,3 @@ export const savedSearchIdSchema = z.object({
     searchId: objectIdSchema
   })
 });
-

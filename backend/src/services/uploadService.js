@@ -1,13 +1,40 @@
+import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { cloudinary, isCloudinaryConfigured } from "../config/cloudinary.js";
 
-const makePlaceholderPhoto = (file, index) => {
-  const title = encodeURIComponent(file.originalname?.replace(/\.[^/.]+$/, "") || `propiedad-${index + 1}`);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDirectory = path.resolve(__dirname, "../../public/uploads/properties");
+
+const sanitizeFileSegment = (value = "") =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9-_]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase();
+
+const saveBufferLocally = async (file, index) => {
+  const title = file.originalname?.replace(/\.[^/.]+$/, "") || `propiedad-${index + 1}`;
+  const extensionFromName = path.extname(file.originalname || "");
+  const extensionFromMime = file.mimetype?.split("/")?.[1]?.split("+")?.[0] || "jpg";
+  const extension = (extensionFromName || `.${extensionFromMime}`).toLowerCase();
+  const safeName = sanitizeFileSegment(title) || `propiedad-${index + 1}`;
+  const fileName = `${Date.now()}-${crypto.randomUUID()}-${safeName}${extension}`;
+  const filePath = path.join(uploadsDirectory, fileName);
+
+  await fs.mkdir(uploadsDirectory, { recursive: true });
+  await fs.writeFile(filePath, file.buffer);
 
   return {
-    url: `https://placehold.co/1200x800/png?text=${title}`,
+    url: `/uploads/properties/${fileName}`,
     publicId: null,
     isPrimary: index === 0,
-    alt: file.originalname?.replace(/\.[^/.]+$/, "") || "Propiedad Costa Rica"
+    alt: title,
+    width: null,
+    height: null
   };
 };
 
@@ -16,7 +43,7 @@ const uploadBufferToCloudinary = (file, index) => {
 
   return cloudinary.uploader
     .upload(`data:${file.mimetype};base64,${base64}`, {
-      folder: "casa-cr/properties",
+      folder: "alquiventascr/properties",
       resource_type: "image",
       use_filename: true,
       unique_filename: true,
@@ -28,7 +55,7 @@ const uploadBufferToCloudinary = (file, index) => {
       width: result.width,
       height: result.height,
       isPrimary: index === 0,
-      alt: file.originalname?.replace(/\.[^/.]+$/, "") || "Propiedad Costa Rica"
+      alt: file.originalname?.replace(/\.[^/.]+$/, "") || "Propiedad AlquiVentasCR"
     }));
 };
 
@@ -39,7 +66,7 @@ export const uploadService = {
     }
 
     if (!isCloudinaryConfigured) {
-      return files.map((file, index) => makePlaceholderPhoto(file, index));
+      return Promise.all(files.map((file, index) => saveBufferLocally(file, index)));
     }
 
     return Promise.all(files.map((file, index) => uploadBufferToCloudinary(file, index)));

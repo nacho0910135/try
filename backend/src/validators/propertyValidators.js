@@ -2,8 +2,11 @@ import { z } from "zod";
 import {
   BUSINESS_TYPES,
   CURRENCIES,
+  MARKET_STATUSES,
   PROPERTY_STATUSES,
-  PROPERTY_TYPES
+  PROPERTY_TYPES,
+  RENTAL_ARRANGEMENTS,
+  ROOMMATE_GENDER_PREFERENCES
 } from "../constants/enums.js";
 import {
   booleanField,
@@ -22,23 +25,44 @@ const photoSchema = z.object({
   height: z.number().optional()
 });
 
+const mediaSchema = z.object({
+  type: z.enum(["image", "video"]),
+  url: z.string().url(),
+  thumbnailUrl: z.string().url().optional(),
+  publicId: z.string().optional().nullable(),
+  provider: z.string().optional(),
+  mimeType: z.string().optional(),
+  alt: z.string().optional(),
+  isPrimary: z.boolean().optional(),
+  order: z.number().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  durationSeconds: z.number().optional()
+});
+
 const propertyBodySchema = z.object({
   title: z.string().min(10).max(160),
   description: z.string().min(40).max(5000),
   businessType: z.enum(BUSINESS_TYPES),
+  operationType: z.enum(BUSINESS_TYPES).optional(),
+  rentalArrangement: z.enum(RENTAL_ARRANGEMENTS).optional(),
   propertyType: z.enum(PROPERTY_TYPES),
   price: z.number().nonnegative(),
+  finalPrice: z.number().nonnegative().optional(),
   currency: z.enum(CURRENCIES),
   bedrooms: z.number().int().nonnegative().default(0),
   bathrooms: z.number().int().nonnegative().default(0),
   parkingSpaces: z.number().int().nonnegative().default(0),
   constructionArea: z.number().nonnegative().default(0),
+  landArea: z.number().nonnegative().default(0),
   lotArea: z.number().nonnegative().default(0),
   furnished: z.boolean().default(false),
   petsAllowed: z.boolean().default(false),
+  depositRequired: z.boolean().default(false),
   featured: z.boolean().optional(),
   amenities: z.array(z.string()).default([]),
   photos: z.array(photoSchema).default([]),
+  media: z.array(mediaSchema).default([]),
   location: z.object({
     lng: z.number().min(-180).max(180),
     lat: z.number().min(-90).max(90)
@@ -51,7 +75,30 @@ const propertyBodySchema = z.object({
     exactAddress: z.string().max(240).optional().default(""),
     hideExactLocation: z.boolean().default(false)
   }),
-  status: z.enum(PROPERTY_STATUSES).default("draft")
+  addressText: z.string().max(240).optional(),
+  sellerInfo: z
+    .object({
+      name: z.string().optional(),
+      phone: z.string().optional(),
+      email: z.string().email().optional(),
+      role: z.string().optional()
+    })
+    .optional(),
+  roommateDetails: z
+    .object({
+      privateRoom: z.boolean().optional(),
+      privateBathroom: z.boolean().optional(),
+      utilitiesIncluded: z.boolean().optional(),
+      studentFriendly: z.boolean().optional(),
+      availableRooms: z.number().int().nonnegative().optional(),
+      currentRoommates: z.number().int().nonnegative().optional(),
+      maxRoommates: z.number().int().nonnegative().optional(),
+      genderPreference: z.enum(ROOMMATE_GENDER_PREFERENCES).optional(),
+      sharedAreas: z.array(z.string()).optional()
+    })
+    .optional(),
+  status: z.enum(PROPERTY_STATUSES).default("draft"),
+  marketStatus: z.enum(MARKET_STATUSES).default("available")
 });
 
 export const createPropertySchema = z.object({
@@ -90,6 +137,7 @@ export const listPropertiesSchema = z.object({
   query: z.object({
     q: z.string().optional(),
     businessType: z.enum(BUSINESS_TYPES).optional(),
+    rentalArrangement: z.enum(RENTAL_ARRANGEMENTS).optional(),
     propertyType: z.enum(PROPERTY_TYPES).optional(),
     currency: z.enum(CURRENCIES).optional(),
     minPrice: numberField(),
@@ -103,8 +151,14 @@ export const listPropertiesSchema = z.object({
     maxLotArea: numberField(),
     furnished: booleanField(),
     petsAllowed: booleanField(),
+    depositRequired: booleanField(),
     featured: booleanField(),
     recent: booleanField(),
+    marketStatus: z.enum(MARKET_STATUSES).optional(),
+    privateRoom: booleanField(),
+    privateBathroom: booleanField(),
+    utilitiesIncluded: booleanField(),
+    studentFriendly: booleanField(),
     province: z.string().optional(),
     canton: z.string().optional(),
     district: z.string().optional(),
@@ -115,7 +169,6 @@ export const listPropertiesSchema = z.object({
     polygon: jsonField(),
     page: integerField(),
     limit: integerField(),
-    sort: z.enum(["relevance", "recent", "price-asc", "price-desc"]).optional()
+    sort: z.enum(["relevance", "recent", "price-asc", "price-desc", "distance"]).optional()
   })
 });
-

@@ -20,6 +20,25 @@ export const propertyStatuses = [
   { value: "rented", label: "Rentado" }
 ];
 
+export const marketStatuses = [
+  { value: "available", label: "Disponible" },
+  { value: "reserved", label: "Reservada" },
+  { value: "sold", label: "Vendida" },
+  { value: "rented", label: "Alquilada" },
+  { value: "inactive", label: "Inactiva" }
+];
+
+export const rentalArrangements = [
+  { value: "full-property", label: "Propiedad completa" },
+  { value: "roommate", label: "Roomies / alquiler compartido" }
+];
+
+export const roommateGenderPreferences = [
+  { value: "any", label: "Sin preferencia" },
+  { value: "female-only", label: "Solo mujeres" },
+  { value: "male-only", label: "Solo hombres" }
+];
+
 export const currencies = [
   { value: "USD", label: "USD" },
   { value: "CRC", label: "CRC" }
@@ -67,4 +86,3 @@ export const mapDefaultCenter = {
   longitude: -84.0907,
   zoom: 7
 };
-

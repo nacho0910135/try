@@ -1,11 +1,25 @@
 import clsx from "clsx";
-import { businessTypes, propertyStatuses, propertyTypes } from "./constants";
+import {
+  businessTypes,
+  marketStatuses,
+  propertyStatuses,
+  propertyTypes,
+  rentalArrangements,
+  roommateGenderPreferences
+} from "./constants";
 
 export const cn = (...inputs) => clsx(inputs);
 
 const propertyTypeMap = Object.fromEntries(propertyTypes.map((item) => [item.value, item.label]));
 const businessTypeMap = Object.fromEntries(businessTypes.map((item) => [item.value, item.label]));
 const statusMap = Object.fromEntries(propertyStatuses.map((item) => [item.value, item.label]));
+const marketStatusMap = Object.fromEntries(marketStatuses.map((item) => [item.value, item.label]));
+const rentalArrangementMap = Object.fromEntries(
+  rentalArrangements.map((item) => [item.value, item.label])
+);
+const roommateGenderPreferenceMap = Object.fromEntries(
+  roommateGenderPreferences.map((item) => [item.value, item.label])
+);
 
 export const formatCurrency = (value, currency = "USD") =>
   new Intl.NumberFormat("es-CR", {
@@ -14,13 +28,33 @@ export const formatCurrency = (value, currency = "USD") =>
     maximumFractionDigits: currency === "CRC" ? 0 : 0
   }).format(value || 0);
 
-export const formatArea = (value) => `${Number(value || 0).toLocaleString("es-CR")} m²`;
+export const formatCompactCurrency = (value, currency = "USD") => {
+  const amount = Number(value || 0);
+  const symbol = currency === "CRC" ? "₡" : "$";
+  const compact = new Intl.NumberFormat("es-CR", {
+    notation: "compact",
+    maximumFractionDigits: 1
+  }).format(amount);
+
+  return `${symbol}${compact}`;
+};
+
+export const formatArea = (value) => `${Number(value || 0).toLocaleString("es-CR")} m2`;
 
 export const formatPropertyType = (value) => propertyTypeMap[value] || value;
 
 export const formatBusinessType = (value) => businessTypeMap[value] || value;
 
 export const formatPropertyStatus = (value) => statusMap[value] || value;
+
+export const formatMarketStatus = (value) => marketStatusMap[value] || value;
+
+export const formatRentalArrangement = (value) => rentalArrangementMap[value] || value;
+
+export const formatRoommateGenderPreference = (value) =>
+  roommateGenderPreferenceMap[value] || value;
+
+export const formatYesNo = (value) => (value ? "Si" : "No");
 
 export const getMainPhoto = (property) =>
   property?.photos?.find((photo) => photo.isPrimary) || property?.photos?.[0] || null;
@@ -38,39 +72,100 @@ export const formatLocation = (property) => {
   return parts.join(", ");
 };
 
-export const buildPropertyPayload = (values, photos = []) => ({
-  title: values.title,
-  description: values.description,
-  businessType: values.businessType,
-  propertyType: values.propertyType,
-  price: Number(values.price),
-  currency: values.currency,
-  bedrooms: Number(values.bedrooms || 0),
-  bathrooms: Number(values.bathrooms || 0),
-  parkingSpaces: Number(values.parkingSpaces || 0),
-  constructionArea: Number(values.constructionArea || 0),
-  lotArea: Number(values.lotArea || 0),
-  furnished: Boolean(values.furnished),
-  petsAllowed: Boolean(values.petsAllowed),
-  status: values.status,
-  amenities: values.amenities
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean),
-  photos,
-  location: {
-    lng: Number(values.lng),
-    lat: Number(values.lat)
-  },
-  address: {
-    province: values.province,
-    canton: values.canton,
-    district: values.district,
-    neighborhood: values.neighborhood || "",
-    exactAddress: values.exactAddress || "",
-    hideExactLocation: Boolean(values.hideExactLocation)
-  }
-});
+export const buildPropertyPayload = (values, photos = [], videoUrls = []) => {
+  const media = [
+    ...photos.map((photo, index) => ({
+      type: "image",
+      url: photo.url,
+      thumbnailUrl: photo.url,
+      publicId: photo.publicId || undefined,
+      alt: photo.alt,
+      isPrimary: photo.isPrimary,
+      order: index,
+      width: photo.width,
+      height: photo.height
+    })),
+    ...videoUrls
+      .filter(Boolean)
+      .map((url, index) => ({
+        type: "video",
+        url,
+        thumbnailUrl: photos[0]?.url,
+        provider: "external",
+        isPrimary: false,
+        order: photos.length + index
+      }))
+  ];
+
+  return {
+    title: values.title,
+    description: values.description,
+    businessType: values.businessType,
+    operationType: values.businessType,
+    rentalArrangement:
+      values.businessType === "rent"
+        ? values.rentalArrangement || (values.propertyType === "room" ? "roommate" : "full-property")
+        : "full-property",
+    propertyType: values.propertyType,
+    price: Number(values.price),
+    finalPrice: values.finalPrice ? Number(values.finalPrice) : undefined,
+    currency: values.currency,
+    bedrooms: Number(values.bedrooms || 0),
+    bathrooms: Number(values.bathrooms || 0),
+    parkingSpaces: Number(values.parkingSpaces || 0),
+    constructionArea: Number(values.constructionArea || 0),
+    landArea: Number(values.landArea || values.lotArea || 0),
+    lotArea: Number(values.lotArea || values.landArea || 0),
+    furnished: Boolean(values.furnished),
+    petsAllowed: Boolean(values.petsAllowed),
+    depositRequired: Boolean(values.depositRequired),
+    status: values.status,
+    marketStatus: values.marketStatus,
+    amenities: values.amenities
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
+    photos,
+    media,
+    location: {
+      lng: Number(values.lng),
+      lat: Number(values.lat)
+    },
+    address: {
+      province: values.province,
+      canton: values.canton,
+      district: values.district,
+      neighborhood: values.neighborhood || "",
+      exactAddress: values.exactAddress || "",
+      hideExactLocation: Boolean(values.hideExactLocation)
+    },
+    addressText: values.addressText || values.exactAddress || "",
+    sellerInfo: {
+      name: values.sellerName || undefined,
+      phone: values.sellerPhone || undefined,
+      email: values.sellerEmail || undefined,
+      role: values.sellerRole || undefined
+    },
+    roommateDetails:
+      values.businessType === "rent" &&
+      (values.rentalArrangement === "roommate" || values.propertyType === "room")
+        ? {
+            privateRoom: Boolean(values.privateRoom),
+            privateBathroom: Boolean(values.privateBathroom),
+            utilitiesIncluded: Boolean(values.utilitiesIncluded),
+            studentFriendly: Boolean(values.studentFriendly),
+            availableRooms: Number(values.availableRooms || 1),
+            currentRoommates: Number(values.currentRoommates || 0),
+            maxRoommates: Number(values.maxRoommates || 0),
+            genderPreference: values.genderPreference || "any",
+            sharedAreas: values.sharedAreas
+              .split(",")
+              .map((item) => item.trim())
+              .filter(Boolean)
+          }
+        : undefined
+  };
+};
 
 export const serializePropertyQuery = (filters = {}) => {
   const params = new URLSearchParams();
@@ -92,4 +187,3 @@ export const serializePropertyQuery = (filters = {}) => {
 };
 
 export const formatPhoneForWhatsApp = (phone = "") => phone.replace(/[^\d]/g, "");
-

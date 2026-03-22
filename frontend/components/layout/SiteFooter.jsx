@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { BrandLogo } from "./BrandLogo";
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-ink/10 bg-white/70">
       <div className="app-shell grid gap-8 py-10 md:grid-cols-3">
         <div>
-          <h3 className="font-serif text-2xl font-semibold">Casa CR</h3>
+          <BrandLogo />
           <p className="mt-3 text-sm text-ink/65">
             Plataforma inmobiliaria para explorar, publicar y conectar propiedades en Costa Rica.
           </p>
@@ -34,4 +35,3 @@ export function SiteFooter() {
     </footer>
   );
 }
-

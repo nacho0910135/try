@@ -1,0 +1,42 @@
+const escapeXml = (value = "") =>
+  String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+
+export const createPlaceholderImageDataUri = (label = "AlquiVentasCR") => {
+  const safeLabel = escapeXml(label).slice(0, 48);
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="${safeLabel}">
+      <defs>
+        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="#eff7f4" />
+          <stop offset="55%" stop-color="#d8efe5" />
+          <stop offset="100%" stop-color="#edf4fb" />
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="800" fill="url(#bg)" rx="36" />
+      <circle cx="930" cy="145" r="116" fill="#d2ead8" opacity="0.55" />
+      <circle cx="220" cy="640" r="180" fill="#d9ebf7" opacity="0.65" />
+      <path d="M184 510h832" stroke="#9fc4b6" stroke-width="22" stroke-linecap="round" opacity="0.55" />
+      <path d="M252 536c78-92 172-144 282-156 106-12 208 11 304 68 44 26 88 56 130 88H252Z" fill="#7bbf76" opacity="0.92" />
+      <path d="M358 496 520 342l162 154v112H358Z" fill="#164a8a" />
+      <path d="M488 338 560 272l76 70" fill="none" stroke="#61b84d" stroke-width="28" stroke-linecap="round" />
+      <path d="M356 492h328l-88-92H448Z" fill="#ff8b1f" />
+      <rect x="420" y="442" width="64" height="64" rx="8" fill="#ffffff" />
+      <rect x="494" y="442" width="64" height="64" rx="8" fill="#ffffff" />
+      <rect x="582" y="448" width="74" height="58" rx="8" fill="#ffffff" />
+      <path d="M452 442v64M526 442v64M420 474h138" stroke="#164a8a" stroke-width="8" opacity="0.9" />
+      <text x="600" y="632" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700" fill="#17324e">
+        AlquiVentasCR
+      </text>
+      <text x="600" y="690" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" letter-spacing="6" fill="#58707c">
+        ${safeLabel}
+      </text>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+};

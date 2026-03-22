@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, Heart, LayoutDashboard, LogOut, Search, Shield } from "lucide-react";
+import { Heart, LayoutDashboard, LogOut, Search, Shield } from "lucide-react";
 import { logoutUser } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+import { BrandLogo } from "./BrandLogo";
 import { Button } from "../ui/Button";
 
 const navItems = [
@@ -35,15 +36,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-white/60 bg-sand/80 backdrop-blur">
       <div className="app-shell flex items-center justify-between gap-4 py-4">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-ink text-white">
-            <Building2 className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="font-serif text-xl font-semibold">Casa CR</div>
-            <div className="text-xs uppercase tracking-[0.22em] text-ink/50">
-              Real Estate Costa Rica
-            </div>
-          </div>
+          <BrandLogo compact showTagline={false} />
         </Link>
 
         <nav className="hidden items-center gap-2 md:flex">
@@ -104,4 +97,3 @@ export function SiteHeader() {
     </header>
   );
 }
-

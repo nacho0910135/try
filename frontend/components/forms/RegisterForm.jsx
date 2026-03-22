@@ -47,7 +47,19 @@ export function RegisterForm() {
       router.push("/dashboard");
       router.refresh();
     } catch (submitError) {
-      setError(submitError.response?.data?.message || "No se pudo crear la cuenta");
+      if (!submitError.response) {
+        setError(
+          "No se pudo conectar con la API. Verifica que el backend este corriendo y que el origen del frontend este permitido."
+        );
+        return;
+      }
+
+      const fieldDetails = submitError.response?.data?.details;
+      const firstDetail = fieldDetails
+        ? Object.values(fieldDetails).flat().find(Boolean)
+        : null;
+
+      setError(firstDetail || submitError.response?.data?.message || "No se pudo crear la cuenta");
     }
   };
 
@@ -111,4 +123,3 @@ export function RegisterForm() {
     </form>
   );
 }
-

@@ -47,3 +47,8 @@ export const updateUserStatusSchema = z.object({
   })
 });
 
+export const analyticsPropertySchema = z.object({
+  params: z.object({
+    propertyId: objectIdSchema
+  })
+});

@@ -1,3 +1,5 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -9,13 +11,49 @@ import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware.js"
 import { router } from "./routes/index.js";
 
 export const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDirectory = path.resolve(__dirname, "../public/uploads");
+
+const allowedOrigins = env.FRONTEND_URL.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const localDevOriginPattern =
+  /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(:\d+)?$/;
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  if (env.NODE_ENV !== "production" && localDevOriginPattern.test(origin)) {
+    return true;
+  }
+
+  return false;
+};
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (isAllowedOrigin(origin)) {
+      return callback(null, true);
+    }
+
+    const corsError = new Error(`Origin not allowed by CORS: ${origin}`);
+    corsError.statusCode = 403;
+    return callback(corsError);
+  },
+  credentials: false
+};
 
 app.use(
-  cors({
-    origin: env.FRONTEND_URL,
-    credentials: false
-  })
+  cors(corsOptions)
 );
+app.options("*", cors(corsOptions));
 
 app.use(
   helmet({
@@ -34,11 +72,12 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(mongoSanitize());
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use("/uploads", express.static(uploadsDirectory));
 
 app.get("/api/health", (_req, res) => {
   res.json({
     success: true,
-    message: "Casa CR API is running"
+    message: "AlquiVentasCR API is running"
   });
 });
 
@@ -46,4 +85,3 @@ app.use("/api", router);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
-

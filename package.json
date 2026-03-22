@@ -10,10 +10,13 @@
     "dev:backend": "npm run dev --workspace backend",
     "dev:frontend": "npm run dev --workspace frontend",
     "seed": "npm run seed --workspace backend",
+    "seed:samples": "npm run seed:samples --workspace backend",
     "lint": "npm run lint --workspace backend && npm run lint --workspace frontend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "mapbox-gl": "^3.20.0"
   }
 }
-

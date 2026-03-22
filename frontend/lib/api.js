@@ -7,7 +7,9 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const storedAuth = window.localStorage.getItem("casa-cr-auth");
+    const storedAuth =
+      window.localStorage.getItem("alquiventascr-auth") ||
+      window.localStorage.getItem("casa-cr-auth");
 
     if (storedAuth) {
       const parsed = JSON.parse(storedAuth);
@@ -79,6 +81,10 @@ export const updateLeadStatus = (leadId, status) =>
 export const getDashboardSummary = () => unwrap(api.get("/users/dashboard-summary"));
 
 export const getAdminMetrics = () => unwrap(api.get("/admin/metrics"));
+export const getAdminAnalyticsOverview = () =>
+  unwrap(api.get("/admin/analytics/overview"));
+export const getAdminPropertyIntelligence = (propertyId) =>
+  unwrap(api.get(`/admin/analytics/properties/${propertyId}`));
 export const getAdminUsers = (filters = {}) =>
   unwrap(api.get(`/admin/users?${serializePropertyQuery(filters)}`));
 export const updateAdminUserStatus = (userId, isActive) =>
@@ -87,4 +93,3 @@ export const getAdminProperties = (filters = {}) =>
   unwrap(api.get(`/admin/properties?${serializePropertyQuery(filters)}`));
 export const moderateAdminProperty = (propertyId, payload) =>
   unwrap(api.patch(`/admin/properties/${propertyId}`, payload));
-

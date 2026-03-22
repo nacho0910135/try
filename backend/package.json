@@ -1,5 +1,5 @@
 {
-  "name": "casa-cr-backend",
+  "name": "alquiventascr-backend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "node src/seeds/seed.js",
+    "seed:samples": "node src/seeds/seedSamples.js",
     "lint": "node --check src/server.js"
   },
   "dependencies": {
@@ -29,4 +30,3 @@
     "nodemon": "^3.1.9"
   }
 }
-

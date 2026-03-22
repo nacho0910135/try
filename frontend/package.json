@@ -1,8 +1,9 @@
 {
-  "name": "casa-cr-frontend",
+  "name": "alquiventascr-frontend",
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "build:geo": "node scripts/build-cr-geo-data.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -30,4 +31,3 @@
     "tailwindcss": "^3.4.17"
   }
 }
-

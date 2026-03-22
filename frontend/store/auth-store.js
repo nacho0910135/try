@@ -9,6 +9,24 @@ const noopStorage = {
   removeItem: () => {}
 };
 
+const legacyAuthKey = "casa-cr-auth";
+
+const authStorage = {
+  getItem: (name) => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(name) || window.localStorage.getItem(legacyAuthKey);
+  },
+  setItem: (name, value) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(name, value);
+  },
+  removeItem: (name) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem(name);
+    window.localStorage.removeItem(legacyAuthKey);
+  }
+};
+
 export const useAuthStore = create(
   persist(
     (set) => ({
@@ -21,9 +39,9 @@ export const useAuthStore = create(
       markHydrated: () => set({ hydrated: true })
     }),
     {
-      name: "casa-cr-auth",
+      name: "alquiventascr-auth",
       storage: createJSONStorage(() =>
-        typeof window !== "undefined" ? window.localStorage : noopStorage
+        typeof window !== "undefined" ? authStorage : noopStorage
       ),
       partialize: (state) => ({
         token: state.token,
@@ -35,4 +53,3 @@ export const useAuthStore = create(
     }
   )
 );
-

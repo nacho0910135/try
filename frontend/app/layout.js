@@ -14,8 +14,8 @@ const serif = Fraunces({
 });
 
 export const metadata = {
-  title: "Casa CR",
-  description: "Plataforma inmobiliaria moderna enfocada en Costa Rica."
+  title: "AlquiVentasCR",
+  description: "Compra, renta y lotes en Costa Rica con exploracion geoespacial moderna."
 };
 
 export default function RootLayout({ children }) {
@@ -29,4 +29,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-
