@@ -2,6 +2,41 @@ import axios from "axios";
 import { serializePropertyQuery } from "./utils";
 
 const AUTH_STORAGE_KEYS = ["alquiventascr-auth", "casa-cr-auth"];
+const LOCAL_API_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
+
+const stripTrailingSlash = (value = "") => value.replace(/\/+$/, "");
+
+const resolveApiBaseUrl = () => {
+  const configuredBaseUrl = stripTrailingSlash(process.env.NEXT_PUBLIC_API_URL || "");
+
+  if (typeof window === "undefined") {
+    return configuredBaseUrl || "http://localhost:5000/api";
+  }
+
+  const { protocol, hostname } = window.location;
+
+  if (!configuredBaseUrl) {
+    return LOCAL_API_HOSTS.has(hostname)
+      ? "http://localhost:5000/api"
+      : `${protocol}//${hostname}:5000/api`;
+  }
+
+  try {
+    const parsedUrl = new URL(configuredBaseUrl);
+    const appIsRemoteDevice = !LOCAL_API_HOSTS.has(hostname);
+    const apiPointsToLocalhost = LOCAL_API_HOSTS.has(parsedUrl.hostname);
+
+    if (appIsRemoteDevice && apiPointsToLocalhost) {
+      parsedUrl.protocol = protocol;
+      parsedUrl.hostname = hostname;
+      parsedUrl.port = parsedUrl.port || "5000";
+    }
+
+    return stripTrailingSlash(parsedUrl.toString());
+  } catch (_error) {
+    return configuredBaseUrl;
+  }
+};
 
 const readStoredAuthState = () => {
   if (typeof window === "undefined") {
@@ -27,10 +62,12 @@ const readStoredAuthState = () => {
 };
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+  baseURL: resolveApiBaseUrl()
 });
 
 api.interceptors.request.use((config) => {
+  config.baseURL = resolveApiBaseUrl();
+
   if (typeof window !== "undefined") {
     const parsed = readStoredAuthState();
     const token = parsed?.state?.token;

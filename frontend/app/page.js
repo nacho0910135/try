@@ -19,6 +19,7 @@ export default function HomePage() {
   const { language, t } = useLanguage();
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [featuredError, setFeaturedError] = useState("");
   const [query, setQuery] = useState("");
   const [province, setProvince] = useState("San Jose");
 
@@ -27,13 +28,21 @@ export default function HomePage() {
       try {
         const data = await getFeaturedProperties();
         setFeatured(data.items || []);
+        setFeaturedError("");
+      } catch (_error) {
+        setFeatured([]);
+        setFeaturedError(
+          language === "en"
+            ? "Featured properties could not be loaded right now."
+            : "No se pudieron cargar las propiedades destacadas en este momento."
+        );
       } finally {
         setLoading(false);
       }
     };
 
     loadFeatured();
-  }, []);
+  }, [language]);
 
   const selectedProvinceMeta = costaRicaProvinces.find((item) => item.name === province);
   const featuredForProvince = featured.filter(
@@ -216,6 +225,10 @@ export default function HomePage() {
                 : "Cargando propiedades destacadas..."
             }
           />
+        ) : featuredError ? (
+          <div className="surface-soft p-5 text-sm leading-6 text-ink/65">
+            {featuredError}
+          </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
             {featured.map((property) => (
