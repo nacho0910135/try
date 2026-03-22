@@ -43,7 +43,7 @@ export default function HomePage() {
     <div className="section-pad">
       <section className="app-shell">
         <div className="surface overflow-hidden bg-hero-grid p-8 sm:p-12 lg:p-16">
-          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div className="grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
             <div>
               <BrandLogo className="mb-6" />
               <span className="eyebrow">Mapa protagonista</span>

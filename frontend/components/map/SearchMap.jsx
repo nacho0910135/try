@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import Map, { GeolocateControl, Layer, Marker, NavigationControl, Source } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
@@ -37,6 +38,7 @@ export function SearchMap({
   onBoundsChange,
   onPolygonChange
 }) {
+  const router = useRouter();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const mapStyle = process.env.NEXT_PUBLIC_MAPBOX_STYLE || "mapbox://styles/mapbox/light-v11";
   const mapRef = useRef(null);
@@ -237,7 +239,10 @@ export function SearchMap({
           >
             <button
               type="button"
-              onClick={() => onSelectProperty?.(property._id)}
+              onClick={() => {
+                onSelectProperty?.(property._id);
+                router.push(`/properties/${property.slug}`);
+              }}
               className={`rounded-full border-2 px-2.5 py-1.5 text-[11px] font-semibold shadow-soft transition ${
                 selectedPropertyId === property._id
                   ? "border-terracotta bg-terracotta text-white"

@@ -158,7 +158,7 @@ export function CostaRicaProvinceExplorer({ selectedProvince, onSelectProvince }
                 onSelectProvince?.(provinceName);
                 router.push(`/search?province=${encodeURIComponent(provinceName)}`);
               }}
-              style={{ width: "100%", minHeight: 460 }}
+              style={{ width: "100%", minHeight: 640 }}
             >
               <NavigationControl position="top-right" />
               {interactiveProvinceGeoJson ? (
