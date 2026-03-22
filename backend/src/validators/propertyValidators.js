@@ -92,7 +92,7 @@ const propertyBodySchema = z.object({
     .object({
       name: z.string().optional(),
       phone: z.string().optional(),
-      email: z.string().email().optional(),
+      email: z.string().trim().optional(),
       role: z.string().optional()
     })
     .optional(),

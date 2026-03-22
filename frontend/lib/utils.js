@@ -128,6 +128,8 @@ export const buildPropertyPayload = (values, photos = [], videoUrls = []) => {
       }))
   ];
 
+  const sellerEmail = String(values.sellerEmail || "").trim();
+
   return {
     title: values.title,
     description: values.description,
@@ -174,7 +176,7 @@ export const buildPropertyPayload = (values, photos = [], videoUrls = []) => {
     sellerInfo: {
       name: values.sellerName || undefined,
       phone: values.sellerPhone || undefined,
-      email: values.sellerEmail || undefined,
+      email: sellerEmail || undefined,
       role: values.sellerRole || undefined
     },
     serviceDistances: Object.keys(serviceDistances).length ? serviceDistances : undefined,
