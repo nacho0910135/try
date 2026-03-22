@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   BarChart3,
@@ -98,7 +98,7 @@ const personaBoardLabels = {
   }
 };
 
-export default function AnalysisPage() {
+function AnalysisPageContent() {
   const { language } = useLanguage();
   const { token } = useAuthStore();
   const searchParams = useSearchParams();
@@ -886,5 +886,13 @@ export default function AnalysisPage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function AnalysisPage() {
+  return (
+    <Suspense fallback={<div className="app-shell section-pad"><LoadingState label="Cargando analisis..." /></div>}>
+      <AnalysisPageContent />
+    </Suspense>
   );
 }

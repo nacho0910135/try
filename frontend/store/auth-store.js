@@ -3,12 +3,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-const noopStorage = {
-  getItem: () => null,
-  setItem: () => {},
-  removeItem: () => {}
-};
-
 const legacyAuthKey = "casa-cr-auth";
 
 const authStorage = {
@@ -40,9 +34,7 @@ export const useAuthStore = create(
     }),
     {
       name: "alquiventascr-auth",
-      storage: createJSONStorage(() =>
-        typeof window !== "undefined" ? authStorage : noopStorage
-      ),
+      storage: createJSONStorage(() => authStorage),
       partialize: (state) => ({
         token: state.token,
         user: state.user

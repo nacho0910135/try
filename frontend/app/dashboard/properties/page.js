@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   deleteProperty,
@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 
-export default function DashboardPropertiesPage() {
+function DashboardPropertiesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [items, setItems] = useState([]);
@@ -482,5 +482,13 @@ export default function DashboardPropertiesPage() {
         </table>
       </div>
     </section>
+  );
+}
+
+export default function DashboardPropertiesPage() {
+  return (
+    <Suspense fallback={<LoadingState label="Cargando propiedades..." />}>
+      <DashboardPropertiesPageContent />
+    </Suspense>
   );
 }

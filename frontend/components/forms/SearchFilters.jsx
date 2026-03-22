@@ -63,260 +63,317 @@ export function SearchFilters({
   );
 
   return (
-    <div className="surface space-y-5 p-5">
-      <div className="grid gap-4 lg:grid-cols-5">
-        <div className="lg:col-span-2">
-          <label className="field-label">{t("filters.searchText")}</label>
-          <Input
-            value={values.q || ""}
-            onChange={(event) => update("q", event.target.value)}
-            placeholder={t("filters.searchPlaceholder")}
-          />
-        </div>
+    <div className="surface-elevated space-y-5 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <label className="field-label">{t("filters.business")}</label>
-          <Select
-            value={values.businessType || ""}
-            onChange={(event) => update("businessType", event.target.value)}
-          >
-            <option value="">{t("common.all")}</option>
-            {businessTypes.map((item) => (
-              <option key={item.value} value={item.value}>
-                {t(BUSINESS_LABELS[item.value])}
-              </option>
-            ))}
-          </Select>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pine/70">
+            {t("searchPage.eyebrow")}
+          </div>
+          <h3 className="mt-2 text-xl font-semibold text-ink">
+            {t("filters.title")}
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-7 text-ink/62">
+            {t("filters.description")}
+          </p>
         </div>
-        <div>
-          <label className="field-label">{t("filters.propertyType")}</label>
-          <Select
-            value={values.propertyType || ""}
-            onChange={(event) => update("propertyType", event.target.value)}
-          >
-            <option value="">{t("common.all")}</option>
-            {propertyTypes.map((item) => (
-              <option key={item.value} value={item.value}>
-                {t(PROPERTY_LABELS[item.value])}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <label className="field-label">{t("filters.rentalArrangement")}</label>
-          <Select
-            value={values.rentalArrangement || ""}
-            onChange={(event) => update("rentalArrangement", event.target.value)}
-          >
-            <option value="">{t("common.allFeminine")}</option>
-            {rentalArrangements.map((item) => (
-              <option key={item.value} value={item.value}>
-                {t(RENTAL_LABELS[item.value])}
-              </option>
-            ))}
-          </Select>
+        <div className="flex flex-wrap gap-2">
+          <span className="stat-chip">
+            {t("filters.business")}
+          </span>
+          <span className="stat-chip">
+            {t("filters.province")}
+          </span>
+          <span className="stat-chip">
+            {t("filters.radius")}
+          </span>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div>
-          <label className="field-label">{t("filters.minPrice")}</label>
-          <Input
-            type="number"
-            value={values.minPrice || ""}
-            onChange={(event) => update("minPrice", event.target.value)}
-            placeholder="0"
-          />
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr]">
+        <div className="surface-soft space-y-4 p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/68">
+            {t("filters.searchText")}
+          </div>
+          <div className="grid gap-4 lg:grid-cols-5">
+            <div className="lg:col-span-2">
+              <label className="field-label">{t("filters.searchText")}</label>
+              <Input
+                value={values.q || ""}
+                onChange={(event) => update("q", event.target.value)}
+                placeholder={t("filters.searchPlaceholder")}
+              />
+            </div>
+            <div>
+              <label className="field-label">{t("filters.business")}</label>
+              <Select
+                value={values.businessType || ""}
+                onChange={(event) => update("businessType", event.target.value)}
+              >
+                <option value="">{t("common.all")}</option>
+                {businessTypes.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {t(BUSINESS_LABELS[item.value])}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="field-label">{t("filters.propertyType")}</label>
+              <Select
+                value={values.propertyType || ""}
+                onChange={(event) => update("propertyType", event.target.value)}
+              >
+                <option value="">{t("common.all")}</option>
+                {propertyTypes.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {t(PROPERTY_LABELS[item.value])}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="field-label">{t("filters.rentalArrangement")}</label>
+              <Select
+                value={values.rentalArrangement || ""}
+                onChange={(event) => update("rentalArrangement", event.target.value)}
+              >
+                <option value="">{t("common.allFeminine")}</option>
+                {rentalArrangements.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {t(RENTAL_LABELS[item.value])}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
         </div>
-        <div>
-          <label className="field-label">{t("filters.maxPrice")}</label>
-          <Input
-            type="number"
-            value={values.maxPrice || ""}
-            onChange={(event) => update("maxPrice", event.target.value)}
-            placeholder="500000"
-          />
-        </div>
-        <div>
-          <label className="field-label">{t("filters.currency")}</label>
-          <Select value={values.currency || ""} onChange={(event) => update("currency", event.target.value)}>
-            <option value="">{t("common.both")}</option>
-            {currencies.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <label className="field-label">{t("filters.status")}</label>
-          <Select
-            value={values.marketStatus || ""}
-            onChange={(event) => update("marketStatus", event.target.value)}
-          >
-            <option value="">{t("common.active")}</option>
-            {marketStatuses.map((item) => (
-              <option key={item.value} value={item.value}>
-                {t(MARKET_LABELS[item.value])}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <label className="field-label">{t("filters.bedrooms")}</label>
-          <Input
-            type="number"
-            value={values.bedrooms || ""}
-            onChange={(event) => update("bedrooms", event.target.value)}
-            placeholder="0"
-          />
-        </div>
-        <div>
-          <label className="field-label">{t("filters.bathrooms")}</label>
-          <Input
-            type="number"
-            value={values.bathrooms || ""}
-            onChange={(event) => update("bathrooms", event.target.value)}
-            placeholder="0"
-          />
-        </div>
-        <div>
-          <label className="field-label">{t("filters.parkingSpaces")}</label>
-          <Input
-            type="number"
-            value={values.parkingSpaces || ""}
-            onChange={(event) => update("parkingSpaces", event.target.value)}
-            placeholder="0"
-          />
+
+        <div className="surface-soft space-y-4 p-4">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/68">
+            {t("filters.location")}
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <div>
+              <label className="field-label">{t("filters.province")}</label>
+              <Select
+                value={values.province || ""}
+                onChange={(event) =>
+                  onChange({
+                    province: event.target.value || undefined,
+                    canton: undefined,
+                    district: undefined
+                  })
+                }
+              >
+                <option value="">{t("common.allFeminine")}</option>
+                {provinces.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="field-label">{t("filters.canton")}</label>
+              <Select
+                value={values.canton || ""}
+                disabled={!values.province}
+                onChange={(event) =>
+                  onChange({
+                    canton: event.target.value || undefined,
+                    district: undefined
+                  })
+                }
+              >
+                <option value="">
+                  {values.province ? t("common.all") : t("filters.selectProvince")}
+                </option>
+                {cantonOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="field-label">{t("filters.district")}</label>
+              <Select
+                value={values.district || ""}
+                disabled={!values.province || !values.canton}
+                onChange={(event) => update("district", event.target.value || undefined)}
+              >
+                <option value="">
+                  {values.province && values.canton ? t("common.all") : t("filters.selectCanton")}
+                </option>
+                {districtOptions.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="field-label">{t("filters.radius")}</label>
+              <Input
+                type="number"
+                value={values.radiusKm || ""}
+                onChange={(event) => update("radiusKm", event.target.value)}
+                placeholder="20"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button variant="success" className="w-full" onClick={onUseCurrentLocation}>
+                {t("filters.nearMe")}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <div>
-          <label className="field-label">{t("filters.province")}</label>
-          <Select
-            value={values.province || ""}
-            onChange={(event) =>
-              onChange({
-                province: event.target.value || undefined,
-                canton: undefined,
-                district: undefined
-              })
-            }
-          >
-            <option value="">{t("common.allFeminine")}</option>
-            {provinces.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </Select>
+      <div className="surface-soft space-y-4 p-4">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/68">
+          {t("filters.priceAndFeatures")}
         </div>
-        <div>
-          <label className="field-label">{t("filters.canton")}</label>
-          <Select
-            value={values.canton || ""}
-            disabled={!values.province}
-            onChange={(event) =>
-              onChange({
-                canton: event.target.value || undefined,
-                district: undefined
-              })
-            }
-          >
-            <option value="">{values.province ? t("common.all") : t("filters.selectProvince")}</option>
-            {cantonOptions.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <label className="field-label">{t("filters.district")}</label>
-          <Select
-            value={values.district || ""}
-            disabled={!values.province || !values.canton}
-            onChange={(event) => update("district", event.target.value || undefined)}
-          >
-            <option value="">
-              {values.province && values.canton ? t("common.all") : t("filters.selectCanton")}
-            </option>
-            {districtOptions.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <label className="field-label">{t("filters.radius")}</label>
-          <Input
-            type="number"
-            value={values.radiusKm || ""}
-            onChange={(event) => update("radiusKm", event.target.value)}
-            placeholder="20"
-          />
-        </div>
-        <div className="flex items-end">
-          <Button variant="secondary" className="w-full" onClick={onUseCurrentLocation}>
-            {t("filters.nearMe")}
-          </Button>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <div>
+            <label className="field-label">{t("filters.minPrice")}</label>
+            <Input
+              type="number"
+              value={values.minPrice || ""}
+              onChange={(event) => update("minPrice", event.target.value)}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="field-label">{t("filters.maxPrice")}</label>
+            <Input
+              type="number"
+              value={values.maxPrice || ""}
+              onChange={(event) => update("maxPrice", event.target.value)}
+              placeholder="500000"
+            />
+          </div>
+          <div>
+            <label className="field-label">{t("filters.currency")}</label>
+            <Select
+              value={values.currency || ""}
+              onChange={(event) => update("currency", event.target.value)}
+            >
+              <option value="">{t("common.both")}</option>
+              {currencies.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <label className="field-label">{t("filters.status")}</label>
+            <Select
+              value={values.marketStatus || ""}
+              onChange={(event) => update("marketStatus", event.target.value)}
+            >
+              <option value="">{t("common.active")}</option>
+              {marketStatuses.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {t(MARKET_LABELS[item.value])}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <label className="field-label">{t("filters.bedrooms")}</label>
+            <Input
+              type="number"
+              value={values.bedrooms || ""}
+              onChange={(event) => update("bedrooms", event.target.value)}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="field-label">{t("filters.bathrooms")}</label>
+            <Input
+              type="number"
+              value={values.bathrooms || ""}
+              onChange={(event) => update("bathrooms", event.target.value)}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="field-label">{t("filters.parkingSpaces")}</label>
+            <Input
+              type="number"
+              value={values.parkingSpaces || ""}
+              onChange={(event) => update("parkingSpaces", event.target.value)}
+              placeholder="0"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
-        <Checkbox
-          label={t("filters.furnished")}
-          checked={Boolean(values.furnished)}
-          onChange={(event) => update("furnished", event.target.checked ? true : undefined)}
-        />
-        <Checkbox
-          label={t("filters.petsAllowed")}
-          checked={Boolean(values.petsAllowed)}
-          onChange={(event) => update("petsAllowed", event.target.checked ? true : undefined)}
-        />
-        <Checkbox
-          label={t("filters.depositRequired")}
-          checked={Boolean(values.depositRequired)}
-          onChange={(event) => update("depositRequired", event.target.checked ? true : undefined)}
-        />
-        <Checkbox
-          label={t("filters.featured")}
-          checked={Boolean(values.featured)}
-          onChange={(event) => update("featured", event.target.checked ? true : undefined)}
-        />
-        <Checkbox
-          label={t("filters.recent")}
-          checked={Boolean(values.recent)}
-          onChange={(event) => update("recent", event.target.checked ? true : undefined)}
-        />
-        <Checkbox
-          label={t("filters.privateRoom")}
-          checked={Boolean(values.privateRoom)}
-          onChange={(event) => update("privateRoom", event.target.checked ? true : undefined)}
-        />
-        <Checkbox
-          label={t("filters.privateBathroom")}
-          checked={Boolean(values.privateBathroom)}
-          onChange={(event) => update("privateBathroom", event.target.checked ? true : undefined)}
-        />
-        <Checkbox
-          label={t("filters.utilitiesIncluded")}
-          checked={Boolean(values.utilitiesIncluded)}
-          onChange={(event) => update("utilitiesIncluded", event.target.checked ? true : undefined)}
-        />
-        <Checkbox
-          label={t("filters.studentFriendly")}
-          checked={Boolean(values.studentFriendly)}
-          onChange={(event) => update("studentFriendly", event.target.checked ? true : undefined)}
-        />
+      <div className="surface-soft space-y-4 p-4">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/68">
+          {t("filters.smartToggles")}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <Checkbox
+            label={t("filters.furnished")}
+            checked={Boolean(values.furnished)}
+            onChange={(event) => update("furnished", event.target.checked ? true : undefined)}
+          />
+          <Checkbox
+            label={t("filters.petsAllowed")}
+            checked={Boolean(values.petsAllowed)}
+            onChange={(event) => update("petsAllowed", event.target.checked ? true : undefined)}
+          />
+          <Checkbox
+            label={t("filters.depositRequired")}
+            checked={Boolean(values.depositRequired)}
+            onChange={(event) => update("depositRequired", event.target.checked ? true : undefined)}
+          />
+          <Checkbox
+            label={t("filters.featured")}
+            checked={Boolean(values.featured)}
+            onChange={(event) => update("featured", event.target.checked ? true : undefined)}
+          />
+          <Checkbox
+            label={t("filters.recent")}
+            checked={Boolean(values.recent)}
+            onChange={(event) => update("recent", event.target.checked ? true : undefined)}
+          />
+          <Checkbox
+            label={t("filters.privateRoom")}
+            checked={Boolean(values.privateRoom)}
+            onChange={(event) => update("privateRoom", event.target.checked ? true : undefined)}
+          />
+          <Checkbox
+            label={t("filters.privateBathroom")}
+            checked={Boolean(values.privateBathroom)}
+            onChange={(event) => update("privateBathroom", event.target.checked ? true : undefined)}
+          />
+          <Checkbox
+            label={t("filters.utilitiesIncluded")}
+            checked={Boolean(values.utilitiesIncluded)}
+            onChange={(event) => update("utilitiesIncluded", event.target.checked ? true : undefined)}
+          />
+          <Checkbox
+            label={t("filters.studentFriendly")}
+            checked={Boolean(values.studentFriendly)}
+            onChange={(event) => update("studentFriendly", event.target.checked ? true : undefined)}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 border-t border-ink/10 pt-5 md:grid-cols-[1fr_auto]">
-        <div>
+        <div className="flex flex-wrap gap-3">
           <Button variant="accent" onClick={onSaveSearch} disabled={!canSave}>
             {t("filters.saveSearch")}
           </Button>
+          {!canSave ? (
+            <span className="self-center text-xs font-medium text-ink/52">
+              {t("searchPage.loginToSaveSearch")}
+            </span>
+          ) : null}
         </div>
         <Button variant="ghost" onClick={onReset}>
           {t("filters.clear")}

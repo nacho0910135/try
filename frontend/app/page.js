@@ -44,20 +44,34 @@ export default function HomePage() {
   return (
     <div className="section-pad">
       <section className="app-shell">
-        <div className="surface overflow-hidden bg-hero-grid p-6 sm:p-10 lg:p-12">
-          <div className="grid gap-8 lg:grid-cols-[0.62fr_1.38fr] lg:items-start">
-            <div className="max-w-2xl">
+        <div className="surface-elevated overflow-hidden bg-hero-grid p-5 sm:p-8 lg:p-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(320px,0.52fr)_minmax(0,1.48fr)] lg:items-start">
+            <div className="max-w-xl lg:pt-4">
               <BrandLogo className="mb-5" />
               <span className="eyebrow">{t("homePage.eyebrow")}</span>
-              <h1 className="mt-4 max-w-3xl font-serif text-4xl font-semibold leading-[1.06] sm:text-5xl">
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="stat-chip">
+                  <MapPinned className="h-3.5 w-3.5 text-terracotta" />
+                  7 provincias
+                </span>
+                <span className="stat-chip">
+                  <Compass className="h-3.5 w-3.5 text-lagoon" />
+                  GPS + mapa
+                </span>
+                <span className="stat-chip">
+                  <ArrowRight className="h-3.5 w-3.5 text-pine" />
+                  Leads + favoritos
+                </span>
+              </div>
+              <h1 className="mt-5 max-w-3xl font-serif text-3xl font-semibold leading-[1.04] sm:text-[3.4rem]">
                 {t("homePage.title")}
               </h1>
-              <p className="mt-4 max-w-xl text-base leading-7 text-ink/68">
+              <p className="mt-4 max-w-lg text-sm leading-7 text-ink/68 sm:text-[15px]">
                 {t("homePage.description")}
               </p>
 
-              <div className="mt-7 grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
-                <div className="surface space-y-3 p-4">
+              <div className="mt-7 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+                <div className="surface-soft space-y-3 p-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <label className="field-label">{t("homePage.searchZoneLabel")}</label>
@@ -84,22 +98,27 @@ export default function HomePage() {
                   <Link
                     href={`/search?q=${encodeURIComponent(query)}&province=${encodeURIComponent(province)}`}
                   >
-                    <Button className="w-full">
+                    <Button className="w-full gap-2">
                       <Search className="mr-2 h-4 w-4" />
                       {t("homePage.exploreButton")}
                     </Button>
                   </Link>
                 </div>
-                <div className="surface p-4">
-                  <div className="text-sm uppercase tracking-[0.18em] text-ink/40">
+                <div className="surface-soft p-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-ink/40">
                     {t("homePage.activeProvince")}
                   </div>
-                  <div className="mt-2 text-xl font-semibold">{selectedProvinceMeta?.name}</div>
+                  <div className="mt-2 text-2xl font-semibold">{selectedProvinceMeta?.name}</div>
                   <p className="mt-2 text-sm leading-6 text-ink/65">
                     {language === "en"
                       ? selectedProvinceMeta?.blurbEn || selectedProvinceMeta?.blurb
                       : selectedProvinceMeta?.blurb}
                   </p>
+                  <div className="mt-4 rounded-[22px] bg-white/75 px-3 py-2 text-xs font-medium text-ink/60">
+                    {language === "en"
+                      ? selectedProvinceMeta?.spotlightEn || selectedProvinceMeta?.spotlight
+                      : selectedProvinceMeta?.spotlight}
+                  </div>
                 </div>
               </div>
             </div>
@@ -107,25 +126,26 @@ export default function HomePage() {
             <CostaRicaProvinceExplorer
               selectedProvince={province}
               onSelectProvince={setProvince}
+              mapMinHeight={860}
             />
           </div>
 
-          <div className="mt-8 grid gap-3 md:grid-cols-3">
-            <div className="surface p-4">
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            <div className="surface-soft p-5">
               <MapPinned className="h-5 w-5 text-terracotta" />
               <h3 className="mt-3 text-base font-semibold">{t("homePage.interactiveMap")}</h3>
               <p className="mt-1 text-sm leading-6 text-ink/60">
                 {t("homePage.interactiveMapDescription")}
               </p>
             </div>
-            <div className="surface p-4">
+            <div className="surface-soft p-5">
               <Compass className="h-5 w-5 text-lagoon" />
               <h3 className="mt-3 text-base font-semibold">{t("homePage.localSearch")}</h3>
               <p className="mt-1 text-sm leading-6 text-ink/60">
                 {t("homePage.localSearchDescription")}
               </p>
             </div>
-            <div className="surface p-4">
+            <div className="surface-soft p-5">
               <ArrowRight className="h-5 w-5 text-pine" />
               <h3 className="mt-3 text-base font-semibold">{t("homePage.simplePublishing")}</h3>
               <p className="mt-1 text-sm leading-6 text-ink/60">
@@ -143,7 +163,7 @@ export default function HomePage() {
                   <Link
                     key={property._id}
                     href={`/properties/${property.slug}`}
-                    className="surface grid gap-4 p-4 sm:grid-cols-[180px_1fr]"
+                    className="surface-soft grid gap-4 p-4 sm:grid-cols-[180px_1fr]"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden rounded-[22px]">
                       <img

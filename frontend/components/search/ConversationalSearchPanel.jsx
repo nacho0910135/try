@@ -36,7 +36,7 @@ export function ConversationalSearchPanel({ onApply }) {
   };
 
   return (
-    <div className="surface space-y-4 border border-pine/10 bg-[linear-gradient(135deg,rgba(45,106,79,0.08),rgba(255,255,255,0.96))] p-5">
+    <div className="surface-elevated space-y-5 border border-pine/10 bg-[linear-gradient(135deg,rgba(45,106,79,0.1),rgba(255,255,255,0.98))] p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pine/70">
@@ -67,10 +67,10 @@ export function ConversationalSearchPanel({ onApply }) {
             ? "Example: Pet-friendly rental near UCR with 2 bedrooms under $900"
             : "Ejemplo: Alquiler pet friendly cerca de la UCR con 2 habitaciones por menos de $900"
         }
-        className="min-h-[108px] bg-white/90"
+        className="min-h-[118px] bg-white/92 shadow-soft"
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="surface-soft flex flex-wrap gap-2 p-3">
         {examples.map((example) => (
           <button
             key={example}
@@ -88,7 +88,7 @@ export function ConversationalSearchPanel({ onApply }) {
           {summaryTokens.map((token) => (
             <span
               key={token}
-              className="rounded-full bg-pine/10 px-3 py-1.5 text-xs font-semibold text-pine"
+              className="rounded-full bg-pine/12 px-3 py-1.5 text-xs font-semibold text-pine shadow-soft"
             >
               {token}
             </span>

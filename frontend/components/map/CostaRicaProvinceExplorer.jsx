@@ -10,6 +10,7 @@ import { useLanguage } from "@/components/layout/LanguageProvider";
 import { getProvinceByName } from "@/lib/costa-rica-geo";
 import { mapDefaultCenter } from "@/lib/constants";
 import { resolveMapStyle } from "@/lib/map-style";
+import { cn } from "@/lib/utils";
 
 const getGeoJsonBounds = (featureCollection) => {
   if (!featureCollection?.features?.length) {
@@ -56,7 +57,9 @@ export function CostaRicaProvinceExplorer({
   selectedProvince,
   onSelectProvince,
   compact = false,
-  navigateOnSelect = true
+  navigateOnSelect = true,
+  mapMinHeight,
+  className
 }) {
   const router = useRouter();
   const { language, t } = useLanguage();
@@ -183,8 +186,8 @@ export function CostaRicaProvinceExplorer({
   };
 
   return (
-    <div className={`surface overflow-hidden ${compact ? "p-0" : "p-3"}`}>
-      <div className="overflow-hidden rounded-[30px] border border-white/80 bg-[#c3e6f0] shadow-soft">
+    <div className={cn(`surface overflow-hidden ${compact ? "p-0" : "p-3"}`, className)}>
+      <div className="map-stage overflow-hidden rounded-[34px] bg-[#c3e6f0]">
         <div
           className={`border-b border-white/60 bg-white/55 backdrop-blur ${
             compact ? "px-3 py-2" : "px-4 py-3"
@@ -238,7 +241,7 @@ export function CostaRicaProvinceExplorer({
             <div className="absolute right-0 top-28 h-36 w-36 rounded-full bg-white/10 blur-3xl" />
           </div>
 
-          <div className="relative z-10 overflow-hidden rounded-[28px] border border-white/60">
+          <div className="relative z-10 overflow-hidden rounded-[30px] border border-white/60">
             <Map
               ref={mapRef}
               mapboxAccessToken={token}
@@ -268,7 +271,15 @@ export function CostaRicaProvinceExplorer({
 
                 handleProvinceSelection(provinceFeature.properties.name);
               }}
-              style={{ width: "100%", minHeight: compact ? 220 : 760 }}
+              style={{
+                width: "100%",
+                minHeight:
+                  typeof mapMinHeight === "number"
+                    ? mapMinHeight
+                    : compact
+                      ? 220
+                      : 760
+              }}
             >
               <NavigationControl position="top-right" />
               {interactiveProvinceGeoJson ? (
@@ -281,7 +292,7 @@ export function CostaRicaProvinceExplorer({
           </div>
 
           {compact ? (
-            <div className="relative z-10 mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-[22px] bg-white/78 px-3 py-2 shadow-soft backdrop-blur">
+            <div className="relative z-10 mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-[24px] bg-white/78 px-3 py-2 shadow-soft backdrop-blur">
               <div>
                 <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-lagoon/75">
                   {t("provinceExplorer.activeProvince")}
@@ -295,7 +306,7 @@ export function CostaRicaProvinceExplorer({
             </div>
           ) : (
             <div className="relative z-10 mt-3 grid gap-3 lg:grid-cols-[1.15fr_auto] lg:items-end">
-              <div className="rounded-[26px] bg-white/80 px-4 py-3 shadow-soft backdrop-blur">
+              <div className="rounded-[28px] bg-white/82 px-4 py-3 shadow-soft backdrop-blur">
                 <div className="text-xs font-semibold uppercase tracking-[0.22em] text-lagoon/75">
                   {t("provinceExplorer.activeProvince")}
                 </div>

@@ -11,7 +11,7 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
   }
 
   return (
-    <div className="surface space-y-4 p-5">
+    <div className="surface-elevated space-y-4 p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pine/70">
@@ -28,7 +28,7 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
               : "Resaltamos cuantas propiedades actuales estan cerca de las capas que activaste, para que el mapa explique estilo de vida y demanda, no solo precio."}
           </p>
         </div>
-        <div className="rounded-full bg-pine/10 px-3 py-1.5 text-xs font-semibold text-pine">
+        <div className="stat-chip">
           {language === "en"
             ? `Insight radius: ${radiusKm || 8} km`
             : `Radio de lectura: ${radiusKm || 8} km`}
@@ -39,13 +39,10 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
         {summary.layerCounts.map((layer) => (
           <div
             key={layer.id}
-            className="rounded-[24px] border border-ink/10 bg-white p-4 shadow-soft"
+            className="rounded-[26px] border border-white/70 bg-white/96 p-4 shadow-soft"
           >
             <div className="flex items-center gap-3">
-              <div
-                className="h-3.5 w-3.5 rounded-full"
-                style={{ backgroundColor: layer.color }}
-              />
+              <div className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: layer.color }} />
               <div className="text-sm font-semibold text-ink">
                 {language === "en" ? layer.labelEn : layer.labelEs}
               </div>
@@ -60,7 +57,7 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
         ))}
 
         {focusedPoint ? (
-          <div className="rounded-[24px] border border-lagoon/15 bg-lagoon/6 p-4 shadow-soft">
+          <div className="rounded-[26px] border border-lagoon/15 bg-lagoon/7 p-4 shadow-soft">
             <div className="flex items-center gap-2 text-sm font-semibold text-lagoon">
               <Compass className="h-4 w-4" />
               {language === "en" ? "Focused point" : "Punto enfocado"}
@@ -77,7 +74,7 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[24px] border border-ink/10 bg-white p-4 shadow-soft">
+        <div className="rounded-[26px] border border-white/70 bg-white/96 p-4 shadow-soft">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
             <MapPinned className="h-4 w-4 text-pine" />
             {language === "en" ? "Top districts in this view" : "Distritos mas fuertes en esta vista"}
@@ -87,9 +84,9 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
               {summary.topDistricts.map((district) => (
                 <span
                   key={district.label}
-                  className="rounded-full bg-pine/10 px-3 py-1.5 text-xs font-semibold text-pine"
+                  className="rounded-full bg-pine/10 px-3 py-1.5 text-xs font-semibold text-pine shadow-soft"
                 >
-                  {district.label} · {district.count}
+                  {`${district.label} - ${district.count}`}
                 </span>
               ))}
             </div>
@@ -102,7 +99,7 @@ export function MapContextInsights({ summary, radiusKm, focusedPoint }) {
           )}
         </div>
 
-        <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4 shadow-soft">
+        <div className="rounded-[26px] border border-amber-200 bg-amber-50 p-4 shadow-soft">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
             <Sparkles className="h-4 w-4" />
             {language === "en" ? "Closest context signal" : "Senal de contexto mas cercana"}

@@ -36,7 +36,7 @@ export function MapContextPanel({
     .find((point) => point.id === focusedPointId);
 
   return (
-    <div className="surface space-y-5 p-5">
+    <div className="surface-elevated space-y-5 p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pine/70">
@@ -53,7 +53,7 @@ export function MapContextPanel({
               : "Activa capas para descubrir propiedades cerca de universidades, hospitales, playas y hubs de trabajo. El mapa se vuelve una herramienta de decision, no solo un lienzo de precios."}
           </p>
         </div>
-        <div className="rounded-full bg-pine/10 px-3 py-1.5 text-xs font-semibold text-pine">
+        <div className="stat-chip">
           {language === "en"
             ? `Search radius: ${radiusKm || 8} km`
             : `Radio de busqueda: ${radiusKm || 8} km`}
@@ -68,8 +68,8 @@ export function MapContextPanel({
           return (
             <div
               key={layer.id}
-              className={`rounded-[24px] border p-4 transition ${
-                active ? "border-pine/20 bg-pine/6" : "border-ink/10 bg-white"
+              className={`rounded-[26px] border p-4 shadow-soft transition ${
+                active ? "border-pine/20 bg-pine/6" : "border-white/70 bg-white/96"
               }`}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -113,10 +113,10 @@ export function MapContextPanel({
                         key={point.id}
                         type="button"
                         onClick={() => onFocusPoint({ ...point, layerId: layer.id })}
-                        className={`rounded-[18px] px-4 py-3 text-left transition ${
+                      className={`rounded-[20px] px-4 py-3 text-left transition ${
                           pointActive
                             ? "bg-white shadow-soft ring-2 ring-pine/20"
-                            : "bg-mist hover:bg-white"
+                            : "bg-mist/85 hover:bg-white"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-3">
@@ -147,7 +147,7 @@ export function MapContextPanel({
       </div>
 
       {focusedPoint ? (
-        <div className="rounded-[24px] border border-lagoon/15 bg-lagoon/6 p-4">
+        <div className="surface-soft border border-lagoon/15 bg-lagoon/7 p-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-lagoon/75">

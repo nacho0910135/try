@@ -134,6 +134,7 @@ const translations = {
       geoError: "No fue posible acceder a tu ubicacion.",
       saveSearchSuccess: "Busqueda guardada correctamente.",
       saveSearchFailed: "No se pudo guardar la busqueda",
+      loginToSaveSearch: "Inicia sesion para guardar esta busqueda",
       eyebrow: "Exploracion",
       title: "Busca propiedades en Costa Rica",
       description:
@@ -183,11 +184,17 @@ const translations = {
         "Agrega coordenadas precisas, varias fotos y descripciones detalladas para destacar en el mapa y en el listado."
     },
     filters: {
+      title: "Filtros de exploracion",
+      description:
+        "Combina zona, presupuesto y senales clave para que el mapa responda con resultados mas utiles.",
       searchText: "Buscar por texto",
       searchPlaceholder: "Escazu, Tamarindo, vista al mar, jardin...",
       business: "Negocio",
       propertyType: "Tipo",
       rentalArrangement: "Modalidad",
+      location: "Ubicacion",
+      priceAndFeatures: "Precio y atributos",
+      smartToggles: "Senales rapidas",
       minPrice: "Precio min",
       maxPrice: "Precio max",
       currency: "Moneda",
@@ -379,6 +386,7 @@ const translations = {
       geoError: "We could not access your location.",
       saveSearchSuccess: "Search saved successfully.",
       saveSearchFailed: "Could not save the search",
+      loginToSaveSearch: "Sign in to save this search",
       eyebrow: "Explore",
       title: "Find properties in Costa Rica",
       description:
@@ -428,11 +436,17 @@ const translations = {
         "Add precise coordinates, multiple photos, and detailed descriptions to stand out on both the map and the listing."
     },
     filters: {
+      title: "Exploration filters",
+      description:
+        "Combine area, budget, and key signals so the map reacts with sharper results.",
       searchText: "Search by text",
       searchPlaceholder: "Escazu, Tamarindo, ocean view, garden...",
       business: "Business",
       propertyType: "Type",
       rentalArrangement: "Rental setup",
+      location: "Location",
+      priceAndFeatures: "Price and features",
+      smartToggles: "Quick signals",
       minPrice: "Min price",
       maxPrice: "Max price",
       currency: "Currency",

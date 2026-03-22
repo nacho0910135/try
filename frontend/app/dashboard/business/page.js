@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { BarChart3, BriefcaseBusiness, Megaphone, TrendingUp } from "lucide-react";
 import {
@@ -17,7 +17,7 @@ import { formatCurrency } from "@/lib/utils";
 
 const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
 
-export default function DashboardBusinessPage() {
+function DashboardBusinessPageContent() {
   const searchParams = useSearchParams();
   const [overview, setOverview] = useState(null);
   const [flashMessage, setFlashMessage] = useState("");
@@ -539,5 +539,13 @@ export default function DashboardBusinessPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function DashboardBusinessPage() {
+  return (
+    <Suspense fallback={<LoadingState label="Cargando negocio..." />}>
+      <DashboardBusinessPageContent />
+    </Suspense>
   );
 }

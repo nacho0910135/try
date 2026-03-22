@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { MessageSquareText, ShieldCheck, Swords } from "lucide-react";
 import {
@@ -46,7 +46,7 @@ const formatMetricValue = (metric, side) => {
   return numberFormatter.format(value || 0);
 };
 
-export default function BattlePage() {
+function BattlePageContent() {
   const { language } = useLanguage();
   const { token } = useAuthStore();
   const searchParams = useSearchParams();
@@ -479,5 +479,13 @@ export default function BattlePage() {
         />
       )}
     </div>
+  );
+}
+
+export default function BattlePage() {
+  return (
+    <Suspense fallback={<div className="app-shell section-pad"><LoadingState label="Cargando batalla..." /></div>}>
+      <BattlePageContent />
+    </Suspense>
   );
 }

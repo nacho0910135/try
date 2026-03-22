@@ -122,8 +122,10 @@ export function PropertyCard({
     <Link
       href={`/properties/${property.slug}`}
       onMouseEnter={() => onSelected?.(property._id)}
-      className={`surface group block overflow-hidden transition ${
-        selected ? "ring-2 ring-terracotta/40" : "hover:-translate-y-1"
+      className={`surface-elevated group block overflow-hidden transition duration-300 ${
+        selected
+          ? "ring-2 ring-terracotta/40 shadow-[0_30px_80px_rgba(228,93,53,0.16)]"
+          : "hover:-translate-y-1.5 hover:shadow-[0_32px_80px_rgba(17,34,54,0.14)]"
       }`}
     >
       <div className={`relative overflow-hidden ${compact ? "aspect-[16/9]" : "aspect-[16/10]"}`}>
@@ -136,6 +138,7 @@ export function PropertyCard({
             event.currentTarget.src = fallbackSrc;
           }}
         />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
         <div className="absolute left-3 top-3 flex flex-wrap gap-2">
           <Badge variant="accent">{businessLabel}</Badge>
           {property.rentalArrangement === "roommate" ? (
@@ -167,23 +170,27 @@ export function PropertyCard({
         </button>
       </div>
 
-      <div className={`${compact ? "space-y-2.5 p-3" : "space-y-3 p-4"}`}>
+      <div className={`${compact ? "space-y-2.5 p-[14px]" : "space-y-3.5 p-[18px]"}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className={compact ? "text-lg font-semibold" : "text-xl font-semibold"}>
+            <div className={compact ? "text-lg font-semibold text-ink" : "text-[1.45rem] font-semibold text-ink"}>
               {formatCurrency(property.price, property.currency)}
             </div>
-            <h3 className={`font-semibold leading-snug ${compact ? "mt-1 text-sm" : "mt-1.5 text-base"}`}>
+            <h3 className={`font-semibold leading-snug text-ink ${compact ? "mt-1 text-sm" : "mt-1.5 text-base"}`}>
               {property.title}
             </h3>
           </div>
-          <span className={compact ? "text-xs text-ink/45" : "text-sm text-ink/45"}>{typeLabel}</span>
+          <span className={`rounded-full bg-mist px-2.5 py-1 font-semibold ${compact ? "text-[10px] text-ink/55" : "text-xs text-ink/55"}`}>
+            {typeLabel}
+          </span>
         </div>
 
         <div className={`flex items-center gap-2 text-ink/60 ${compact ? "text-xs" : "text-sm"}`}>
           <MapPin className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           <span>{formatLocation(property)}</span>
         </div>
+
+        <div className="soft-divider" />
 
         {(property.trustProfile?.score || daysOnMarket !== undefined) ? (
           <div className={`flex flex-wrap text-ink/60 ${compact ? "gap-1.5 text-[11px]" : "gap-2 text-xs"}`}>

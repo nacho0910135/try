@@ -1,8 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSavedSearch, getFavorites, getProperties } from "@/lib/api";
 import { serializePropertyQuery } from "@/lib/utils";
@@ -12,6 +11,8 @@ import { SearchFilters } from "@/components/forms/SearchFilters";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { MapContextInsights } from "@/components/map/MapContextInsights";
 import { MapContextPanel } from "@/components/map/MapContextPanel";
+import { SearchMap } from "@/components/map/SearchMap";
+import { CostaRicaProvinceExplorer } from "@/components/map/CostaRicaProvinceExplorer";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { ConversationalSearchPanel } from "@/components/search/ConversationalSearchPanel";
 import { Button } from "@/components/ui/Button";
@@ -21,25 +22,6 @@ import {
   buildContextResultsSummary,
   getPropertyContextMatches
 } from "@/lib/map-context-insights";
-
-const SearchMap = dynamic(
-  () => import("@/components/map/SearchMap").then((module) => module.SearchMap),
-  {
-    ssr: false,
-    loading: () => <LoadingState label="..." />
-  }
-);
-
-const CostaRicaProvinceExplorer = dynamic(
-  () =>
-    import("@/components/map/CostaRicaProvinceExplorer").then(
-      (module) => module.CostaRicaProvinceExplorer
-    ),
-  {
-    ssr: false,
-    loading: () => <LoadingState label="..." />
-  }
-);
 
 const parseFilterValue = (value) => {
   if (value === "true") return true;
@@ -71,7 +53,7 @@ const toPolygonGeometry = (polygon) => {
   };
 };
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initializedRef = useRef(false);
@@ -260,17 +242,27 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="app-shell section-pad space-y-6">
+    <div className="app-shell section-pad space-y-7">
       <div>
         <span className="eyebrow">{t("searchPage.eyebrow")}</span>
-        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="font-serif text-5xl font-semibold">{t("searchPage.title")}</h1>
-            <p className="mt-3 max-w-3xl text-base text-ink/65">
+        <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <span className="stat-chip">
+                {language === "en" ? "Map-led exploration" : "Exploracion guiada por mapa"}
+              </span>
+              <span className="stat-chip">
+                {language === "en" ? "Live price field" : "Campo de precios en vivo"}
+              </span>
+            </div>
+            <h1 className="font-serif text-4xl font-semibold leading-[1.02] sm:text-[4rem]">
+              {t("searchPage.title")}
+            </h1>
+            <p className="max-w-3xl text-sm leading-7 text-ink/65 sm:text-[15px]">
               {t("searchPage.description")}
             </p>
           </div>
-          <div className="surface min-w-[280px] border border-pine/15 bg-pine/10 p-4">
+          <div className="surface-soft min-w-[280px] border border-pine/15 bg-pine/10 p-4">
             <p className="text-sm font-semibold text-pine">
               {token
                 ? t("searchPage.publishPromptLoggedIn")
@@ -319,18 +311,19 @@ export default function SearchPage() {
 
       {message ? <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{message}</p> : null}
 
-      <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
         <div className="xl:sticky xl:top-24 xl:h-fit xl:self-start">
           <CostaRicaProvinceExplorer
             selectedProvince={filters.province}
             onSelectProvince={handleProvinceAtlasSelection}
             compact
             navigateOnSelect={false}
+            mapMinHeight={360}
           />
         </div>
 
         <div>
-          <div className="mb-4 rounded-[30px] border border-white/80 bg-white/82 p-4 shadow-soft backdrop-blur">
+          <div className="surface-soft mb-4 p-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pine/70">
@@ -345,8 +338,13 @@ export default function SearchPage() {
                     : "El mapa de precios se mantiene como protagonista. Toca una nube de precio para abrir la publicación."}
                 </p>
               </div>
-              <div className="rounded-full bg-pine/10 px-3 py-1.5 text-xs font-semibold text-pine">
-                {language === "en" ? "Live listings" : "Propiedades en vivo"}
+              <div className="flex flex-wrap gap-2">
+                <span className="stat-chip">
+                  {pagination.total} {language === "en" ? "matches" : "resultados"}
+                </span>
+                <span className="stat-chip">
+                  {filters.province || (language === "en" ? "All Costa Rica" : "Todo Costa Rica")}
+                </span>
               </div>
             </div>
           </div>
@@ -389,6 +387,7 @@ export default function SearchPage() {
                 bounds: undefined
               });
             }}
+            minHeight={820}
           />
         </div>
       </div>
@@ -400,7 +399,7 @@ export default function SearchPage() {
           focusedPoint={focusedContextPoint}
         />
 
-        <div className="flex items-center justify-between">
+        <div className="surface-soft flex items-center justify-between px-4 py-3">
           <p className="text-sm text-ink/55">
             {loading
               ? t("searchPage.searching")
@@ -457,5 +456,13 @@ export default function SearchPage() {
         ) : null}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="app-shell section-pad"><LoadingState label="Cargando mapa..." /></div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }

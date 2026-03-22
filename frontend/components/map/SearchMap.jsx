@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import { Expand, MapPinned, Sparkles } from "lucide-react";
 import Map, { GeolocateControl, Layer, Marker, NavigationControl, Source } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { getVisibleMapContextPoints, mapContextLayers } from "@/lib/costa-rica-map-context";
-import { formatCompactCurrency, formatCurrency } from "@/lib/utils";
+import { cn, formatCompactCurrency, formatCurrency } from "@/lib/utils";
 import { mapDefaultCenter } from "@/lib/constants";
 import { getProvinceCode } from "@/lib/costa-rica-geo";
 import { resolveMapStyle } from "@/lib/map-style";
@@ -33,23 +34,23 @@ const collectBounds = (coordinates, state) => {
 
 const markerStylesByStatus = {
   available: {
-    base: "border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-500",
+    base: "border-emerald-700/90 bg-emerald-600/95 text-white hover:-translate-y-0.5 hover:bg-emerald-500",
     selected: "border-emerald-900 bg-emerald-700 text-white ring-4 ring-emerald-200"
   },
   reserved: {
-    base: "border-amber-700 bg-amber-500 text-white hover:bg-amber-400",
+    base: "border-amber-700/90 bg-amber-500/95 text-white hover:-translate-y-0.5 hover:bg-amber-400",
     selected: "border-amber-900 bg-amber-600 text-white ring-4 ring-amber-200"
   },
   sold: {
-    base: "border-rose-700 bg-rose-600 text-white hover:bg-rose-500",
+    base: "border-rose-700/90 bg-rose-600/95 text-white hover:-translate-y-0.5 hover:bg-rose-500",
     selected: "border-rose-900 bg-rose-700 text-white ring-4 ring-rose-200"
   },
   rented: {
-    base: "border-sky-700 bg-sky-600 text-white hover:bg-sky-500",
+    base: "border-sky-700/90 bg-sky-600/95 text-white hover:-translate-y-0.5 hover:bg-sky-500",
     selected: "border-sky-900 bg-sky-700 text-white ring-4 ring-sky-200"
   },
   inactive: {
-    base: "border-slate-600 bg-slate-500 text-white hover:bg-slate-400",
+    base: "border-slate-600/90 bg-slate-500/95 text-white hover:-translate-y-0.5 hover:bg-slate-400",
     selected: "border-slate-800 bg-slate-600 text-white ring-4 ring-slate-200"
   }
 };
@@ -65,7 +66,9 @@ export function SearchMap({
   onSelectDistrict,
   onSelectContextPoint,
   onBoundsChange,
-  onPolygonChange
+  onPolygonChange,
+  minHeight = 740,
+  className
 }) {
   const router = useRouter();
   const { t, language } = useLanguage();
@@ -225,7 +228,24 @@ export function SearchMap({
   };
 
   return (
-    <div className="surface overflow-hidden">
+    <div className={cn("map-stage", className)}>
+      <div className="pointer-events-none absolute inset-x-4 top-4 z-10 flex flex-wrap items-start justify-between gap-3">
+        <div className="surface-soft px-4 py-3">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-pine/75">
+            {language === "en" ? "Live price field" : "Campo de precios"}
+          </div>
+          <div className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-ink">
+            <MapPinned className="h-4 w-4 text-terracotta" />
+            {selectedProvince || "Costa Rica"}
+            <span className="text-ink/35">•</span>
+            {properties.length} {language === "en" ? "results" : "resultados"}
+          </div>
+        </div>
+        <div className="surface-soft hidden items-center gap-2 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/60 md:inline-flex">
+          <Expand className="h-3.5 w-3.5 text-lagoon" />
+          {language === "en" ? "Drag, zoom, draw" : "Arrastra, acerca, dibuja"}
+        </div>
+      </div>
       <Map
         ref={mapRef}
         mapboxAccessToken={token}
@@ -263,7 +283,7 @@ export function SearchMap({
             north: bounds.getNorth()
           });
         }}
-        style={{ width: "100%", minHeight: 740 }}
+        style={{ width: "100%", minHeight }}
       >
         <NavigationControl position="top-right" />
         <GeolocateControl position="top-right" trackUserLocation={false} showUserHeading />
@@ -293,7 +313,7 @@ export function SearchMap({
                     onSelectProperty?.(property._id);
                     router.push(`/properties/${property.slug}`);
                   }}
-                  className={`rounded-full border-2 px-2.5 py-1.5 text-[11px] font-semibold shadow-soft transition ${
+                  className={`rounded-full border-2 px-3 py-1.5 text-[11px] font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition ${
                     selectedPropertyId === property._id
                       ? markerStyle.selected
                       : markerStyle.base
@@ -339,9 +359,16 @@ export function SearchMap({
         })}
       </Map>
 
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0f24301c] via-transparent to-transparent" />
+
       {selectedProvince || activeContextLayers.length ? (
-        <div className="space-y-2 border-t border-ink/10 bg-white/88 px-4 py-3 text-xs font-medium text-ink/65">
-          {selectedProvince ? <div>{t("map.districtsHint", { province: selectedProvince })}</div> : null}
+        <div className="space-y-2 border-t border-ink/10 bg-white/90 px-4 py-3 text-xs font-medium text-ink/65">
+          {selectedProvince ? (
+            <div className="flex items-start gap-2">
+              <Sparkles className="mt-0.5 h-3.5 w-3.5 text-terracotta" />
+              <span>{t("map.districtsHint", { province: selectedProvince })}</span>
+            </div>
+          ) : null}
           {activeContextLayers.length ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[11px] uppercase tracking-[0.18em] text-ink/45">
