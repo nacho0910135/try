@@ -2,18 +2,15 @@
 
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useLanguage } from "@/components/layout/LanguageProvider";
-import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 export default function AuthLayout({ children }) {
   const { t } = useLanguage();
 
   return (
     <div className="app-shell section-pad">
-      <div className="mb-6 flex justify-end">
-        <LanguageSwitcher />
-      </div>
-      <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-        <section className="surface bg-hero-grid p-8 sm:p-12">
+      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8">
+        <div className="order-1">{children}</div>
+        <section className="order-2 hidden surface bg-hero-grid p-8 sm:p-12 lg:block">
           <BrandLogo />
           <div className="mt-8">
             <span className="eyebrow">{t("authLayout.eyebrow")}</span>
@@ -25,7 +22,6 @@ export default function AuthLayout({ children }) {
             </p>
           </div>
         </section>
-        <div>{children}</div>
       </div>
     </div>
   );

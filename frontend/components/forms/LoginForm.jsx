@@ -69,25 +69,27 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="surface space-y-5 p-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="surface mx-auto w-full max-w-xl space-y-5 p-6 sm:p-8">
       <div>
         <span className="eyebrow">{t("loginForm.eyebrow")}</span>
-        <h1 className="mt-4 font-serif text-4xl font-semibold">{t("loginForm.title")}</h1>
-        <p className="mt-3 text-sm text-ink/60">{t("loginForm.description")}</p>
+        <h1 className="mt-4 font-serif text-3xl font-semibold sm:text-4xl">{t("loginForm.title")}</h1>
+        <p className="mt-2 text-sm text-ink/60">{t("loginForm.description")}</p>
       </div>
 
-      <div>
+      <div className="space-y-5">
+        <div>
         <label className="field-label">{t("loginForm.email")}</label>
         <Input type="email" placeholder={t("loginForm.emailPlaceholder")} {...register("email")} />
         {errors.email ? <p className="mt-2 text-sm text-red-600">{errors.email.message}</p> : null}
-      </div>
+        </div>
 
-      <div>
+        <div>
         <label className="field-label">{t("loginForm.password")}</label>
         <Input type="password" placeholder={t("loginForm.passwordPlaceholder")} {...register("password")} />
         {errors.password ? (
           <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
         ) : null}
+        </div>
       </div>
 
       {error ? <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p> : null}

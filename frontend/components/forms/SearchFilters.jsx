@@ -170,7 +170,11 @@ export function SearchFilters({
                   onChange({
                     province: event.target.value || undefined,
                     canton: undefined,
-                    district: undefined
+                    district: undefined,
+                    lat: undefined,
+                    lng: undefined,
+                    bounds: undefined,
+                    polygon: undefined
                   })
                 }
               >
@@ -190,7 +194,11 @@ export function SearchFilters({
                 onChange={(event) =>
                   onChange({
                     canton: event.target.value || undefined,
-                    district: undefined
+                    district: undefined,
+                    lat: undefined,
+                    lng: undefined,
+                    bounds: undefined,
+                    polygon: undefined
                   })
                 }
               >
@@ -209,7 +217,15 @@ export function SearchFilters({
               <Select
                 value={values.district || ""}
                 disabled={!values.province || !values.canton}
-                onChange={(event) => update("district", event.target.value || undefined)}
+                onChange={(event) =>
+                  onChange({
+                    district: event.target.value || undefined,
+                    lat: undefined,
+                    lng: undefined,
+                    bounds: undefined,
+                    polygon: undefined
+                  })
+                }
               >
                 <option value="">
                   {values.province && values.canton ? t("common.all") : t("filters.selectCanton")}

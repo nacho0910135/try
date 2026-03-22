@@ -144,6 +144,18 @@ function SearchPageContent() {
 
   const updateFilters = (patch) => {
     setPage(1);
+    if (
+      "province" in patch ||
+      "canton" in patch ||
+      "district" in patch ||
+      "lat" in patch ||
+      "lng" in patch ||
+      "bounds" in patch ||
+      "polygon" in patch
+    ) {
+      setFocusedContextPoint(null);
+      setSelectedPropertyId(null);
+    }
     setFilters(patch);
   };
 
@@ -214,6 +226,8 @@ function SearchPageContent() {
       province: provinceName,
       canton: undefined,
       district: undefined,
+      lat: undefined,
+      lng: undefined,
       bounds: undefined,
       polygon: undefined
     });
