@@ -325,7 +325,7 @@ export function PropertyForm({ property, propertyId }) {
             sellerRole: "Visible role",
             serviceDistances: "Nearby services",
             serviceDistancesHelp:
-              "Optional. If you select any of these distances, they will be shown on the property page.",
+              "3 optional questions. If you choose any of these distances, they will appear on the property page.",
             hospitalDistance: "Distance to nearest hospital",
             schoolDistance: "Distance to nearest school",
             highSchoolDistance: "Distance to nearest high school",
@@ -441,7 +441,7 @@ export function PropertyForm({ property, propertyId }) {
             sellerRole: "Rol visible",
             serviceDistances: "Servicios cercanos",
             serviceDistancesHelp:
-              "Opcional. Si llenas alguna de estas distancias, se mostraran en la publicacion.",
+              "3 preguntas opcionales. Si eliges alguna de estas distancias, se mostraran en la publicacion.",
             hospitalDistance: "Distancia al hospital mas cercano",
             schoolDistance: "Distancia a la escuela mas cercana",
             highSchoolDistance: "Distancia al colegio mas cercano",
@@ -1079,6 +1079,53 @@ export function PropertyForm({ property, propertyId }) {
           <label className="field-label">{copy.addressText}</label>
           <Input {...register("addressText")} />
         </div>
+
+        <div className="rounded-[28px] border border-pine/15 bg-pine/5 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-xl font-semibold">{copy.serviceDistances}</h3>
+              <p className="mt-2 text-sm text-ink/60">{copy.serviceDistancesHelp}</p>
+            </div>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-pine">
+              {isEnglish ? "Optional" : "Opcional"}
+            </span>
+          </div>
+          <div className="mt-5 grid gap-5 md:grid-cols-3">
+            <div>
+              <label className="field-label">{copy.hospitalDistance}</label>
+              <Select {...register("serviceHospitalKm")}>
+                <option value="">{copy.serviceDistancePlaceholder}</option>
+                {serviceDistanceOptions.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="field-label">{copy.schoolDistance}</label>
+              <Select {...register("serviceSchoolKm")}>
+                <option value="">{copy.serviceDistancePlaceholder}</option>
+                {serviceDistanceOptions.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="field-label">{copy.highSchoolDistance}</label>
+              <Select {...register("serviceHighSchoolKm")}>
+                <option value="">{copy.serviceDistancePlaceholder}</option>
+                {serviceDistanceOptions.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="surface space-y-5 p-6">
@@ -1101,48 +1148,6 @@ export function PropertyForm({ property, propertyId }) {
             <Select {...register("sellerRole")}>
               <option value="">{isEnglish ? "Select role" : "Selecciona rol"}</option>
               {sellerRoleOptions.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-        </div>
-      </section>
-
-      <section className="surface space-y-5 p-6">
-        <div>
-          <h2 className="text-2xl font-semibold">{copy.serviceDistances}</h2>
-          <p className="mt-2 text-sm text-ink/60">{copy.serviceDistancesHelp}</p>
-        </div>
-        <div className="grid gap-5 md:grid-cols-3">
-          <div>
-            <label className="field-label">{copy.hospitalDistance}</label>
-            <Select {...register("serviceHospitalKm")}>
-              <option value="">{copy.serviceDistancePlaceholder}</option>
-              {serviceDistanceOptions.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <div>
-            <label className="field-label">{copy.schoolDistance}</label>
-            <Select {...register("serviceSchoolKm")}>
-              <option value="">{copy.serviceDistancePlaceholder}</option>
-              {serviceDistanceOptions.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <div>
-            <label className="field-label">{copy.highSchoolDistance}</label>
-            <Select {...register("serviceHighSchoolKm")}>
-              <option value="">{copy.serviceDistancePlaceholder}</option>
-              {serviceDistanceOptions.map((item) => (
                 <option key={item.value} value={item.value}>
                   {item.label}
                 </option>
