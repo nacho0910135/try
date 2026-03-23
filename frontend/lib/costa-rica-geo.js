@@ -1,4 +1,4 @@
-import { costaRicaProvinces } from "./costa-rica-provinces";
+import { costaRicaProvinces } from "./costa-rica-provinces.js";
 
 const provinceByName = new Map(costaRicaProvinces.map((province) => [province.name, province]));
 const provinceByCode = new Map(costaRicaProvinces.map((province) => [province.code, province]));

@@ -25,6 +25,7 @@ import {
   getCantonsByProvince,
   getDistrictsByProvinceAndCanton
 } from "@/lib/costa-rica-locations";
+import { reverseGeocodeCostaRica } from "@/lib/costa-rica-reverse-geo";
 import { buildPropertyPayload } from "@/lib/utils";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { Button } from "../ui/Button";
@@ -101,6 +102,22 @@ const optionalNumberField = () =>
     z.coerce.number().nonnegative().optional()
   );
 
+const coordinateField = (copy) =>
+  z.preprocess(
+    (value) => {
+      if (value === "" || value === null || value === undefined) {
+        return undefined;
+      }
+
+      const parsedValue = Number(value);
+      return Number.isFinite(parsedValue) ? parsedValue : value;
+    },
+    z.number({
+      required_error: copy.validationCoordinates,
+      invalid_type_error: copy.validationCoordinates
+    })
+  );
+
 const createPropertyFormSchema = (copy) =>
   z.object({
     title: z.string().min(10, copy.validationTitleMin),
@@ -146,14 +163,8 @@ const createPropertyFormSchema = (copy) =>
     maxRoommates: numberField(),
     genderPreference: z.string(),
     sharedAreas: z.string(),
-    lat: z.coerce.number({
-      required_error: copy.validationCoordinates,
-      invalid_type_error: copy.validationCoordinates
-    }),
-    lng: z.coerce.number({
-      required_error: copy.validationCoordinates,
-      invalid_type_error: copy.validationCoordinates
-    })
+    lat: coordinateField(copy),
+    lng: coordinateField(copy)
   });
 
 const findFirstMessage = (value) => {
@@ -213,7 +224,7 @@ const toDefaultValues = (property) => ({
   status: property?.status || "published",
   marketStatus: property?.marketStatus || "available",
   amenities: property?.amenities?.join(", ") || "",
-  province: property?.address?.province || "San Jose",
+  province: property?.address?.province || "",
   canton: property?.address?.canton || "",
   district: property?.address?.district || "",
   neighborhood: property?.address?.neighborhood || "",
@@ -250,8 +261,8 @@ const toDefaultValues = (property) => ({
   genderPreference: property?.roommateDetails?.genderPreference || "any",
   sharedAreas: property?.roommateDetails?.sharedAreas?.join(", ") || "",
   hideExactLocation: property?.address?.hideExactLocation ?? false,
-  lat: property?.location?.coordinates?.[1] || 9.9281,
-  lng: property?.location?.coordinates?.[0] || -84.0907
+  lat: property?.location?.coordinates?.[1] ?? "",
+  lng: property?.location?.coordinates?.[0] ?? ""
 });
 
 export function PropertyForm({ property, propertyId }) {
@@ -374,10 +385,15 @@ export function PropertyForm({ property, propertyId }) {
             validationCanton: "Select a canton.",
             validationDistrict: "Select a district.",
             validationCoordinates: "Enter valid latitude and longitude coordinates.",
+            selectProvince: "Select province",
             selectCanton: "Select canton",
             selectDistrict: "Select district",
             firstProvince: "Choose province first",
-            firstCanton: "Choose canton first"
+            firstCanton: "Choose canton first",
+            feedbackLocationResolved: (label) =>
+              `Location detected in ${label}. You can now save your property.`,
+            feedbackLocationNeedsReview:
+              "Coordinates were detected, but review province, canton, and district before saving."
           }
         : {
             newProperty: "Nueva propiedad",
@@ -492,10 +508,15 @@ export function PropertyForm({ property, propertyId }) {
             validationCanton: "Selecciona un canton.",
             validationDistrict: "Selecciona un distrito.",
             validationCoordinates: "Ingresa coordenadas validas para latitud y longitud.",
+            selectProvince: "Selecciona provincia",
             selectCanton: "Selecciona canton",
             selectDistrict: "Selecciona distrito",
             firstProvince: "Primero provincia",
-            firstCanton: "Primero canton"
+            firstCanton: "Primero canton",
+            feedbackLocationResolved: (label) =>
+              `Ubicacion detectada en ${label}. Ya puedes guardar tu propiedad.`,
+            feedbackLocationNeedsReview:
+              "Se detectaron las coordenadas, pero revisa provincia, canton y distrito antes de guardar."
           },
     [isEnglish]
   );
@@ -541,6 +562,7 @@ export function PropertyForm({ property, propertyId }) {
     reset,
     setValue,
     clearErrors,
+    getValues,
     watch,
     formState: { errors, isSubmitting }
   } = useForm({
@@ -550,14 +572,14 @@ export function PropertyForm({ property, propertyId }) {
   const provinceField = register("province");
   const cantonField = register("canton");
   const districtField = register("district");
+  const latField = register("lat");
+  const lngField = register("lng");
   const businessTypeValue = watch("businessType");
   const propertyTypeValue = watch("propertyType");
   const rentalArrangementValue = watch("rentalArrangement");
   const provinceValue = watch("province");
   const cantonValue = watch("canton");
   const districtValue = watch("district");
-  const latValue = watch("lat");
-  const lngValue = watch("lng");
   const showRoommateSection =
     businessTypeValue === "rent" &&
     (rentalArrangementValue === "roommate" || propertyTypeValue === "room");
@@ -662,6 +684,78 @@ export function PropertyForm({ property, propertyId }) {
     });
   };
 
+  const syncAdministrativeLocation = async (lat, lng, options = {}) => {
+    const { updateFeedback = false } = options;
+
+    try {
+      const resolvedLocation = await reverseGeocodeCostaRica({ lat, lng });
+
+      if (!resolvedLocation?.province || !resolvedLocation?.canton || !resolvedLocation?.district) {
+        if (updateFeedback) {
+          setFeedbackTone("info");
+          setFeedback(copy.feedbackLocationNeedsReview);
+        }
+
+        return null;
+      }
+
+      const previousZoneLabel = [
+        getValues("district"),
+        getValues("canton"),
+        getValues("province")
+      ]
+        .filter(Boolean)
+        .join(", ");
+      const currentAddressText = String(getValues("addressText") || "").trim();
+
+      setValue("province", resolvedLocation.province, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+      setValue("canton", resolvedLocation.canton, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+      setValue("district", resolvedLocation.district, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+      clearErrors(["province", "canton", "district"]);
+
+      if (!currentAddressText || currentAddressText === previousZoneLabel) {
+        setValue("addressText", resolvedLocation.label, {
+          shouldValidate: false,
+          shouldDirty: true
+        });
+      }
+
+      if (updateFeedback) {
+        setFeedbackTone("success");
+        setFeedback(copy.feedbackLocationResolved(resolvedLocation.label));
+      }
+
+      return resolvedLocation;
+    } catch {
+      if (updateFeedback) {
+        setFeedbackTone("info");
+        setFeedback(copy.feedbackLocationNeedsReview);
+      }
+
+      return null;
+    }
+  };
+
+  const syncLocationFromCurrentCoordinates = async (options = {}) => {
+    const currentLat = getValues("lat");
+    const currentLng = getValues("lng");
+
+    if (currentLat === "" || currentLng === "" || currentLat === undefined || currentLng === undefined) {
+      return null;
+    }
+
+    return syncAdministrativeLocation(currentLat, currentLng, options);
+  };
+
   const useCurrentLocation = () => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setFeedbackTone("error");
@@ -670,11 +764,26 @@ export function PropertyForm({ property, propertyId }) {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setValue("lat", Number(position.coords.latitude.toFixed(6)));
-        setValue("lng", Number(position.coords.longitude.toFixed(6)));
-        setFeedbackTone("success");
-        setFeedback(copy.feedbackLocationSuccess);
+      async (position) => {
+        const nextLat = Number(position.coords.latitude.toFixed(6));
+        const nextLng = Number(position.coords.longitude.toFixed(6));
+
+        setValue("lat", nextLat, { shouldValidate: true, shouldDirty: true });
+        setValue("lng", nextLng, { shouldValidate: true, shouldDirty: true });
+        clearErrors(["lat", "lng"]);
+
+        const resolvedLocation = await syncAdministrativeLocation(nextLat, nextLng, {
+          updateFeedback: false
+        });
+
+        if (resolvedLocation?.label) {
+          setFeedbackTone("success");
+          setFeedback(copy.feedbackLocationResolved(resolvedLocation.label));
+          return;
+        }
+
+        setFeedbackTone("info");
+        setFeedback(copy.feedbackLocationNeedsReview);
       },
       () => {
         setFeedbackTone("error");
@@ -1022,6 +1131,7 @@ export function PropertyForm({ property, propertyId }) {
                 clearErrors(["province", "canton", "district"]);
               }}
             >
+              <option value="">{copy.selectProvince}</option>
               {provinces.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -1087,11 +1197,31 @@ export function PropertyForm({ property, propertyId }) {
           </div>
           <div>
             <label className="field-label">{copy.latitude}</label>
-            <Input type="number" step="0.000001" {...register("lat")} />
+            <Input
+              type="number"
+              step="0.000001"
+              name={latField.name}
+              ref={latField.ref}
+              onChange={latField.onChange}
+              onBlur={(event) => {
+                latField.onBlur(event);
+                void syncLocationFromCurrentCoordinates();
+              }}
+            />
           </div>
           <div>
             <label className="field-label">{copy.longitude}</label>
-            <Input type="number" step="0.000001" {...register("lng")} />
+            <Input
+              type="number"
+              step="0.000001"
+              name={lngField.name}
+              ref={lngField.ref}
+              onChange={lngField.onChange}
+              onBlur={(event) => {
+                lngField.onBlur(event);
+                void syncLocationFromCurrentCoordinates();
+              }}
+            />
           </div>
         </div>
         <div className="grid gap-5 md:grid-cols-2">
