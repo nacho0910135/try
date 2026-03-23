@@ -65,6 +65,8 @@ Plataforma inmobiliaria full stack para Costa Rica, orientada a publicacion, exp
 
 Copia `backend/.env.example` a `backend/.env`.
 
+Para produccion usa como base `backend/.env.production.example`.
+
 Variables clave:
 
 - `PORT`
@@ -73,6 +75,7 @@ Variables clave:
 - `JWT_SECRET`
 - `JWT_EXPIRES_IN`
 - `FRONTEND_URL`
+  admite una o varias URLs absolutas separadas por comas
 - `TRUST_PROXY`
 - `LOG_LEVEL`
 - `MONITORING_WEBHOOK_URL`
@@ -94,10 +97,13 @@ Variables clave:
 - `BACKUP_RETENTION_DAYS`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
+  solo si reactivas checkout mas adelante
 
 ### Frontend
 
 Copia `frontend/.env.example` a `frontend/.env.local`.
+
+Para produccion usa como base `frontend/.env.production.example`.
 
 Variables clave:
 
@@ -121,6 +127,7 @@ npm install
 
 - `backend/.env`
 - `frontend/.env.local`
+- en servidor: `backend/.env.production.example` y `frontend/.env.production.example` como referencia
 
 ### 3. Configurar MongoDB
 
@@ -159,6 +166,8 @@ npm run seed
 npm run seed:samples
 npm run alerts:send
 npm run backup:mongo
+npm run check:launch
+npm run generate:jwt
 ```
 
 ## Credenciales del seed local
@@ -294,6 +303,7 @@ Antes de lanzar:
 3. Verifica que `FRONTEND_URL` solo contenga dominios finales.
 4. Revisa que `MONITORING_WEBHOOK_URL` apunte a tu canal real de incidentes.
 5. Programa backups de Mongo y monitorea que terminen correctamente.
+6. No guardes `backend/.env` ni `frontend/.env.local` en git.
 
 ## Checkout y pagos
 
@@ -330,14 +340,28 @@ Rutas destacadas:
 ## Notas operativas
 
 - La recuperacion de contrasena requiere SMTP para enviar el enlace.
-- Una propiedad solo entra al catalogo publico si esta `published`, aprobada y en un estado de mercado visible.
+- Una propiedad entra al catalogo publico cuando esta `published` y en un estado de mercado visible.
 - Los videos se agregan por URL desde el formulario.
 - El analisis interactivo usa heuristicas y no reemplaza criterio profesional.
 
-## Validacion recomendada antes del lanzamiento
+## Checklist de lanzamiento
+
+Ejecuta este chequeo rapido antes de subir:
+
+```bash
+npm run check:launch
+```
+
+Para generar un `JWT_SECRET` fuerte:
+
+```bash
+npm run generate:jwt
+```
+
+Tambien valida manualmente:
 
 - Probar registro, login y reset password
-- Probar publicar, editar y aprobar propiedades
+- Probar publicar, editar y ver propiedades en explorar
 - Probar favoritos, leads, ofertas y alertas
 - Probar mapa y filtros en movil
 - Probar `npm run build --workspace frontend`

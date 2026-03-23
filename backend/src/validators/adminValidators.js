@@ -21,8 +21,7 @@ export const listAdminPropertiesSchema = z.object({
     page: integerField(),
     limit: integerField(),
     q: z.string().optional(),
-    status: z.enum(PROPERTY_STATUSES).optional(),
-    isApproved: booleanField()
+    status: z.enum(PROPERTY_STATUSES).optional()
   })
 });
 
@@ -31,7 +30,6 @@ export const moderatePropertySchema = z.object({
     propertyId: objectIdSchema
   }),
   body: z.object({
-    isApproved: z.boolean().optional(),
     featured: z.boolean().optional(),
     status: z.enum(PROPERTY_STATUSES).optional(),
     moderationNote: z.string().max(300).optional()

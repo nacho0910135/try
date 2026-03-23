@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { env } from "../config/env.js";
+import { primaryFrontendUrl } from "../config/env.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/apiError.js";
 import { generateToken } from "../utils/jwt.js";
@@ -92,7 +92,7 @@ export const authService = {
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
-    const resetUrl = `${env.FRONTEND_URL.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
+    const resetUrl = `${primaryFrontendUrl.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
     const emailResult = await notificationService.sendPasswordReset({
       user,
       resetUrl

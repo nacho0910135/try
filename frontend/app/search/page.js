@@ -222,6 +222,11 @@ function SearchPageContent() {
   };
 
   const handleUseCurrentLocation = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setMessage(t("searchPage.geoError"));
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setFocusedContextPoint(null);
@@ -233,7 +238,12 @@ function SearchPageContent() {
           polygon: undefined
         });
       },
-      () => setMessage(t("searchPage.geoError"))
+      () => setMessage(t("searchPage.geoError")),
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 60000
+      }
     );
   };
 

@@ -1,6 +1,6 @@
 import { SavedSearch } from "../models/SavedSearch.js";
 import { Property } from "../models/Property.js";
-import { env } from "../config/env.js";
+import { primaryFrontendUrl } from "../config/env.js";
 import { ApiError } from "../utils/apiError.js";
 import { buildBoundsPolygon, normalizePolygonCoordinates } from "../utils/geo.js";
 import { notificationService } from "./notificationService.js";
@@ -89,7 +89,7 @@ const buildSavedSearchName = (payload = {}) => {
 };
 
 const buildSavedSearchUrl = (savedSearch) => {
-  const baseUrl = env.FRONTEND_URL.split(",")[0] || "http://localhost:3000";
+  const baseUrl = primaryFrontendUrl;
   const params = new URLSearchParams();
   const filters = savedSearch.filters || {};
 

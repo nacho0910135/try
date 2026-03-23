@@ -23,6 +23,21 @@ const parseBoolean = (value) => {
   return value === "true" || value === "1";
 };
 
+const splitCsv = (value) =>
+  String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const isValidUrl = (value) => {
+  try {
+    new URL(value);
+    return true;
+  } catch (_error) {
+    return false;
+  }
+};
+
 const envSchema = z.object({
   HOST: z.string().default("0.0.0.0"),
   PORT: z.coerce.number().default(5000),
@@ -61,6 +76,15 @@ if (!parsed.success) {
   process.exit(1);
 }
 
+const frontendOrigins = splitCsv(parsed.data.FRONTEND_URL);
+
+if (!frontendOrigins.length || frontendOrigins.some((origin) => !isValidUrl(origin))) {
+  console.error("Invalid environment variables", {
+    FRONTEND_URL: ["FRONTEND_URL must contain one or more valid absolute URLs, separated by commas if needed"]
+  });
+  process.exit(1);
+}
+
 if (
   parsed.data.NODE_ENV === "production" &&
   (parsed.data.JWT_SECRET === "change-this-super-secret" || parsed.data.JWT_SECRET.length < 32)
@@ -81,3 +105,5 @@ if (
 }
 
 export const env = parsed.data;
+export const allowedFrontendOrigins = frontendOrigins;
+export const primaryFrontendUrl = frontendOrigins[0] || "http://localhost:3000";

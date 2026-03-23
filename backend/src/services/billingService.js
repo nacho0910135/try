@@ -1,5 +1,5 @@
 import { User } from "../models/User.js";
-import { env } from "../config/env.js";
+import { primaryFrontendUrl } from "../config/env.js";
 import { ApiError } from "../utils/apiError.js";
 import { COMMERCIAL_PLAN_CONFIG, resolveEffectiveSubscription } from "../constants/plans.js";
 import { stripeService } from "./stripeService.js";
@@ -9,7 +9,7 @@ const BILLING_CYCLES = {
   yearly: "year"
 };
 
-const getFrontendBaseUrl = () => env.FRONTEND_URL.split(",")[0] || "http://localhost:3000";
+const getFrontendBaseUrl = () => primaryFrontendUrl;
 
 const isPaidPlan = (planId) => Number(COMMERCIAL_PLAN_CONFIG[planId]?.monthlyPrice || 0) > 0;
 

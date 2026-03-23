@@ -82,11 +82,11 @@ export const adminService = {
     if (payload.status) property.status = payload.status;
     if (payload.moderationNote !== undefined) property.moderationNote = payload.moderationNote;
 
-    property.isApproved = property.status === "published";
-    property.approvedAt = property.isApproved ? property.approvedAt || new Date() : undefined;
-    property.approvedBy = property.isApproved ? property.approvedBy || adminUser._id : undefined;
-    if (property.isApproved && !property.publishedAt) {
+    if (property.status === "published" && !property.publishedAt) {
       property.publishedAt = new Date();
+    }
+    if (property.status !== "published") {
+      property.featured = false;
     }
 
     await property.save();

@@ -662,6 +662,12 @@ export function PropertyForm({ property, propertyId }) {
   };
 
   const useCurrentLocation = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setFeedbackTone("error");
+      setFeedback(copy.feedbackLocationError);
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setValue("lat", Number(position.coords.latitude.toFixed(6)));
@@ -672,6 +678,11 @@ export function PropertyForm({ property, propertyId }) {
       () => {
         setFeedbackTone("error");
         setFeedback(copy.feedbackLocationError);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 60000
       }
     );
   };

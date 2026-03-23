@@ -5,7 +5,8 @@ import { buildPagination } from "../utils/pagination.js";
 
 export const offerService = {
   async create(payload, user) {
-    const property = await Property.findById(payload.propertyId).populate("owner", "name email phone");
+    const propertyId = payload.propertyId || payload.property;
+    const property = await Property.findById(propertyId).populate("owner", "name email phone");
 
     if (!property || property.status !== "published") {
       throw new ApiError(404, "Propiedad no encontrada");

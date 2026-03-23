@@ -6,7 +6,7 @@ import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import helmet from "helmet";
 import morgan from "morgan";
-import { env } from "./config/env.js";
+import { allowedFrontendOrigins, env } from "./config/env.js";
 import {
   getHealthSummary,
   getLiveness,
@@ -26,10 +26,6 @@ if (env.TRUST_PROXY) {
   app.set("trust proxy", 1);
 }
 
-const allowedOrigins = env.FRONTEND_URL.split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
 const localDevOriginPattern =
   /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(:\d+)?$/;
 
@@ -38,7 +34,7 @@ const isAllowedOrigin = (origin) => {
     return true;
   }
 
-  if (allowedOrigins.includes(origin)) {
+  if (allowedFrontendOrigins.includes(origin)) {
     return true;
   }
 

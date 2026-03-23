@@ -45,7 +45,8 @@ const buildCrmSummary = (items = []) => {
 
 export const leadService = {
   async create(payload, user) {
-    const property = await Property.findById(payload.propertyId).populate("owner", "name email phone");
+    const propertyId = payload.propertyId || payload.property;
+    const property = await Property.findById(propertyId).populate("owner", "name email phone");
 
     if (!property) {
       throw new ApiError(404, "Property not found");
