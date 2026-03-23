@@ -303,17 +303,21 @@ export function SearchMap({
                   onSelectProperty?.(property._id);
                   router.push(`/properties/${property.slug}`);
                 }}
-                className={`rounded-full border-2 px-2 py-1.5 text-[10px] font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition sm:px-3 sm:py-1.5 sm:text-[11px] ${
-                  selectedPropertyId === property._id
-                    ? markerStyle.selected
-                    : markerStyle.base
-                }`}
+                className="group relative -m-2 rounded-full p-2 focus:outline-none"
                 aria-label={t("map.selectedAria", {
                   title: property.title,
                   price: formatCurrency(property.price, property.currency)
                 })}
               >
-                {formatCompactCurrency(property.price, property.currency)}
+                <span
+                  className={`inline-flex rounded-full border-2 px-2 py-1.5 text-[10px] font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition duration-150 ease-out sm:px-3 sm:py-1.5 sm:text-[11px] ${
+                    selectedPropertyId === property._id
+                      ? `${markerStyle.selected} scale-[1.08]`
+                      : `${markerStyle.base} group-hover:scale-[1.13] group-focus-visible:scale-[1.13]`
+                  }`}
+                >
+                  {formatCompactCurrency(property.price, property.currency)}
+                </span>
               </button>
             </Marker>
           );
