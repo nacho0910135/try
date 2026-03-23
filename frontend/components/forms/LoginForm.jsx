@@ -93,7 +93,18 @@ export function LoginForm() {
         </div>
       </div>
 
-      {error ? <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            className="mt-3 font-semibold text-lagoon"
+          >
+            {t("loginForm.forgotPassword")}
+          </button>
+        </div>
+      ) : null}
       {resetMessage ? (
         <p className="rounded-2xl bg-mist px-4 py-3 text-sm text-ink/70">{resetMessage}</p>
       ) : null}
