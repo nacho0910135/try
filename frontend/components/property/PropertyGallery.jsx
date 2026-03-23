@@ -140,7 +140,7 @@ function GalleryViewer({ item, title }) {
   );
 }
 
-export function PropertyGallery({ media = [], photos = [], title }) {
+export function PropertyGallery({ media = [], photos = [], title, compact = false }) {
   const items = useMemo(() => normalizeGalleryItems({ media, photos, title }), [media, photos, title]);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeItem = items[activeIndex] || items[0];
@@ -168,8 +168,12 @@ export function PropertyGallery({ media = [], photos = [], title }) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-[30px] border border-white/60 bg-[#0f1720] shadow-[0_28px_60px_rgba(15,23,32,0.18)]">
+    <div className={compact ? "space-y-3" : "space-y-4"}>
+      <div
+        className={`relative overflow-hidden border border-white/60 bg-[#0f1720] shadow-[0_28px_60px_rgba(15,23,32,0.18)] ${
+          compact ? "rounded-[26px]" : "rounded-[30px]"
+        }`}
+      >
         <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 px-3 py-3 sm:px-4 sm:py-4">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur sm:gap-2 sm:px-3 sm:text-[11px] sm:tracking-[0.18em]">
             <Images className="h-3.5 w-3.5" />
@@ -181,7 +185,11 @@ export function PropertyGallery({ media = [], photos = [], title }) {
           </div>
         </div>
 
-        <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[16/9]">
+        <div
+          className={`relative overflow-hidden ${
+            compact ? "aspect-[4/3] sm:aspect-[15/8]" : "aspect-[4/3] sm:aspect-[16/9]"
+          }`}
+        >
           <GalleryViewer item={activeItem} title={title} />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/45 via-black/8 to-transparent" />
         </div>

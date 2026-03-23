@@ -27,7 +27,8 @@ export function OfferForm({
   propertyType,
   businessType = "sale",
   currency = "USD",
-  askingPrice = 0
+  askingPrice = 0,
+  embedded = false
 }) {
   const { user } = useAuthStore();
   const [feedback, setFeedback] = useState("");
@@ -92,16 +93,21 @@ export function OfferForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="surface space-y-4 p-6">
-      <div>
-        <h3 className="text-xl font-semibold">
-          {businessType === "rent" ? "Proponer renta" : "Enviar oferta"}
-        </h3>
-        <p className="mt-2 text-sm text-ink/60">
-          El anunciante recibira tu propuesta con monto y mensaje. Precio publicado:{" "}
-          <strong>{formatCurrency(askingPrice, currency)}</strong>
-        </p>
-      </div>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className={embedded ? "space-y-4" : "surface space-y-4 p-6"}
+    >
+      {!embedded ? (
+        <div>
+          <h3 className="text-xl font-semibold">
+            {businessType === "rent" ? "Proponer renta" : "Enviar oferta"}
+          </h3>
+          <p className="mt-2 text-sm text-ink/60">
+            El anunciante recibira tu propuesta con monto y mensaje. Precio publicado:{" "}
+            <strong>{formatCurrency(askingPrice, currency)}</strong>
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>

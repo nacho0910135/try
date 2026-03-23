@@ -18,7 +18,14 @@ const leadSchema = z.object({
   message: z.string().min(10, "Escribe un mensaje con un poco mas de detalle")
 });
 
-export function ContactLeadForm({ propertyId, propertyTitle, propertySlug, businessType, propertyType }) {
+export function ContactLeadForm({
+  propertyId,
+  propertyTitle,
+  propertySlug,
+  businessType,
+  propertyType,
+  embedded = false
+}) {
   const { user } = useAuthStore();
   const [feedback, setFeedback] = useState("");
   const {
@@ -71,13 +78,18 @@ export function ContactLeadForm({ propertyId, propertyTitle, propertySlug, busin
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="surface space-y-4 p-6">
-      <div>
-        <h3 className="text-xl font-semibold">Contactar anunciante</h3>
-        <p className="mt-2 text-sm text-ink/60">
-          El lead quedara asociado a la propiedad y al propietario o agente correspondiente.
-        </p>
-      </div>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className={embedded ? "space-y-4" : "surface space-y-4 p-6"}
+    >
+      {!embedded ? (
+        <div>
+          <h3 className="text-xl font-semibold">Contactar anunciante</h3>
+          <p className="mt-2 text-sm text-ink/60">
+            El lead quedara asociado a la propiedad y al propietario o agente correspondiente.
+          </p>
+        </div>
+      ) : null}
 
       <div>
         <label className="field-label">Nombre</label>
