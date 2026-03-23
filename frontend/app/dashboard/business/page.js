@@ -16,6 +16,7 @@ import {
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { formatCurrency } from "@/lib/utils";
 
 const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
@@ -26,13 +27,26 @@ export default function DashboardBusinessPage() {
   const [donationAmount, setDonationAmount] = useState(10);
   const [donorName, setDonorName] = useState("");
   const [donationLoading, setDonationLoading] = useState(false);
+  const [loadingOverview, setLoadingOverview] = useState(true);
+  const [overviewError, setOverviewError] = useState("");
 
-  useEffect(() => {
-    const loadOverview = async () => {
+  const loadOverview = async () => {
+    try {
+      setLoadingOverview(true);
+      setOverviewError("");
       const data = await getCommercialOverview();
       setOverview(data.overview);
-    };
+    } catch (error) {
+      setOverview(null);
+      setOverviewError(
+        error.response?.data?.message || "No pudimos cargar la visibilidad comercial."
+      );
+    } finally {
+      setLoadingOverview(false);
+    }
+  };
 
+  useEffect(() => {
     loadOverview();
   }, []);
 
@@ -59,8 +73,19 @@ export default function DashboardBusinessPage() {
     }
   }, []);
 
-  if (!overview) {
+  if (loadingOverview) {
     return <LoadingState label="Cargando visibilidad y metricas..." />;
+  }
+
+  if (!overview) {
+    return (
+      <EmptyState
+        title="No pudimos cargar este panel"
+        description={overviewError || "Intenta de nuevo en unos segundos."}
+        actionLabel="Reintentar"
+        onAction={loadOverview}
+      />
+    );
   }
 
   const {

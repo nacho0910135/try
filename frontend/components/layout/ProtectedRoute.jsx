@@ -1,13 +1,49 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
+import { getCurrentUser } from "@/lib/api";
 import { LoadingState } from "../ui/LoadingState";
 
 export function ProtectedRoute({ children, roles }) {
   const router = useRouter();
-  const { hydrated, token, user } = useAuthStore();
+  const { hydrated, token, user, setUser, logout } = useAuthStore();
+  const [resolvingUser, setResolvingUser] = useState(false);
+
+  useEffect(() => {
+    if (!hydrated || !token || user || resolvingUser) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const resolveCurrentUser = async () => {
+      try {
+        setResolvingUser(true);
+        const data = await getCurrentUser();
+
+        if (!cancelled) {
+          setUser(data.user);
+        }
+      } catch (_error) {
+        if (!cancelled) {
+          logout();
+          router.replace("/login");
+        }
+      } finally {
+        if (!cancelled) {
+          setResolvingUser(false);
+        }
+      }
+    };
+
+    resolveCurrentUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, token, user, resolvingUser, setUser, logout, router]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -17,19 +53,18 @@ export function ProtectedRoute({ children, roles }) {
       return;
     }
 
-    if (roles?.length && !roles.includes(user?.role)) {
+    if (roles?.length && user && !roles.includes(user?.role)) {
       router.replace("/");
     }
   }, [hydrated, token, user, roles, router]);
 
-  if (!hydrated) {
+  if (!hydrated || (token && (!user || resolvingUser))) {
     return <LoadingState label="Validando sesion..." />;
   }
 
-  if (!token || (roles?.length && !roles.includes(user?.role))) {
+  if (!token || (roles?.length && user && !roles.includes(user?.role))) {
     return <LoadingState label="Redirigiendo..." />;
   }
 
   return children;
 }
-

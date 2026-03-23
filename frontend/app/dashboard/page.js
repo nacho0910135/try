@@ -16,6 +16,7 @@ import { useLanguage } from "@/components/layout/LanguageProvider";
 import { useAuthStore } from "@/store/auth-store";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const leadStatusLabels = {
   new: "Nuevo",
@@ -34,18 +35,42 @@ export default function DashboardPage() {
   const [verificationNote, setVerificationNote] = useState("");
   const [verificationFeedback, setVerificationFeedback] = useState("");
   const [verificationSaving, setVerificationSaving] = useState(false);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [summaryError, setSummaryError] = useState("");
 
   const loadSummary = async () => {
-    const data = await getDashboardSummary();
-    setSummary(data.summary);
+    try {
+      setLoadingSummary(true);
+      setSummaryError("");
+      const data = await getDashboardSummary();
+      setSummary(data.summary);
+    } catch (error) {
+      setSummary(null);
+      setSummaryError(
+        error.response?.data?.message || "No pudimos cargar tu resumen comercial."
+      );
+    } finally {
+      setLoadingSummary(false);
+    }
   };
 
   useEffect(() => {
     loadSummary();
   }, []);
 
-  if (!summary) {
+  if (loadingSummary) {
     return <LoadingState label={t("dashboardPage.loading")} />;
+  }
+
+  if (!summary) {
+    return (
+      <EmptyState
+        title="No pudimos cargar tu dashboard"
+        description={summaryError || "Intenta de nuevo en unos segundos."}
+        actionLabel="Reintentar"
+        onAction={loadSummary}
+      />
+    );
   }
 
   const cards = [
