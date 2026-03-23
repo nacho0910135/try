@@ -80,7 +80,7 @@ export default function HomePage() {
               <CostaRicaProvinceExplorer
                 selectedProvince={province}
                 onSelectProvince={setProvince}
-                mapMinHeight={1180}
+                mapMinHeight={920}
                 hero
               />
             </div>

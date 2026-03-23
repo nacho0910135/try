@@ -403,12 +403,12 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
               ? compact
                 ? `clamp(208px, 30svh, ${mapMinHeight}px)`
                 : hero
-                  ? `clamp(560px, 78svh, ${mapMinHeight}px)`
+                  ? `clamp(440px, 64svh, ${mapMinHeight}px)`
                   : `clamp(360px, 58svh, ${mapMinHeight}px)`
               : compact
                 ? "clamp(208px, 30svh, 280px)"
                 : hero
-                  ? "clamp(560px, 78svh, 1180px)"
+                  ? "clamp(440px, 64svh, 920px)"
                 : "clamp(360px, 58svh, 760px)"
         }}
       >
