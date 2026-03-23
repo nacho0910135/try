@@ -189,6 +189,7 @@ const SearchMapComponent = function SearchMap({
   const router = useRouter();
   const { t, language } = useLanguage();
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const drawControlsEnabled = process.env.NEXT_PUBLIC_ENABLE_MAP_DRAW === "true";
   const mapStyle = resolveMapStyle(process.env.NEXT_PUBLIC_MAPBOX_STYLE);
   const mapRef = useRef(null);
   const drawRef = useRef(null);
@@ -376,40 +377,89 @@ const SearchMapComponent = function SearchMap({
   }, [focusedContextPoint]);
 
   useEffect(() => {
-    if (!token || !mapRef.current || drawRef.current) {
+    if (!drawControlsEnabled) {
       return;
     }
 
-    const map = mapRef.current.getMap();
-    const draw = new MapboxDraw({
-      displayControlsDefault: false,
-      controls: {
-        polygon: true,
-        trash: true
-      }
-    });
+    if (!token || !mapRef.current) {
+      return;
+    }
 
-    drawRef.current = draw;
-    map.addControl(draw, "top-left");
+    const map = mapRef.current.getMap?.();
+
+    if (!map) {
+      return;
+    }
+
+    let draw = null;
+    let controlsAttached = false;
 
     const syncPolygon = () => {
-      const [feature] = draw.getAll().features;
+      const activeDraw = drawRef.current;
+
+      if (!activeDraw) {
+        return;
+      }
+
+      const [feature] = activeDraw.getAll().features;
       const polygon = feature?.geometry?.coordinates?.[0] || null;
       onPolygonChange?.(polygon);
     };
 
-    map.on("draw.create", syncPolygon);
-    map.on("draw.update", syncPolygon);
-    map.on("draw.delete", syncPolygon);
+    const attachDrawControls = () => {
+      if (drawRef.current || controlsAttached) {
+        return;
+      }
+
+      try {
+        draw = new MapboxDraw({
+          displayControlsDefault: false,
+          controls: {
+            polygon: true,
+            trash: true
+          }
+        });
+
+        map.addControl(draw, "top-left");
+        drawRef.current = draw;
+        map.on("draw.create", syncPolygon);
+        map.on("draw.update", syncPolygon);
+        map.on("draw.delete", syncPolygon);
+        controlsAttached = true;
+      } catch (_error) {
+        draw = null;
+        drawRef.current = null;
+      }
+    };
+
+    if (map.loaded()) {
+      attachDrawControls();
+    } else {
+      map.once("load", attachDrawControls);
+    }
 
     return () => {
+      map.off("load", attachDrawControls);
+
+      if (!controlsAttached || !draw) {
+        return;
+      }
+
       map.off("draw.create", syncPolygon);
       map.off("draw.update", syncPolygon);
       map.off("draw.delete", syncPolygon);
-      map.removeControl(draw);
-      drawRef.current = null;
+
+      try {
+        map.removeControl(draw);
+      } catch (_error) {
+        // The control can already be gone if Mapbox reused internal instances.
+      }
+
+      if (drawRef.current === draw) {
+        drawRef.current = null;
+      }
     };
-  }, [token, onPolygonChange]);
+  }, [drawControlsEnabled, token, onPolygonChange]);
 
   if (!token) {
     return (
@@ -436,7 +486,13 @@ const SearchMapComponent = function SearchMap({
         </div>
         <div className="surface-soft hidden items-center gap-2 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/60 md:inline-flex">
           <Expand className="h-3.5 w-3.5 text-lagoon" />
-          {language === "en" ? "Drag, zoom, draw" : "Arrastra, acerca, dibuja"}
+          {drawControlsEnabled
+            ? language === "en"
+              ? "Drag, zoom, draw"
+              : "Arrastra, acerca, dibuja"
+            : language === "en"
+              ? "Drag and zoom"
+              : "Arrastra y acerca"}
         </div>
       </div>
 
@@ -445,7 +501,6 @@ const SearchMapComponent = function SearchMap({
         mapboxAccessToken={token}
         mapLib={mapboxgl}
         mapStyle={mapStyle}
-        reuseMaps
         initialViewState={mapDefaultCenter}
         interactiveLayerIds={districtLayerIds}
         minZoom={5}
