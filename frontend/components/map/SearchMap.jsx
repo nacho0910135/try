@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import { Expand, MapPinned, Sparkles } from "lucide-react";
@@ -8,7 +8,7 @@ import Map, { GeolocateControl, Layer, Marker, NavigationControl, Source } from 
 import mapboxgl from "mapbox-gl";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { getVisibleMapContextPoints, mapContextLayers } from "@/lib/costa-rica-map-context";
-import { cn, formatCompactCurrency, formatCurrency } from "@/lib/utils";
+import { cn, formatCompactCurrency } from "@/lib/utils";
 import { mapDefaultCenter } from "@/lib/constants";
 import { getProvinceCode } from "@/lib/costa-rica-geo";
 import { resolveMapStyle } from "@/lib/map-style";
@@ -55,123 +55,21 @@ const markerStylesByStatus = {
   }
 };
 
-const districtGeoJsonCache = new Map();
-const districtGeoJsonPromiseCache = new Map();
-const geoJsonBoundsCache = new WeakMap();
-
-const loadCachedGeoJson = async (cacheKey, resourcePath) => {
-  if (districtGeoJsonCache.has(cacheKey)) {
-    return districtGeoJsonCache.get(cacheKey);
-  }
-
-  if (districtGeoJsonPromiseCache.has(cacheKey)) {
-    return districtGeoJsonPromiseCache.get(cacheKey);
-  }
-
-  const request = fetch(resourcePath)
-    .then(async (response) => {
-      if (!response.ok) {
-        throw new Error(`Failed to load ${resourcePath}`);
-      }
-
-      const data = await response.json();
-      districtGeoJsonCache.set(cacheKey, data);
-      districtGeoJsonPromiseCache.delete(cacheKey);
-      return data;
-    })
-    .catch((error) => {
-      districtGeoJsonPromiseCache.delete(cacheKey);
-      throw error;
-    });
-
-  districtGeoJsonPromiseCache.set(cacheKey, request);
-  return request;
-};
-
-const getGeoJsonBounds = (featureCollection) => {
-  if (!featureCollection) {
-    return null;
-  }
-
-  if (geoJsonBoundsCache.has(featureCollection)) {
-    return geoJsonBoundsCache.get(featureCollection);
-  }
-
-  const state = {
-    minLng: Infinity,
-    maxLng: -Infinity,
-    minLat: Infinity,
-    maxLat: -Infinity,
-    hasPoints: false
-  };
-
-  featureCollection.features?.forEach((feature) =>
-    collectBounds(feature.geometry?.coordinates, state)
+const safeMapProperties = (properties = []) =>
+  properties.filter(
+    (property) =>
+      property &&
+      Array.isArray(property.location?.coordinates) &&
+      Number.isFinite(property.location.coordinates[0]) &&
+      Number.isFinite(property.location.coordinates[1])
   );
 
-  const bounds = state.hasPoints
-    ? [
-        [state.minLng, state.minLat],
-        [state.maxLng, state.maxLat]
-      ]
-    : null;
-
-  geoJsonBoundsCache.set(featureCollection, bounds);
-  return bounds;
-};
-
-const PriceMarker = memo(function PriceMarker({ property, isSelected, ariaLabel, onOpenProperty }) {
-  const marketStatus = property.marketStatus || "available";
-  const markerStyle = markerStylesByStatus[marketStatus] || markerStylesByStatus.available;
-
-  return (
-    <Marker
-      longitude={property.location.coordinates[0]}
-      latitude={property.location.coordinates[1]}
-      anchor="bottom"
-    >
-      <button
-        type="button"
-        onClick={() => onOpenProperty(property)}
-        className="group relative -m-2 rounded-full p-2 focus:outline-none"
-        aria-label={ariaLabel}
-      >
-        <span
-          className={`inline-flex rounded-full border-2 px-2 py-1.5 text-[10px] font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition duration-150 ease-out sm:px-3 sm:py-1.5 sm:text-[11px] ${
-            isSelected
-              ? `${markerStyle.selected} scale-[1.08]`
-              : `${markerStyle.base} group-hover:scale-[1.13] group-focus-visible:scale-[1.13]`
-          }`}
-        >
-          {formatCompactCurrency(property.price, property.currency)}
-        </span>
-      </button>
-    </Marker>
+const safeContextPoints = (layerIds = []) =>
+  getVisibleMapContextPoints(layerIds).filter(
+    (point) => point && Number.isFinite(point.lng) && Number.isFinite(point.lat)
   );
-});
 
-const ContextPointMarker = memo(function ContextPointMarker({ point, isSelected, onSelectContextPoint }) {
-  return (
-    <Marker longitude={point.lng} latitude={point.lat} anchor="bottom">
-      <button
-        type="button"
-        onClick={() => onSelectContextPoint?.(point)}
-        className={`rounded-full border px-2 py-1.5 text-[9px] font-semibold text-white shadow-soft transition sm:px-2.5 sm:py-1.5 sm:text-[10px] ${
-          isSelected ? "scale-105 ring-4 ring-white/80" : "opacity-90 hover:opacity-100"
-        }`}
-        style={{
-          backgroundColor: point.color,
-          borderColor: "rgba(255,255,255,0.82)"
-        }}
-        aria-label={point.name}
-      >
-        {point.shortLabel || point.name}
-      </button>
-    </Marker>
-  );
-});
-
-const SearchMapComponent = function SearchMap({
+export function SearchMap({
   properties = [],
   selectedPropertyId,
   selectedProvince,
@@ -195,156 +93,31 @@ const SearchMapComponent = function SearchMap({
   const drawRef = useRef(null);
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
   const provinceCode = getProvinceCode(selectedProvince);
-  const deferredProperties = useDeferredValue(properties);
-  const deferredActiveContextLayers = useDeferredValue(activeContextLayers);
-  const visibleContextPoints = useMemo(
-    () => getVisibleMapContextPoints(deferredActiveContextLayers),
-    [deferredActiveContextLayers]
-  );
-  const districtLayerIds = useMemo(
-    () => (districtGeoJson ? ["district-fills"] : []),
-    [districtGeoJson]
-  );
-  const activeContextLayerMeta = useMemo(
-    () => mapContextLayers.filter((layer) => activeContextLayers.includes(layer.id)),
-    [activeContextLayers]
-  );
-  const districtFillLayer = useMemo(
-    () => ({
-      id: "district-fills",
-      type: "fill",
-      paint: {
-        "fill-color": [
-          "case",
-          ["==", ["get", "district"], selectedDistrict || ""],
-          "#22c55e",
-          "#3b82f6"
-        ],
-        "fill-opacity": [
-          "case",
-          ["==", ["get", "district"], selectedDistrict || ""],
-          0.38,
-          0.2
-        ]
-      }
-    }),
-    [selectedDistrict]
-  );
-  const districtLineLayer = useMemo(
-    () => ({
-      id: "district-lines",
-      type: "line",
-      paint: {
-        "line-color": [
-          "case",
-          ["==", ["get", "district"], selectedDistrict || ""],
-          "#15803d",
-          "#ffffff"
-        ],
-        "line-width": [
-          "case",
-          ["==", ["get", "district"], selectedDistrict || ""],
-          2.4,
-          1.2
-        ],
-        "line-opacity": 0.9
-      }
-    }),
-    [selectedDistrict]
-  );
-
-  const handleOpenProperty = useCallback(
-    (property) => {
-      onSelectProperty?.(property._id);
-      router.push(`/properties/${property.slug}`);
-    },
-    [onSelectProperty, router]
-  );
-
-  const handleDistrictClick = useCallback(
-    (event) => {
-      const districtFeature = event.features?.find(
-        (feature) => feature.layer.id === "district-fills"
-      );
-
-      if (!districtFeature?.properties?.district) {
-        return;
-      }
-
-      onSelectDistrict?.({
-        province: districtFeature.properties.province,
-        canton: districtFeature.properties.canton,
-        district: districtFeature.properties.district
-      });
-    },
-    [onSelectDistrict]
-  );
-
-  const propertyMarkers = useMemo(
-    () =>
-      deferredProperties
-        .filter(
-          (property) =>
-            property?.location?.coordinates &&
-            Number.isFinite(property.location.coordinates[0]) &&
-            Number.isFinite(property.location.coordinates[1])
-        )
-        .map((property) => (
-          <PriceMarker
-            key={property._id}
-            property={property}
-            isSelected={selectedPropertyId === property._id}
-            ariaLabel={t("map.selectedAria", {
-              title: property.title,
-              price: formatCurrency(property.price, property.currency)
-            })}
-            onOpenProperty={handleOpenProperty}
-          />
-        )),
-    [deferredProperties, handleOpenProperty, selectedPropertyId, t]
-  );
-
-  const contextMarkers = useMemo(
-    () =>
-      visibleContextPoints.map((point) => (
-        <ContextPointMarker
-          key={point.id}
-          point={point}
-          isSelected={focusedContextPoint?.id === point.id}
-          onSelectContextPoint={onSelectContextPoint}
-        />
-      )),
-    [focusedContextPoint?.id, onSelectContextPoint, visibleContextPoints]
+  const visibleProperties = safeMapProperties(properties);
+  const visibleContextPoints = safeContextPoints(activeContextLayers);
+  const activeContextLayerMeta = mapContextLayers.filter((layer) =>
+    activeContextLayers.includes(layer.id)
   );
 
   useEffect(() => {
-    let cancelled = false;
-
     const loadDistricts = async () => {
       if (!provinceCode) {
         setDistrictGeoJson(null);
         return;
       }
 
-      const data = await loadCachedGeoJson(
-        `districts-${provinceCode}`,
-        `/geo/districts/${provinceCode}.json`
-      );
+      const response = await fetch(`/geo/districts/${provinceCode}.json`);
 
-      if (!cancelled) {
-        setDistrictGeoJson(data);
+      if (!response.ok) {
+        throw new Error(`Failed to load districts for ${provinceCode}`);
       }
+
+      setDistrictGeoJson(await response.json());
     };
 
     loadDistricts().catch(() => {
-      if (!cancelled) {
-        setDistrictGeoJson(null);
-      }
+      setDistrictGeoJson(null);
     });
-
-    return () => {
-      cancelled = true;
-    };
   }, [provinceCode]);
 
   useEffect(() => {
@@ -352,16 +125,36 @@ const SearchMapComponent = function SearchMap({
       return;
     }
 
-    const bounds = getGeoJsonBounds(districtGeoJson);
+    const state = {
+      minLng: Infinity,
+      maxLng: -Infinity,
+      minLat: Infinity,
+      maxLat: -Infinity,
+      hasPoints: false
+    };
 
-    if (!bounds) {
+    districtGeoJson.features?.forEach((feature) =>
+      collectBounds(feature.geometry?.coordinates, state)
+    );
+
+    if (!state.hasPoints) {
       return;
     }
 
-    mapRef.current.getMap().fitBounds(bounds, {
-      padding: 36,
-      duration: 700
-    });
+    try {
+      mapRef.current.getMap().fitBounds(
+        [
+          [state.minLng, state.minLat],
+          [state.maxLng, state.maxLat]
+        ],
+        {
+          padding: 36,
+          duration: 700
+        }
+      );
+    } catch (_error) {
+      // Keep the map usable even if the district fit fails.
+    }
   }, [districtGeoJson]);
 
   useEffect(() => {
@@ -369,19 +162,23 @@ const SearchMapComponent = function SearchMap({
       return;
     }
 
-    mapRef.current.getMap().flyTo({
-      center: [focusedContextPoint.lng, focusedContextPoint.lat],
-      zoom: 11.6,
-      duration: 1000
-    });
-  }, [focusedContextPoint]);
-
-  useEffect(() => {
-    if (!drawControlsEnabled) {
+    if (!Number.isFinite(focusedContextPoint.lng) || !Number.isFinite(focusedContextPoint.lat)) {
       return;
     }
 
-    if (!token || !mapRef.current) {
+    try {
+      mapRef.current.getMap().flyTo({
+        center: [focusedContextPoint.lng, focusedContextPoint.lat],
+        zoom: 11.6,
+        duration: 1000
+      });
+    } catch (_error) {
+      // Ignore flyTo issues and keep the map mounted.
+    }
+  }, [focusedContextPoint]);
+
+  useEffect(() => {
+    if (!drawControlsEnabled || !token || !mapRef.current || drawRef.current) {
       return;
     }
 
@@ -392,7 +189,6 @@ const SearchMapComponent = function SearchMap({
     }
 
     let draw = null;
-    let controlsAttached = false;
 
     const syncPolygon = () => {
       const activeDraw = drawRef.current;
@@ -406,53 +202,38 @@ const SearchMapComponent = function SearchMap({
       onPolygonChange?.(polygon);
     };
 
-    const attachDrawControls = () => {
-      if (drawRef.current || controlsAttached) {
-        return;
-      }
+    try {
+      draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {
+          polygon: true,
+          trash: true
+        }
+      });
 
-      try {
-        draw = new MapboxDraw({
-          displayControlsDefault: false,
-          controls: {
-            polygon: true,
-            trash: true
-          }
-        });
-
-        map.addControl(draw, "top-left");
-        drawRef.current = draw;
-        map.on("draw.create", syncPolygon);
-        map.on("draw.update", syncPolygon);
-        map.on("draw.delete", syncPolygon);
-        controlsAttached = true;
-      } catch (_error) {
-        draw = null;
-        drawRef.current = null;
-      }
-    };
-
-    if (map.loaded()) {
-      attachDrawControls();
-    } else {
-      map.once("load", attachDrawControls);
+      drawRef.current = draw;
+      map.addControl(draw, "top-left");
+      map.on("draw.create", syncPolygon);
+      map.on("draw.update", syncPolygon);
+      map.on("draw.delete", syncPolygon);
+    } catch (_error) {
+      drawRef.current = null;
+      return;
     }
 
     return () => {
-      map.off("load", attachDrawControls);
-
-      if (!controlsAttached || !draw) {
-        return;
-      }
-
       map.off("draw.create", syncPolygon);
       map.off("draw.update", syncPolygon);
       map.off("draw.delete", syncPolygon);
 
+      if (!draw) {
+        return;
+      }
+
       try {
         map.removeControl(draw);
       } catch (_error) {
-        // The control can already be gone if Mapbox reused internal instances.
+        // Ignore cleanup errors.
       }
 
       if (drawRef.current === draw) {
@@ -470,6 +251,45 @@ const SearchMapComponent = function SearchMap({
     );
   }
 
+  const districtFillLayer = {
+    id: "district-fills",
+    type: "fill",
+    paint: {
+      "fill-color": [
+        "case",
+        ["==", ["get", "district"], selectedDistrict || ""],
+        "#22c55e",
+        "#3b82f6"
+      ],
+      "fill-opacity": [
+        "case",
+        ["==", ["get", "district"], selectedDistrict || ""],
+        0.38,
+        0.2
+      ]
+    }
+  };
+
+  const districtLineLayer = {
+    id: "district-lines",
+    type: "line",
+    paint: {
+      "line-color": [
+        "case",
+        ["==", ["get", "district"], selectedDistrict || ""],
+        "#15803d",
+        "#ffffff"
+      ],
+      "line-width": [
+        "case",
+        ["==", ["get", "district"], selectedDistrict || ""],
+        2.4,
+        1.2
+      ],
+      "line-opacity": 0.9
+    }
+  };
+
   return (
     <div className={cn("map-stage", className)}>
       <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-wrap items-start justify-between gap-3 sm:inset-x-4 sm:top-4">
@@ -481,7 +301,7 @@ const SearchMapComponent = function SearchMap({
             <MapPinned className="h-4 w-4 shrink-0 text-terracotta" />
             {selectedProvince || "Costa Rica"}
             <span className="text-ink/35">{"\u00b7"}</span>
-            {properties.length} {language === "en" ? "results" : "resultados"}
+            {visibleProperties.length} {language === "en" ? "results" : "resultados"}
           </div>
         </div>
         <div className="surface-soft hidden items-center gap-2 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/60 md:inline-flex">
@@ -502,10 +322,39 @@ const SearchMapComponent = function SearchMap({
         mapLib={mapboxgl}
         mapStyle={mapStyle}
         initialViewState={mapDefaultCenter}
-        interactiveLayerIds={districtLayerIds}
+        interactiveLayerIds={districtGeoJson ? ["district-fills"] : []}
         minZoom={5}
         renderWorldCopies={false}
-        onClick={handleDistrictClick}
+        onClick={(event) => {
+          const districtFeature = event.features?.find(
+            (feature) => feature.layer.id === "district-fills"
+          );
+
+          if (!districtFeature?.properties?.district) {
+            return;
+          }
+
+          onSelectDistrict?.({
+            province: districtFeature.properties.province,
+            canton: districtFeature.properties.canton,
+            district: districtFeature.properties.district
+          });
+        }}
+        onMoveEnd={(event) => {
+          const map = event.target;
+          const bounds = map?.getBounds?.();
+
+          if (!bounds || !onBoundsChange) {
+            return;
+          }
+
+          onBoundsChange({
+            south: Number(bounds.getSouth().toFixed(6)),
+            west: Number(bounds.getWest().toFixed(6)),
+            north: Number(bounds.getNorth().toFixed(6)),
+            east: Number(bounds.getEast().toFixed(6))
+          });
+        }}
         style={{
           width: "100%",
           height:
@@ -524,9 +373,64 @@ const SearchMapComponent = function SearchMap({
           </Source>
         ) : null}
 
-        {propertyMarkers}
+        {visibleProperties.map((property) => {
+          const marketStatus = property.marketStatus || "available";
+          const markerStyle = markerStylesByStatus[marketStatus] || markerStylesByStatus.available;
 
-        {contextMarkers}
+          return (
+            <Marker
+              key={property._id}
+              longitude={property.location.coordinates[0]}
+              latitude={property.location.coordinates[1]}
+              anchor="bottom"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectProperty?.(property._id);
+                  if (property.slug) {
+                    router.push(`/properties/${property.slug}`);
+                  }
+                }}
+                className="group relative -m-2 rounded-full p-2 focus:outline-none"
+                aria-label={property.title || "Propiedad"}
+              >
+                <span
+                  className={`inline-flex rounded-full border-2 px-2 py-1.5 text-[10px] font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition duration-150 ease-out sm:px-3 sm:py-1.5 sm:text-[11px] ${
+                    selectedPropertyId === property._id
+                      ? `${markerStyle.selected} scale-[1.08]`
+                      : `${markerStyle.base} group-hover:scale-[1.13] group-focus-visible:scale-[1.13]`
+                  }`}
+                >
+                  {formatCompactCurrency(property.price, property.currency)}
+                </span>
+              </button>
+            </Marker>
+          );
+        })}
+
+        {visibleContextPoints.map((point) => {
+          const selected = focusedContextPoint?.id === point.id;
+
+          return (
+            <Marker key={point.id} longitude={point.lng} latitude={point.lat} anchor="bottom">
+              <button
+                type="button"
+                onClick={() => onSelectContextPoint?.(point)}
+                className={`rounded-full border px-2 py-1.5 text-[9px] font-semibold text-white shadow-soft transition sm:px-2.5 sm:py-1.5 sm:text-[10px] ${
+                  selected ? "scale-105 ring-4 ring-white/80" : "opacity-90 hover:opacity-100"
+                }`}
+                style={{
+                  backgroundColor: point.color,
+                  borderColor: "rgba(255,255,255,0.82)"
+                }}
+                aria-label={point.name}
+              >
+                {point.shortLabel || point.name}
+              </button>
+            </Marker>
+          );
+        })}
       </Map>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0f24301c] via-transparent to-transparent" />
@@ -566,6 +470,4 @@ const SearchMapComponent = function SearchMap({
       ) : null}
     </div>
   );
-};
-
-export const SearchMap = memo(SearchMapComponent);
+}
