@@ -14,6 +14,16 @@ const buildAuthPayload = (user) => ({
   })
 });
 
+const normalizeCommercialRole = async (user) => {
+  if (!user || user.role !== "user") {
+    return user;
+  }
+
+  user.role = "owner";
+  await user.save();
+  return user;
+};
+
 export const authService = {
   async register(payload) {
     const existingUser = await User.findOne({ email: payload.email.toLowerCase() });
@@ -24,7 +34,10 @@ export const authService = {
 
     const user = await User.create({
       ...payload,
-      role: payload.role === "admin" ? "user" : payload.role,
+      role:
+        !payload.role || payload.role === "admin" || payload.role === "user"
+          ? "owner"
+          : payload.role,
       email: payload.email.toLowerCase()
     });
 
@@ -42,7 +55,8 @@ export const authService = {
       throw new ApiError(403, "This account is inactive");
     }
 
-    const sanitizedUser = await User.findById(user._id);
+    const normalizedUser = await normalizeCommercialRole(user);
+    const sanitizedUser = await User.findById(normalizedUser._id);
     return buildAuthPayload(sanitizedUser);
   },
 
@@ -53,7 +67,7 @@ export const authService = {
       throw new ApiError(404, "User not found");
     }
 
-    return user;
+    return normalizeCommercialRole(user);
   },
 
   async updateProfile(userId, payload) {

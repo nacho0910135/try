@@ -7,7 +7,7 @@ export const registerSchema = z.object({
     email: emailSchema,
     password: passwordSchema,
     phone: phoneSchema,
-    role: z.enum(["user", "agent", "owner"]).optional()
+    role: z.enum(["agent", "owner"]).optional()
   })
 });
 
