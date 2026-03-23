@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Heart, LayoutDashboard, LogOut, Search, Shield } from "lucide-react";
 import { logoutUser } from "@/lib/api";
+import { hasCommercialDashboardAccess } from "@/lib/user-access";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { BrandLogo } from "./BrandLogo";
@@ -17,6 +18,7 @@ export function SiteHeader() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { t } = useLanguage();
+  const canAccessDashboard = hasCommercialDashboardAccess(user);
   const navItems = [
     { href: "/", label: t("nav.home") },
     { href: "/search", label: t("nav.explore") },
@@ -71,12 +73,14 @@ export function SiteHeader() {
           <DonateButton compact className="px-2.5 py-2 sm:px-3.5 sm:py-2.5" />
           {user ? (
             <>
-              <Link href="/dashboard">
-                <Button variant="secondary" className="hidden sm:inline-flex">
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  {t("nav.dashboard")}
-                </Button>
-              </Link>
+              {canAccessDashboard ? (
+                <Link href="/dashboard">
+                  <Button variant="secondary" className="hidden sm:inline-flex">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    {t("nav.dashboard")}
+                  </Button>
+                </Link>
+              ) : null}
               {user.role === "admin" ? (
                 <Link href="/admin">
                   <Button variant="ghost" className="hidden sm:inline-flex">
@@ -124,15 +128,17 @@ export function SiteHeader() {
             </Link>
           ))}
           {user ? (
-            <Link
-              href="/dashboard"
-              className={cn(
-                "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
-                pathname.startsWith("/dashboard") ? "bg-ink text-white shadow-soft" : "bg-pine/10 text-pine"
-              )}
-            >
-              {t("nav.dashboard")}
-            </Link>
+            canAccessDashboard ? (
+              <Link
+                href="/dashboard"
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
+                  pathname.startsWith("/dashboard") ? "bg-ink text-white shadow-soft" : "bg-pine/10 text-pine"
+                )}
+              >
+                {t("nav.dashboard")}
+              </Link>
+            ) : null
           ) : null}
         </nav>
       </div>

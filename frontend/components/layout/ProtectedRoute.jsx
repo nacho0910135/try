@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { getCurrentUser } from "@/lib/api";
+import { getRoleRestrictedFallbackPath } from "@/lib/user-access";
 import { LoadingState } from "../ui/LoadingState";
 
 export function ProtectedRoute({ children, roles }) {
@@ -54,7 +55,7 @@ export function ProtectedRoute({ children, roles }) {
     }
 
     if (roles?.length && user && !roles.includes(user?.role)) {
-      router.replace("/");
+      router.replace(getRoleRestrictedFallbackPath(user));
     }
   }, [hydrated, token, user, roles, router]);
 

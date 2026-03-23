@@ -18,6 +18,7 @@ import { ConversationalSearchPanel } from "@/components/search/ConversationalSea
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { hasCommercialDashboardAccess } from "@/lib/user-access";
 import {
   buildContextResultsSummary,
   getPropertyContextMatches
@@ -80,7 +81,7 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const initializedRef = useRef(false);
   const requestSequenceRef = useRef(0);
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const { language, t } = useLanguage();
   const { filters, replaceFilters, setFilters, selectedPropertyId, setSelectedPropertyId } =
     useSearchStore();
@@ -94,6 +95,8 @@ function SearchPageContent() {
   const [focusedContextPoint, setFocusedContextPoint] = useState(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const contextRadiusKm = Number(filters.radiusKm || 8);
+  const canAccessDashboard = hasCommercialDashboardAccess(user);
+  const publishHref = canAccessDashboard ? "/dashboard/properties/new" : token ? "/favorites" : "/login";
 
   const contextualProperties = useMemo(
     () =>
@@ -335,7 +338,7 @@ function SearchPageContent() {
                 : t("searchPage.publishPromptLoggedOut")}
             </p>
             <div className="mt-3">
-              <Link href={token ? "/dashboard/properties/new" : "/login"}>
+              <Link href={publishHref}>
                 <Button variant="success" className="w-full shadow-soft">
                   {token
                     ? t("searchPage.publishButtonLoggedIn")
@@ -473,10 +476,7 @@ function SearchPageContent() {
               ? t("searchPage.searching")
               : t("searchPage.resultsFound", { count: pagination.total })}
           </p>
-          <Link
-            href={token ? "/dashboard/properties/new" : "/login"}
-            className="text-sm font-semibold text-pine"
-          >
+          <Link href={publishHref} className="text-sm font-semibold text-pine">
             {token
               ? t("searchPage.publishLinkLoggedIn")
               : t("searchPage.publishLinkLoggedOut")}

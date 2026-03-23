@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { hasCommercialDashboardAccess } from "@/lib/user-access";
+import { useAuthStore } from "@/store/auth-store";
 import { useLanguage } from "./LanguageProvider";
 import { BrandLogo } from "./BrandLogo";
 import { CookiePreferencesButton } from "./CookiePreferencesButton";
 
 export function SiteFooter() {
+  const { user } = useAuthStore();
   const { t } = useLanguage();
+  const canAccessDashboard = hasCommercialDashboardAccess(user);
 
   return (
     <footer className="border-t border-ink/10 bg-white/70">
@@ -34,9 +38,14 @@ export function SiteFooter() {
             <Link href="/favorites" className="transition hover:text-pine">
               {t("footer.favorites")}
             </Link>
-            <Link href="/dashboard" className="transition hover:text-pine">
-              {t("footer.publishProperty")}
-            </Link>
+            {!user || canAccessDashboard ? (
+              <Link
+                href={canAccessDashboard ? "/dashboard/properties/new" : "/login"}
+                className="transition hover:text-pine"
+              >
+                {t("footer.publishProperty")}
+              </Link>
+            ) : null}
           </div>
         </div>
         <div>

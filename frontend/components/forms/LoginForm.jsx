@@ -7,6 +7,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { loginUser, requestPasswordReset } from "@/lib/api";
+import { getAuthenticatedHomePath } from "@/lib/user-access";
 import { useAuthStore } from "@/store/auth-store";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { Button } from "../ui/Button";
@@ -45,7 +46,7 @@ export function LoginForm() {
       setError("");
       const data = await loginUser(values);
       setAuth({ token: data.token, user: data.user });
-      router.push("/dashboard");
+      router.push(getAuthenticatedHomePath(data.user));
       router.refresh();
     } catch (submitError) {
       setError(submitError.response?.data?.message || t("loginForm.submitFailed"));
