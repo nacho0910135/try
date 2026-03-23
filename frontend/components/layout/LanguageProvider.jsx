@@ -118,9 +118,8 @@ const translations = {
     },
     homePage: {
       eyebrow: "Mapa protagonista",
-      title: "Descubre oportunidades desde la geografia, no desde un listado generico.",
-      description:
-        "Selecciona una provincia, entra al territorio y usa el mapa como la pieza central de exploracion para venta, renta y lotes en Costa Rica.",
+      title: "Selecciona una provincia para explorar",
+      description: "",
       searchZoneLabel: "Busca por zona o estilo",
       searchZonePlaceholder: "Ejemplo: Escazu, playa, lote...",
       provinceLabel: "Provincia",
@@ -396,9 +395,8 @@ const translations = {
     },
     homePage: {
       eyebrow: "Map-first",
-      title: "Discover opportunities through geography, not a generic listing.",
-      description:
-        "Pick a province, step into the territory, and use the map as the central piece for exploring homes, rentals, and land in Costa Rica.",
+      title: "Select a province to explore",
+      description: "",
       searchZoneLabel: "Search by area or style",
       searchZonePlaceholder: "Example: Escazu, beach, lot...",
       provinceLabel: "Province",

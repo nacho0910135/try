@@ -90,9 +90,11 @@ export default function HomePage() {
               <h1 className="mt-5 max-w-3xl font-serif text-[2.2rem] font-semibold leading-[1.02] sm:text-[3.15rem] lg:text-[3.4rem]">
                 {t("homePage.title")}
               </h1>
-              <p className="mt-4 max-w-lg text-sm leading-6 text-ink/68 sm:text-[15px] sm:leading-7">
-                {t("homePage.description")}
-              </p>
+              {t("homePage.description") ? (
+                <p className="mt-4 max-w-lg text-sm leading-6 text-ink/68 sm:text-[15px] sm:leading-7">
+                  {t("homePage.description")}
+                </p>
+              ) : null}
 
               <div className="mt-6">
                 <div className="surface-soft p-4">
@@ -128,31 +130,6 @@ export default function HomePage() {
               mapMinHeight={760}
             />
           </div>
-
-          <div className="mt-6 grid gap-4 lg:grid-cols-3">
-            <div className="surface-soft p-5">
-              <MapPinned className="h-5 w-5 text-terracotta" />
-              <h3 className="mt-3 text-base font-semibold">{t("homePage.interactiveMap")}</h3>
-              <p className="mt-1 text-sm leading-6 text-ink/60">
-                {t("homePage.interactiveMapDescription")}
-              </p>
-            </div>
-            <div className="surface-soft p-5">
-              <Compass className="h-5 w-5 text-lagoon" />
-              <h3 className="mt-3 text-base font-semibold">{t("homePage.localSearch")}</h3>
-              <p className="mt-1 text-sm leading-6 text-ink/60">
-                {t("homePage.localSearchDescription")}
-              </p>
-            </div>
-            <div className="surface-soft p-5">
-              <ArrowRight className="h-5 w-5 text-pine" />
-              <h3 className="mt-3 text-base font-semibold">{t("homePage.simplePublishing")}</h3>
-              <p className="mt-1 text-sm leading-6 text-ink/60">
-                {t("homePage.simplePublishingDescription")}
-              </p>
-            </div>
-          </div>
-
           {featuredForProvince.length ? (
             <div className="mt-8 grid gap-4 lg:grid-cols-2">
               {featuredForProvince.slice(0, 2).map((property) => {
