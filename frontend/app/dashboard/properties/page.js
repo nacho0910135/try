@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   createPayPalBoostOrder,
@@ -21,6 +21,24 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 
+const AUTO_SAVE_DELAY_MS = 700;
+
+const buildDashboardDraftState = (item) => ({
+  status:
+    item.status === "sold" || item.status === "rented" ? "published" : item.status || "draft",
+  marketStatus:
+    item.marketStatus && item.marketStatus !== "available"
+      ? item.marketStatus
+      : item.status === "sold"
+        ? "sold"
+        : item.status === "rented"
+          ? "rented"
+          : item.marketStatus || "available"
+});
+
+const areDraftStatesEqual = (first, second) =>
+  first?.status === second?.status && first?.marketStatus === second?.marketStatus;
+
 function DashboardPropertiesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,36 +46,26 @@ function DashboardPropertiesPageContent() {
   const [draftStates, setDraftStates] = useState({});
   const [loading, setLoading] = useState(true);
   const [flashMessage, setFlashMessage] = useState("");
-  const [savingPropertyId, setSavingPropertyId] = useState("");
+  const [featuredPropertyId, setFeaturedPropertyId] = useState("");
   const [rowFeedback, setRowFeedback] = useState({});
+  const [autoSaveStateById, setAutoSaveStateById] = useState({});
   const [commercialOverview, setCommercialOverview] = useState(null);
+  const autoSaveTimersRef = useRef({});
+  const autoSaveInFlightRef = useRef({});
+  const itemsRef = useRef([]);
+  const draftStatesRef = useRef({});
 
   const loadProperties = async () => {
     try {
       const data = await getMyProperties();
       const nextItems = data.items || [];
-      setItems(nextItems);
-      setDraftStates(
-        Object.fromEntries(
-          nextItems.map((item) => [
-            item._id,
-            {
-              status:
-                item.status === "sold" || item.status === "rented"
-                  ? "published"
-                  : item.status || "draft",
-              marketStatus:
-                item.marketStatus && item.marketStatus !== "available"
-                  ? item.marketStatus
-                  : item.status === "sold"
-                    ? "sold"
-                    : item.status === "rented"
-                      ? "rented"
-                      : item.marketStatus || "available"
-            }
-          ])
-        )
+      const nextDraftStates = Object.fromEntries(
+        nextItems.map((item) => [item._id, buildDashboardDraftState(item)])
       );
+      itemsRef.current = nextItems;
+      draftStatesRef.current = nextDraftStates;
+      setItems(nextItems);
+      setDraftStates(nextDraftStates);
     } finally {
       setLoading(false);
     }
@@ -75,6 +83,22 @@ function DashboardPropertiesPageContent() {
   useEffect(() => {
     loadProperties();
     loadCommercialOverview();
+  }, []);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    draftStatesRef.current = draftStates;
+  }, [draftStates]);
+
+  useEffect(() => {
+    const timersRef = autoSaveTimersRef;
+
+    return () => {
+      Object.values(timersRef.current).forEach((timer) => window.clearTimeout(timer));
+    };
   }, []);
 
   useEffect(() => {
@@ -111,59 +135,165 @@ function DashboardPropertiesPageContent() {
     }
   }, [router, searchParams]);
 
-  const handleDraftChange = (propertyId, key, value) => {
-    setDraftStates((current) => ({
-      ...current,
-      [propertyId]: {
-        ...(current[propertyId] || {}),
-        [key]: value
+  const setAutoSaveState = (propertyId, nextState) => {
+    setAutoSaveStateById((current) => {
+      const next = { ...current };
+
+      if (nextState) {
+        next[propertyId] = nextState;
+      } else {
+        delete next[propertyId];
       }
-    }));
+
+      return next;
+    });
   };
 
-  const handleSaveStatus = async (propertyId) => {
-    const draft = draftStates[propertyId];
+  const clearAutoSaveTimer = (propertyId) => {
+    const timer = autoSaveTimersRef.current[propertyId];
 
-    if (!draft) {
+    if (!timer) {
       return;
     }
 
-    try {
-      setSavingPropertyId(propertyId);
-      await updateProperty(propertyId, {
-        status: draft.status,
-        marketStatus: draft.marketStatus
+    window.clearTimeout(timer);
+    delete autoSaveTimersRef.current[propertyId];
+  };
+
+  const hasDraftChanges = (propertyId, draft = draftStatesRef.current[propertyId]) => {
+    const currentItem = itemsRef.current.find((item) => item._id === propertyId);
+
+    if (!currentItem || !draft) {
+      return false;
+    }
+
+    return !areDraftStatesEqual(draft, buildDashboardDraftState(currentItem));
+  };
+
+  const persistDraftState = async (propertyId) => {
+    if (autoSaveInFlightRef.current[propertyId]) {
+      return;
+    }
+
+    const draft = draftStatesRef.current[propertyId];
+
+    if (!draft || !hasDraftChanges(propertyId, draft)) {
+      setAutoSaveState(propertyId, "");
+      setRowFeedback((current) => {
+        if (!current[propertyId]) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[propertyId];
+        return next;
       });
-      setFlashMessage("El estado de la propiedad se actualizo correctamente.");
+      return;
+    }
+
+    autoSaveInFlightRef.current[propertyId] = true;
+    setAutoSaveState(propertyId, "saving");
+    setRowFeedback((current) => ({
+      ...current,
+      [propertyId]: {
+        tone: "info",
+        message: "Guardando cambios automaticamente..."
+      }
+    }));
+
+    const sentDraft = { ...draft };
+    let shouldPersistLatestDraft = false;
+
+    try {
+      await updateProperty(propertyId, {
+        status: sentDraft.status,
+        marketStatus: sentDraft.marketStatus
+      });
+
+      shouldPersistLatestDraft = !areDraftStatesEqual(draftStatesRef.current[propertyId], sentDraft);
+
+      if (shouldPersistLatestDraft) {
+        clearAutoSaveTimer(propertyId);
+        setAutoSaveState(propertyId, "pending");
+        setRowFeedback((current) => ({
+          ...current,
+          [propertyId]: {
+            tone: "info",
+            message: "Se detectaron nuevos cambios. Guardando de nuevo..."
+          }
+        }));
+        return;
+      }
+
+      await Promise.all([loadProperties(), loadCommercialOverview()]);
+      setAutoSaveState(propertyId, "saved");
       setRowFeedback((current) => ({
         ...current,
         [propertyId]: {
           tone: "success",
-          message: "Estado guardado correctamente."
+          message: "Estado actualizado automaticamente."
         }
       }));
-      await loadProperties();
-      await loadCommercialOverview();
     } catch (error) {
-      setFlashMessage(
-        error.response?.data?.message || "No se pudo actualizar el estado de la propiedad."
-      );
+      setAutoSaveState(propertyId, "error");
       setRowFeedback((current) => ({
         ...current,
         [propertyId]: {
           tone: "error",
           message:
-            error.response?.data?.message || "No se pudo actualizar el estado."
+            error.response?.data?.message ||
+            "No se pudo guardar el cambio automaticamente."
         }
       }));
     } finally {
-      setSavingPropertyId("");
+      autoSaveInFlightRef.current[propertyId] = false;
+
+      if (shouldPersistLatestDraft) {
+        void persistDraftState(propertyId);
+      }
     }
+  };
+
+  const scheduleAutoSave = (propertyId) => {
+    clearAutoSaveTimer(propertyId);
+    setAutoSaveState(propertyId, "pending");
+    setRowFeedback((current) => ({
+      ...current,
+      [propertyId]: {
+        tone: "info",
+        message: "Cambio detectado. Guardando automaticamente..."
+      }
+    }));
+
+    autoSaveTimersRef.current[propertyId] = window.setTimeout(() => {
+      delete autoSaveTimersRef.current[propertyId];
+
+      if (autoSaveInFlightRef.current[propertyId]) {
+        return;
+      }
+
+      void persistDraftState(propertyId);
+    }, AUTO_SAVE_DELAY_MS);
+  };
+
+  const handleDraftChange = (propertyId, key, value) => {
+    setDraftStates((current) => {
+      const next = {
+        ...current,
+        [propertyId]: {
+          ...(current[propertyId] || {}),
+          [key]: value
+        }
+      };
+      draftStatesRef.current = next;
+      return next;
+    });
+    scheduleAutoSave(propertyId);
   };
 
   const handleToggleFeatured = async (item) => {
     try {
-      setSavingPropertyId(item._id);
+      setFeaturedPropertyId(item._id);
 
       if (!item.featured) {
         const data = await createPayPalBoostOrder({ propertyId: item._id });
@@ -202,13 +332,14 @@ function DashboardPropertiesPageContent() {
         error.response?.data?.message || "No se pudo actualizar el destacado de la propiedad."
       );
     } finally {
-      setSavingPropertyId("");
+      setFeaturedPropertyId("");
     }
   };
 
   const handleDelete = async (propertyId) => {
     const confirmed = window.confirm("Deseas eliminar esta propiedad?");
     if (!confirmed) return;
+    clearAutoSaveTimer(propertyId);
     await deleteProperty(propertyId);
     await Promise.all([loadProperties(), loadCommercialOverview()]);
   };
@@ -282,7 +413,8 @@ function DashboardPropertiesPageContent() {
           <span className="eyebrow">Publicaciones</span>
           <h1 className="mt-4 font-serif text-4xl font-semibold">Mis propiedades</h1>
           <p className="mt-3 text-sm text-ink/60">
-            Las propiedades en estado <strong>Publicado</strong> ya aparecen en el buscador.
+            Las propiedades en estado <strong>Publicado</strong> ya aparecen en el buscador y los
+            cambios de estado se guardan automaticamente.
           </p>
         </div>
         <Link href="/dashboard/properties/new">
@@ -446,24 +578,18 @@ function DashboardPropertiesPageContent() {
                 <td className="py-4">
                   <div className="flex flex-wrap gap-2">
                     <Button
-                      variant="accent"
-                      onClick={() => handleSaveStatus(item._id)}
-                      disabled={savingPropertyId === item._id}
-                    >
-                      {savingPropertyId === item._id ? "Guardando..." : "Guardar estado"}
-                    </Button>
-                    <Button
                       variant={item.featured ? "success" : "secondary"}
                       onClick={() => handleToggleFeatured(item)}
                       disabled={
-                        savingPropertyId === item._id ||
+                        featuredPropertyId === item._id ||
+                        ["pending", "saving"].includes(autoSaveStateById[item._id]) ||
                         (!item.featured && !commercialOverview?.billing?.configured) ||
                         (!item.featured &&
                           (item.status !== "published" ||
                             !["available", "reserved"].includes(item.marketStatus || "available")))
                       }
                     >
-                      {savingPropertyId === item._id
+                      {featuredPropertyId === item._id
                         ? "Actualizando..."
                         : item.featured
                           ? "Quitar boost"
@@ -481,7 +607,11 @@ function DashboardPropertiesPageContent() {
                     <Link href={`/dashboard/properties/${item._id}/edit`}>
                       <Button variant="secondary">Editar</Button>
                     </Link>
-                    <Button variant="ghost" onClick={() => handleDelete(item._id)}>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleDelete(item._id)}
+                      disabled={["pending", "saving"].includes(autoSaveStateById[item._id])}
+                    >
                       Eliminar
                     </Button>
                   </div>
@@ -490,6 +620,8 @@ function DashboardPropertiesPageContent() {
                       className={`mt-2 text-xs font-medium ${
                         rowFeedback[item._id].tone === "success"
                           ? "text-pine"
+                          : rowFeedback[item._id].tone === "info"
+                            ? "text-lagoon"
                           : "text-red-600"
                       }`}
                     >
