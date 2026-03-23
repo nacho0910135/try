@@ -66,7 +66,10 @@ export default function HomePage() {
         <div className="surface-elevated overflow-hidden bg-hero-grid px-3 py-3 sm:px-5 sm:py-4 lg:px-6 lg:py-5">
           <div className="mx-auto max-w-6xl">
             <div className="max-w-lg lg:max-w-[34rem]">
-              <h1 className="max-w-xl font-serif text-[2.1rem] font-semibold leading-[0.95] sm:text-[2.85rem] lg:text-[3.15rem]">
+              <h1
+                className="max-w-xl font-semibold leading-[1.2] text-[18px]"
+                style={{ fontFamily: '"Times New Roman", Times, serif' }}
+              >
                 {t("homePage.title")}
               </h1>
               {t("homePage.description") ? (

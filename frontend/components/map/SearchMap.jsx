@@ -81,6 +81,7 @@ export function SearchMap({
   onSelectContextPoint,
   onBoundsChange,
   onPolygonChange,
+  autoFitKey,
   minHeight = 740,
   className
 }) {
@@ -91,6 +92,7 @@ export function SearchMap({
   const mapStyle = resolveMapStyle(process.env.NEXT_PUBLIC_MAPBOX_STYLE);
   const mapRef = useRef(null);
   const drawRef = useRef(null);
+  const lastAutoFitSignatureRef = useRef("");
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
   const provinceCode = getProvinceCode(selectedProvince);
   const visibleProperties = safeMapProperties(properties);
@@ -176,6 +178,52 @@ export function SearchMap({
       // Ignore flyTo issues and keep the map mounted.
     }
   }, [focusedContextPoint]);
+
+  useEffect(() => {
+    if (!mapRef.current || districtGeoJson || focusedContextPoint || !visibleProperties.length) {
+      return;
+    }
+
+    const propertiesSignature = `${autoFitKey || ""}::${visibleProperties
+      .map((property) => `${property._id}:${property.location.coordinates.join(",")}`)
+      .join("|")}`;
+
+    if (!propertiesSignature || propertiesSignature === lastAutoFitSignatureRef.current) {
+      return;
+    }
+
+    const map = mapRef.current.getMap?.();
+
+    if (!map) {
+      return;
+    }
+
+    try {
+      if (visibleProperties.length === 1) {
+        map.flyTo({
+          center: visibleProperties[0].location.coordinates,
+          zoom: 12.6,
+          duration: 700
+        });
+      } else {
+        const bounds = new mapboxgl.LngLatBounds();
+
+        visibleProperties.forEach((property) => {
+          bounds.extend(property.location.coordinates);
+        });
+
+        map.fitBounds(bounds, {
+          padding: 56,
+          duration: 700,
+          maxZoom: 12.4
+        });
+      }
+
+      lastAutoFitSignatureRef.current = propertiesSignature;
+    } catch (_error) {
+      // Keep the map available even if auto-fit fails for a particular result set.
+    }
+  }, [autoFitKey, districtGeoJson, focusedContextPoint, visibleProperties]);
 
   useEffect(() => {
     if (!drawControlsEnabled || !token || !mapRef.current || drawRef.current) {

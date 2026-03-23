@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createSavedSearch, getFavorites, getProperties } from "@/lib/api";
+import { createSavedSearch, getFavorites, getProperties, updateSavedSearch } from "@/lib/api";
 import { serializePropertyQuery } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { useSearchStore } from "@/store/search-store";
@@ -77,11 +77,32 @@ const toPolygonGeometry = (polygon) => {
   };
 };
 
+const SEARCH_AUTOSAVE_STORAGE_KEY = "alquiventascr-search-autosave-id";
+
+const hasMeaningfulSearchState = (filters = {}) =>
+  Object.entries(filters).some(([key, value]) => {
+    if (key === "bounds") {
+      return false;
+    }
+
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+
+    if (value && typeof value === "object") {
+      return Object.keys(value).length > 0;
+    }
+
+    return value !== undefined && value !== null && value !== "" && value !== false;
+  });
+
 function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initializedRef = useRef(false);
   const requestSequenceRef = useRef(0);
+  const autosaveIdRef = useRef(null);
+  const autosaveSequenceRef = useRef(0);
   const { token, user } = useAuthStore();
   const { language, t } = useLanguage();
   const { filters, replaceFilters, setFilters, selectedPropertyId, setSelectedPropertyId } =
@@ -95,9 +116,61 @@ function SearchPageContent() {
   const [activeContextLayers, setActiveContextLayers] = useState([]);
   const [focusedContextPoint, setFocusedContextPoint] = useState(null);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [autosaveStatus, setAutosaveStatus] = useState("idle");
   const contextRadiusKm = Number(filters.radiusKm || 8);
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const publishHref = canAccessDashboard ? "/dashboard/properties/new" : token ? "/favorites" : "/login";
+  const hasAutosaivableSearch = useMemo(() => hasMeaningfulSearchState(filters), [filters]);
+  const autosavePayload = useMemo(
+    () => ({
+      name: language === "en" ? "Current search" : "Busqueda actual",
+      filters,
+      mapArea: toPolygonGeometry(filters.polygon),
+      bounds: filters.bounds,
+      alertsEnabled: false
+    }),
+    [filters, language]
+  );
+  const autoFitKey = useMemo(
+    () =>
+      JSON.stringify({
+        q: filters.q,
+        businessType: filters.businessType,
+        propertyType: filters.propertyType,
+        province: filters.province,
+        canton: filters.canton,
+        district: filters.district,
+        lat: filters.lat,
+        lng: filters.lng,
+        radiusKm: filters.radiusKm,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+        currency: filters.currency,
+        marketStatus: filters.marketStatus,
+        sort: filters.sort,
+        bedrooms: filters.bedrooms,
+        bathrooms: filters.bathrooms,
+        parkingSpaces: filters.parkingSpaces,
+        minConstructionArea: filters.minConstructionArea,
+        maxConstructionArea: filters.maxConstructionArea,
+        minLotArea: filters.minLotArea,
+        maxLotArea: filters.maxLotArea,
+        rentalArrangement: filters.rentalArrangement,
+        furnished: filters.furnished,
+        petsAllowed: filters.petsAllowed,
+        depositRequired: filters.depositRequired,
+        featured: filters.featured,
+        recent: filters.recent,
+        privateRoom: filters.privateRoom,
+        privateBathroom: filters.privateBathroom,
+        utilitiesIncluded: filters.utilitiesIncluded,
+        studentFriendly: filters.studentFriendly,
+        polygonPoints: filters.polygon?.length || 0,
+        activeContextLayers,
+        focusedContextPoint: focusedContextPoint?.id || null
+      }),
+    [activeContextLayers, filters, focusedContextPoint]
+  );
 
   const contextualProperties = useMemo(
     () =>
@@ -180,6 +253,75 @@ function SearchPageContent() {
     loadFavorites();
   }, [token]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (!token) {
+      autosaveIdRef.current = null;
+      setAutosaveStatus("idle");
+      return;
+    }
+
+    autosaveIdRef.current = window.localStorage.getItem(SEARCH_AUTOSAVE_STORAGE_KEY) || null;
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !initializedRef.current || !hasAutosaivableSearch) {
+      if (!hasAutosaivableSearch) {
+        setAutosaveStatus("idle");
+      }
+      return;
+    }
+
+    const requestId = ++autosaveSequenceRef.current;
+    setAutosaveStatus("saving");
+
+    const timeout = setTimeout(async () => {
+      const persistNewAutosave = async () => {
+        const created = await createSavedSearch(autosavePayload);
+        const nextId = created?.item?._id;
+
+        if (typeof window !== "undefined" && nextId) {
+          window.localStorage.setItem(SEARCH_AUTOSAVE_STORAGE_KEY, nextId);
+        }
+
+        autosaveIdRef.current = nextId || null;
+      };
+
+      try {
+        if (autosaveIdRef.current) {
+          await updateSavedSearch(autosaveIdRef.current, autosavePayload);
+        } else {
+          await persistNewAutosave();
+        }
+
+        if (requestId === autosaveSequenceRef.current) {
+          setAutosaveStatus("saved");
+        }
+      } catch (error) {
+        if (error.response?.status === 404 && requestId === autosaveSequenceRef.current) {
+          try {
+            await persistNewAutosave();
+            if (requestId === autosaveSequenceRef.current) {
+              setAutosaveStatus("saved");
+            }
+            return;
+          } catch (_retryError) {
+            // Fall through to the shared error state below.
+          }
+        }
+
+        if (requestId === autosaveSequenceRef.current) {
+          setAutosaveStatus("error");
+        }
+      }
+    }, 700);
+
+    return () => clearTimeout(timeout);
+  }, [autosavePayload, hasAutosaivableSearch, token]);
+
   const updateFilters = useCallback(
     (patch) => {
       setPage(1);
@@ -252,21 +394,6 @@ function SearchPageContent() {
         maximumAge: 60000
       }
     );
-  };
-
-  const handleSaveSearch = async () => {
-    if (!token) return;
-
-    try {
-      await createSavedSearch({
-        filters,
-        mapArea: toPolygonGeometry(filters.polygon),
-        bounds: filters.bounds
-      });
-      setMessage(t("searchPage.saveSearchSuccess"));
-    } catch (error) {
-      setMessage(error.response?.data?.message || t("searchPage.saveSearchFailed"));
-    }
   };
 
   const handleProvinceAtlasSelection = useCallback(
@@ -417,8 +544,8 @@ function SearchPageContent() {
         onChange={updateFilters}
         onReset={handleReset}
         onUseCurrentLocation={handleUseCurrentLocation}
-        onSaveSearch={handleSaveSearch}
-        canSave={Boolean(token)}
+        canAutoSave={Boolean(token)}
+        autosaveStatus={autosaveStatus}
       />
 
       {message ? (
@@ -502,6 +629,7 @@ function SearchPageContent() {
               onSelectDistrict={handleMapDistrictSelection}
               onBoundsChange={handleMapBoundsChange}
               onPolygonChange={handleMapPolygonChange}
+              autoFitKey={autoFitKey}
               minHeight={760}
             />
           </SectionErrorBoundary>

@@ -96,8 +96,8 @@ export function SearchFilters({
   onChange,
   onReset,
   onUseCurrentLocation,
-  onSaveSearch,
-  canSave
+  canAutoSave,
+  autosaveStatus
 }) {
   const { language, t } = useLanguage();
   const update = (key, value) => onChange({ [key]: value });
@@ -145,6 +145,20 @@ export function SearchFilters({
     values.studentFriendly
   ]);
 
+  const autosaveCopy = !canAutoSave
+    ? t("searchPage.loginToSaveSearch")
+    : autosaveStatus === "saving"
+      ? language === "en"
+        ? "Auto-saving current search..."
+        : "Autoguardando la busqueda actual..."
+      : autosaveStatus === "error"
+        ? language === "en"
+          ? "Auto-save could not be updated."
+          : "No se pudo actualizar el autoguardado."
+        : language === "en"
+          ? "Your current search saves automatically."
+          : "Tu busqueda actual se guarda automaticamente.";
+
   return (
     <div className="surface-elevated space-y-4 p-4 md:p-5">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
@@ -155,26 +169,13 @@ export function SearchFilters({
           </div>
           <p className="max-w-3xl text-sm leading-6 text-ink/58">{t("filters.description")}</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Button
-            variant="accent"
-            onClick={onSaveSearch}
-            disabled={!canSave}
-            className="w-full sm:w-auto"
-          >
-            {t("filters.saveSearch")}
-          </Button>
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+          <div className="text-xs font-medium leading-5 text-ink/56">{autosaveCopy}</div>
           <Button variant="ghost" onClick={onReset} className="w-full sm:w-auto">
             {t("filters.clear")}
           </Button>
         </div>
       </div>
-
-      {!canSave ? (
-        <div className="rounded-2xl bg-mist px-4 py-3 text-xs font-medium text-ink/56">
-          {t("searchPage.loginToSaveSearch")}
-        </div>
-      ) : null}
 
       <div className="surface-soft border border-ink/10 bg-white/85 p-4">
         <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-pine/68">
