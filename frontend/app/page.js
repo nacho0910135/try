@@ -63,20 +63,20 @@ export default function HomePage() {
   return (
     <div className="section-pad">
       <section className="app-shell">
-        <div className="surface-elevated overflow-hidden bg-hero-grid p-4 sm:p-8 lg:p-10">
+        <div className="surface-elevated overflow-hidden bg-hero-grid px-4 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-7">
           <div className="mx-auto max-w-5xl">
-            <div className="max-w-3xl lg:max-w-4xl">
-              <h1 className="max-w-3xl font-serif text-[2.2rem] font-semibold leading-[1.02] sm:text-[3.15rem] lg:text-[3.5rem]">
+            <div className="max-w-2xl lg:max-w-[44rem]">
+              <h1 className="max-w-3xl font-serif text-[2.2rem] font-semibold leading-[0.98] sm:text-[3.05rem] lg:text-[3.4rem]">
                 {t("homePage.title")}
               </h1>
               {t("homePage.description") ? (
-                <p className="mt-4 max-w-lg text-sm leading-6 text-ink/68 sm:text-[15px] sm:leading-7">
+                <p className="mt-3 max-w-lg text-sm leading-6 text-ink/68 sm:text-[15px] sm:leading-7">
                   {t("homePage.description")}
                 </p>
               ) : null}
             </div>
 
-            <div className="mt-8 lg:mt-10">
+            <div className="mt-5 lg:mt-6">
               <CostaRicaProvinceExplorer
                 selectedProvince={province}
                 onSelectProvince={setProvince}
