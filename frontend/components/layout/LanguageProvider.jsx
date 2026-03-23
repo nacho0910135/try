@@ -582,7 +582,10 @@ const interpolate = (value, params = {}) => {
 const LanguageContext = createContext({
   language: "es",
   setLanguage: () => {},
-  t: (key, params) => interpolate(resolveTranslation("es", key) || key, params)
+  t: (key, params) => {
+    const translation = resolveTranslation("es", key);
+    return interpolate(translation === undefined ? key : translation, params);
+  }
 });
 
 export function LanguageProvider({ children }) {
@@ -613,7 +616,10 @@ export function LanguageProvider({ children }) {
     () => ({
       language,
       setLanguage,
-      t: (key, params) => interpolate(resolveTranslation(language, key) || key, params)
+      t: (key, params) => {
+        const translation = resolveTranslation(language, key);
+        return interpolate(translation === undefined ? key : translation, params);
+      }
     }),
     [language]
   );

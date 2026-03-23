@@ -11,7 +11,6 @@ import { MapLoadingShell } from "@/components/map/MapLoadingShell";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Button } from "@/components/ui/Button";
-import { costaRicaProvinces } from "@/lib/costa-rica-provinces";
 import { formatCurrency, getMainPhoto } from "@/lib/utils";
 
 const CostaRicaProvinceExplorer = dynamic(
@@ -59,7 +58,6 @@ export default function HomePage() {
     };
   }, []);
 
-  const selectedProvinceMeta = costaRicaProvinces.find((item) => item.name === province);
   const featuredForProvince = featured.filter(
     (property) => property.address?.province === province
   );
@@ -69,8 +67,8 @@ export default function HomePage() {
     <div className="section-pad">
       <section className="app-shell">
         <div className="surface-elevated overflow-hidden bg-hero-grid p-4 sm:p-8 lg:p-10">
-          <div className="grid gap-8 lg:grid-cols-[minmax(320px,0.52fr)_minmax(0,1.48fr)] lg:items-start">
-            <div className="max-w-xl lg:pt-4">
+          <div className="grid gap-6 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,1.62fr)] lg:items-start lg:gap-8">
+            <div className="max-w-lg lg:pt-4">
               <BrandLogo className="mb-4" compact showTagline={false} />
               <span className="eyebrow">{t("homePage.eyebrow")}</span>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -95,39 +93,23 @@ export default function HomePage() {
                   {t("homePage.description")}
                 </p>
               ) : null}
-
-              <div className="mt-6">
-                <div className="surface-soft p-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-ink/40">
-                    {t("homePage.activeProvince")}
-                  </div>
-                  <div className="mt-2 text-xl font-semibold sm:text-2xl">{selectedProvinceMeta?.name}</div>
-                  <p className="mt-2 text-sm leading-6 text-ink/65">
-                    {language === "en"
-                      ? selectedProvinceMeta?.blurbEn || selectedProvinceMeta?.blurb
-                      : selectedProvinceMeta?.blurb}
-                  </p>
-                  <div className="mt-4 rounded-[22px] bg-white/75 px-3 py-2 text-xs font-medium text-ink/60">
-                    {language === "en"
-                      ? selectedProvinceMeta?.spotlightEn || selectedProvinceMeta?.spotlight
-                      : selectedProvinceMeta?.spotlight}
-                  </div>
-                  <div className="mt-4">
-                    <Link href={`/search?province=${encodeURIComponent(province)}`}>
-                      <Button className="w-full gap-2">
-                        <ArrowRight className="mr-2 h-4 w-4" />
-                        {t("homePage.exploreButton")}
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <span className="stat-chip">
+                  {t("homePage.activeProvince")}: {province}
+                </span>
+                <Link href={`/search?province=${encodeURIComponent(province)}`}>
+                  <Button className="gap-2">
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    {t("homePage.exploreButton")}
+                  </Button>
+                </Link>
               </div>
             </div>
 
             <CostaRicaProvinceExplorer
               selectedProvince={province}
               onSelectProvince={setProvince}
-              mapMinHeight={760}
+              mapMinHeight={840}
             />
           </div>
           {featuredForProvince.length ? (
