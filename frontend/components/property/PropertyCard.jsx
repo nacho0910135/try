@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   Bath,
@@ -153,13 +154,17 @@ export function PropertyCard({
       }`}
     >
       <div className={`relative overflow-hidden ${compact ? "aspect-[4/3] sm:aspect-[16/9]" : "aspect-[16/10]"}`}>
-        <img
+        <Image
           src={mainPhoto?.url || fallbackSrc}
           alt={mainPhoto?.alt || property.title}
-          loading="lazy"
-          decoding="async"
-          fetchPriority="low"
-          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+          fill
+          unoptimized
+          sizes={
+            compact
+              ? "(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
+              : "(max-width: 639px) 100vw, (max-width: 1279px) 50vw, 33vw"
+          }
+          className="object-cover transition duration-500 group-hover:scale-[1.03]"
           onError={(event) => {
             event.currentTarget.onerror = null;
             event.currentTarget.src = fallbackSrc;

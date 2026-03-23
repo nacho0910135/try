@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Images, PlayCircle } from "lucide-react";
 
@@ -126,12 +127,14 @@ function GalleryViewer({ item, title }) {
   }
 
   return (
-    <img
+    <Image
       key={item.id}
       src={item.url || fallbackSrc}
       alt={item.alt || title}
-      decoding="async"
-      className="absolute inset-0 h-full w-full object-cover"
+      fill
+      unoptimized
+      sizes="(max-width: 767px) 100vw, 70vw"
+      className="object-cover"
       onError={(event) => {
         event.currentTarget.onerror = null;
         event.currentTarget.src = fallbackSrc;
@@ -234,12 +237,13 @@ export function PropertyGallery({ media = [], photos = [], title, compact = fals
               >
                 {item.type === "video" ? (
                   <>
-                    <img
+                    <Image
                       src={item.thumbnailUrl || fallbackSrc}
                       alt={item.alt || title}
-                      loading="lazy"
-                      decoding="async"
-                      className="absolute inset-0 h-full w-full object-cover"
+                      fill
+                      unoptimized
+                      sizes="132px"
+                      className="object-cover"
                       onError={(event) => {
                         event.currentTarget.onerror = null;
                         event.currentTarget.src = fallbackSrc;
@@ -253,12 +257,13 @@ export function PropertyGallery({ media = [], photos = [], title, compact = fals
                     </div>
                   </>
                 ) : (
-                  <img
+                  <Image
                     src={item.thumbnailUrl || fallbackSrc}
                     alt={item.alt || title}
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover"
+                    fill
+                    unoptimized
+                    sizes="132px"
+                    className="object-cover"
                     onError={(event) => {
                       event.currentTarget.onerror = null;
                       event.currentTarget.src = fallbackSrc;

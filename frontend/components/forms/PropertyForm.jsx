@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, MapPinned } from "lucide-react";
@@ -1203,10 +1204,13 @@ export function PropertyForm({ property, propertyId }) {
             {photos.map((photo, index) => (
               <div key={`${photo.url}-${index}`} className="rounded-[24px] border border-ink/10 bg-white p-3">
                 <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
-                  <img
+                  <Image
                     src={photo.url || fallbackSrc}
                     alt={photo.alt || watch("title")}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 1279px) 50vw, 25vw"
+                    className="object-cover"
                     onError={(event) => {
                       event.currentTarget.onerror = null;
                       event.currentTarget.src = fallbackSrc;

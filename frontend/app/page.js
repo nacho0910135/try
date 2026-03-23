@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { getFeaturedProperties } from "@/lib/api";
@@ -101,10 +102,13 @@ export default function HomePage() {
                     className="surface-soft grid gap-4 p-4 sm:grid-cols-[180px_1fr]"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden rounded-[22px]">
-                      <img
+                      <Image
                         src={mainPhoto?.url || fallbackSrc}
                         alt={mainPhoto?.alt || property.title}
-                        className="absolute inset-0 h-full w-full object-cover"
+                        fill
+                        unoptimized
+                        sizes="(max-width: 639px) 100vw, 180px"
+                        className="object-cover"
                         onError={(event) => {
                           event.currentTarget.onerror = null;
                           event.currentTarget.src = fallbackSrc;

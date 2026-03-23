@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
 
 const propertyTypeLabels = {
@@ -182,9 +183,12 @@ export function ZoneSeoPage({ zone, summary, items, childrenZones = [] }) {
                 className="surface overflow-hidden transition hover:-translate-y-1"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-mist">
-                  <img
+                  <Image
                     src={property.photos?.find((item) => item.isPrimary)?.url || property.photos?.[0]?.url || "/property-placeholder.svg"}
                     alt={property.title}
+                    width={800}
+                    height={500}
+                    unoptimized
                     className="h-full w-full object-cover"
                   />
                 </div>

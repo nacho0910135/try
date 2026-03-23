@@ -133,7 +133,15 @@ export default function PropertyDetailPage({ params }) {
       canton: property.address?.canton,
       district: property.address?.district
     });
-  }, [property?._id, property?.slug]);
+  }, [
+    property?._id,
+    property?.slug,
+    property?.businessType,
+    property?.propertyType,
+    property?.address?.province,
+    property?.address?.canton,
+    property?.address?.district
+  ]);
 
   const handleFavorite = async () => {
     if (!token) {
