@@ -15,6 +15,7 @@ import { DonateButton } from "./DonateButton";
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const activePathname = pathname || "";
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { t } = useLanguage();
@@ -60,7 +61,7 @@ export function SiteHeader() {
               href={item.href}
               className={cn(
                 "rounded-full px-4 py-2 text-sm font-medium transition hover:bg-white/80",
-                pathname === item.href ? "bg-white text-ink shadow-soft" : "text-ink/70"
+                activePathname === item.href ? "bg-white text-ink shadow-soft" : "text-ink/70"
               )}
             >
               {item.label}
@@ -119,12 +120,12 @@ export function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
-                pathname === item.href ? "bg-white text-ink shadow-soft" : "bg-white/70 text-ink/70"
-              )}
-            >
-              {item.label}
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
+                  activePathname === item.href ? "bg-white text-ink shadow-soft" : "bg-white/70 text-ink/70"
+                )}
+              >
+                {item.label}
             </Link>
           ))}
           {user ? (
@@ -133,7 +134,9 @@ export function SiteHeader() {
                 href="/dashboard"
                 className={cn(
                   "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
-                  pathname.startsWith("/dashboard") ? "bg-ink text-white shadow-soft" : "bg-pine/10 text-pine"
+                  activePathname.startsWith("/dashboard")
+                    ? "bg-ink text-white shadow-soft"
+                    : "bg-pine/10 text-pine"
                 )}
               >
                 {t("nav.dashboard")}

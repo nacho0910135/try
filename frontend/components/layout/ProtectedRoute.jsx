@@ -11,9 +11,10 @@ export function ProtectedRoute({ children, roles }) {
   const router = useRouter();
   const { hydrated, token, user, setUser, logout } = useAuthStore();
   const [resolvingUser, setResolvingUser] = useState(false);
+  const needsRoleResolution = token && user?.role === "user";
 
   useEffect(() => {
-    if (!hydrated || !token || user || resolvingUser) {
+    if (!hydrated || !token || (user && !needsRoleResolution) || resolvingUser) {
       return;
     }
 
@@ -44,7 +45,7 @@ export function ProtectedRoute({ children, roles }) {
     return () => {
       cancelled = true;
     };
-  }, [hydrated, token, user, resolvingUser, setUser, logout, router]);
+  }, [hydrated, token, user, needsRoleResolution, resolvingUser, setUser, logout, router]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -54,12 +55,12 @@ export function ProtectedRoute({ children, roles }) {
       return;
     }
 
-    if (roles?.length && user && !roles.includes(user?.role)) {
+    if (roles?.length && user && !needsRoleResolution && !roles.includes(user?.role)) {
       router.replace(getRoleRestrictedFallbackPath(user));
     }
-  }, [hydrated, token, user, roles, router]);
+  }, [hydrated, token, user, roles, router, needsRoleResolution]);
 
-  if (!hydrated || (token && (!user || resolvingUser))) {
+  if (!hydrated || (token && (!user || resolvingUser || needsRoleResolution))) {
     return <LoadingState label="Validando sesion..." />;
   }
 

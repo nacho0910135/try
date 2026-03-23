@@ -1,6 +1,6 @@
 "use client";
 
-const COMMERCIAL_ROLES = new Set(["agent", "owner", "admin"]);
+const COMMERCIAL_ROLES = new Set(["user", "agent", "owner", "admin"]);
 
 export const hasCommercialDashboardAccess = (userOrRole) => {
   const role = typeof userOrRole === "string" ? userOrRole : userOrRole?.role;

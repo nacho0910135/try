@@ -10,6 +10,16 @@ const extractToken = (authorizationHeader = "") => {
   return authorizationHeader.replace("Bearer ", "").trim();
 };
 
+const normalizeLegacyUserRole = async (user) => {
+  if (!user || user.role !== "user") {
+    return user;
+  }
+
+  user.role = "owner";
+  await user.save();
+  return user;
+};
+
 export const requireAuth = async (req, _res, next) => {
   try {
     const token = extractToken(req.headers.authorization);
@@ -25,7 +35,7 @@ export const requireAuth = async (req, _res, next) => {
       throw new ApiError(401, "Session is no longer valid");
     }
 
-    req.user = user;
+    req.user = await normalizeLegacyUserRole(user);
     next();
   } catch (error) {
     next(error instanceof ApiError ? error : new ApiError(401, "Invalid authentication token"));
@@ -44,7 +54,7 @@ export const optionalAuth = async (req, _res, next) => {
     const user = await User.findById(decoded.sub);
 
     if (user?.isActive) {
-      req.user = user;
+      req.user = await normalizeLegacyUserRole(user);
     }
 
     next();
@@ -64,4 +74,3 @@ export const authorize = (...roles) => (req, _res, next) => {
 
   return next();
 };
-
