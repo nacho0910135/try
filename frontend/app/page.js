@@ -3,14 +3,12 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { ArrowRight, Compass, MapPinned } from "lucide-react";
 import { getFeaturedProperties } from "@/lib/api";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { MapLoadingShell } from "@/components/map/MapLoadingShell";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { Button } from "@/components/ui/Button";
 import { formatCurrency, getMainPhoto } from "@/lib/utils";
 
 const CostaRicaProvinceExplorer = dynamic(
@@ -71,21 +69,7 @@ export default function HomePage() {
             <div className="max-w-3xl lg:max-w-4xl">
               <BrandLogo className="mb-4" compact showTagline={false} />
               <span className="eyebrow">{t("homePage.eyebrow")}</span>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="stat-chip">
-                  <MapPinned className="h-3.5 w-3.5 text-terracotta" />
-                  7 provincias
-                </span>
-                <span className="stat-chip">
-                  <Compass className="h-3.5 w-3.5 text-lagoon" />
-                  GPS + mapa
-                </span>
-                <span className="stat-chip">
-                  <ArrowRight className="h-3.5 w-3.5 text-pine" />
-                  Leads + favoritos
-                </span>
-              </div>
-              <h1 className="mt-5 max-w-3xl font-serif text-[2.2rem] font-semibold leading-[1.02] sm:text-[3.15rem] lg:text-[3.4rem]">
+              <h1 className="mt-5 max-w-3xl font-serif text-[2.2rem] font-semibold leading-[1.02] sm:text-[3.15rem] lg:text-[3.5rem]">
                 {t("homePage.title")}
               </h1>
               {t("homePage.description") ? (
@@ -93,24 +77,14 @@ export default function HomePage() {
                   {t("homePage.description")}
                 </p>
               ) : null}
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <span className="stat-chip">
-                  {t("homePage.activeProvince")}: {province}
-                </span>
-                <Link href={`/search?province=${encodeURIComponent(province)}`}>
-                  <Button className="gap-2">
-                    <ArrowRight className="mr-2 h-4 w-4" />
-                    {t("homePage.exploreButton")}
-                  </Button>
-                </Link>
-              </div>
             </div>
 
             <div className="mt-8 lg:mt-10">
               <CostaRicaProvinceExplorer
                 selectedProvince={province}
                 onSelectProvince={setProvince}
-                mapMinHeight={920}
+                mapMinHeight={1040}
+                hero
               />
             </div>
           </div>

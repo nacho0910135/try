@@ -100,6 +100,7 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
   selectedProvince,
   onSelectProvince,
   compact = false,
+  hero = false,
   navigateOnSelect = true,
   mapMinHeight,
   className
@@ -308,53 +309,60 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
   }
 
   return (
-    <div className={cn(`surface overflow-hidden ${compact ? "p-0" : "p-3"}`, className)}>
+    <div
+      className={cn(
+        `surface overflow-hidden ${compact || hero ? "p-0" : "p-3"}`,
+        className
+      )}
+    >
       <div className="map-stage overflow-hidden rounded-[34px] bg-[#c3e6f0]">
-        <div
-          className={`border-b border-white/60 bg-white/55 backdrop-blur ${
-            compact ? "px-3 py-2" : "px-4 py-3"
-          }`}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              {compact ? (
-                <>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-lagoon/75">
-                    {language === "en" ? "Quick province switcher" : "Cambio rapido de provincia"}
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-ink sm:text-base">
-                    {selectedProvince || (language === "en" ? "Costa Rica provinces" : "Provincias de Costa Rica")}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-xs font-semibold uppercase tracking-[0.28em] text-lagoon/75">
-                    {t("provinceExplorer.atlas")}
-                  </div>
-                  <div className="mt-1 text-xl font-semibold text-ink sm:text-2xl">
-                    {t("provinceExplorer.title")}
-                  </div>
-                </>
-              )}
-            </div>
-            <div
-              className={`inline-flex items-center gap-2 rounded-full bg-white/80 font-semibold text-ink/70 ${
-                compact ? "px-2.5 py-1 text-[10px]" : "px-3 py-1.5 text-[11px] sm:text-xs"
-              }`}
-            >
-              <MapPinned className="h-4 w-4 text-terracotta" />
-              {compact
-                ? language === "en"
-                  ? "Tap and filter"
-                  : "Toca y filtra"
-                : t("provinceExplorer.tapProvince")}
+        {hero ? null : (
+          <div
+            className={`border-b border-white/60 bg-white/55 backdrop-blur ${
+              compact ? "px-3 py-2" : "px-4 py-3"
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                {compact ? (
+                  <>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-lagoon/75">
+                      {language === "en" ? "Quick province switcher" : "Cambio rapido de provincia"}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-ink sm:text-base">
+                      {selectedProvince || (language === "en" ? "Costa Rica provinces" : "Provincias de Costa Rica")}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs font-semibold uppercase tracking-[0.28em] text-lagoon/75">
+                      {t("provinceExplorer.atlas")}
+                    </div>
+                    <div className="mt-1 text-xl font-semibold text-ink sm:text-2xl">
+                      {t("provinceExplorer.title")}
+                    </div>
+                  </>
+                )}
+              </div>
+              <div
+                className={`inline-flex items-center gap-2 rounded-full bg-white/80 font-semibold text-ink/70 ${
+                  compact ? "px-2.5 py-1 text-[10px]" : "px-3 py-1.5 text-[11px] sm:text-xs"
+                }`}
+              >
+                <MapPinned className="h-4 w-4 text-terracotta" />
+                {compact
+                  ? language === "en"
+                    ? "Tap and filter"
+                    : "Toca y filtra"
+                  : t("provinceExplorer.tapProvince")}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div
           className={`relative overflow-hidden bg-[radial-gradient(circle_at_24%_28%,rgba(255,255,255,0.45),transparent_18%),radial-gradient(circle_at_76%_22%,rgba(255,255,255,0.3),transparent_16%),linear-gradient(180deg,#a5d9e8_0%,#9ed2e3_48%,#98cfe0_100%)] ${
-            compact ? "px-2 pb-2 pt-2" : "px-3 pb-3 pt-2"
+            hero ? "p-2 sm:p-3" : compact ? "px-2 pb-2 pt-2" : "px-3 pb-3 pt-2"
           }`}
         >
           <div className="absolute inset-0 opacity-60">
@@ -384,9 +392,13 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
             typeof mapMinHeight === "number"
               ? compact
                 ? `clamp(208px, 30svh, ${mapMinHeight}px)`
-                : `clamp(360px, 58svh, ${mapMinHeight}px)`
+                : hero
+                  ? `clamp(520px, 74svh, ${mapMinHeight}px)`
+                  : `clamp(360px, 58svh, ${mapMinHeight}px)`
               : compact
                 ? "clamp(208px, 30svh, 280px)"
+                : hero
+                  ? "clamp(520px, 74svh, 1040px)"
                 : "clamp(360px, 58svh, 760px)"
         }}
       >
@@ -401,7 +413,7 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
             </Map>
           </div>
 
-          {compact ? (
+          {hero ? null : compact ? (
             <div className="relative z-10 mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-[24px] bg-white/78 px-3 py-2 shadow-soft backdrop-blur">
               <div>
                 <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-lagoon/75">
