@@ -67,8 +67,8 @@ export default function HomePage() {
     <div className="section-pad">
       <section className="app-shell">
         <div className="surface-elevated overflow-hidden bg-hero-grid p-4 sm:p-8 lg:p-10">
-          <div className="grid gap-6 lg:grid-cols-[minmax(280px,0.38fr)_minmax(0,1.62fr)] lg:items-start lg:gap-8">
-            <div className="max-w-lg lg:pt-4">
+          <div className="mx-auto max-w-5xl">
+            <div className="max-w-3xl lg:max-w-4xl">
               <BrandLogo className="mb-4" compact showTagline={false} />
               <span className="eyebrow">{t("homePage.eyebrow")}</span>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -106,12 +106,15 @@ export default function HomePage() {
               </div>
             </div>
 
-            <CostaRicaProvinceExplorer
-              selectedProvince={province}
-              onSelectProvince={setProvince}
-              mapMinHeight={840}
-            />
+            <div className="mt-8 lg:mt-10">
+              <CostaRicaProvinceExplorer
+                selectedProvince={province}
+                onSelectProvince={setProvince}
+                mapMinHeight={920}
+              />
+            </div>
           </div>
+
           {featuredForProvince.length ? (
             <div className="mt-8 grid gap-4 lg:grid-cols-2">
               {featuredForProvince.slice(0, 2).map((property) => {
