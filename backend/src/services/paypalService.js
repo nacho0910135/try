@@ -1,17 +1,32 @@
+import {
+  CheckoutPaymentIntent,
+  Client,
+  Environment,
+  OrdersController,
+  PaypalExperienceUserAction
+} from "@paypal/paypal-server-sdk";
 import { env } from "../config/env.js";
 import { ApiError } from "../utils/apiError.js";
 
-const PAYPAL_API_BASES = {
-  sandbox: "https://api-m.sandbox.paypal.com",
-  live: "https://api-m.paypal.com"
+const toSdkShape = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => toSdkShape(item));
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, nestedValue]) => [
+      key.replace(/_([a-z])/g, (_match, letter) => letter.toUpperCase()),
+      toSdkShape(nestedValue)
+    ])
+  );
 };
 
-let accessTokenCache = {
-  token: "",
-  expiresAt: 0
-};
-
-const getApiBaseUrl = () => PAYPAL_API_BASES[env.PAYPAL_ENVIRONMENT] || PAYPAL_API_BASES.sandbox;
+const getSdkEnvironment = () =>
+  env.PAYPAL_ENVIRONMENT === "live" ? Environment.Production : Environment.Sandbox;
 
 const ensureConfigured = () => {
   if (!env.PAYPAL_CLIENT_ID || !env.PAYPAL_CLIENT_SECRET) {
@@ -19,81 +34,59 @@ const ensureConfigured = () => {
   }
 };
 
-const readResponseBody = async (response) => {
-  const text = await response.text();
-
-  if (!text) {
-    return {};
+const readSdkErrorPayload = (error) => {
+  if (!error || typeof error !== "object") {
+    return undefined;
   }
 
-  try {
-    return JSON.parse(text);
-  } catch (_error) {
-    return { message: text };
+  if (error.result && typeof error.result === "object") {
+    return error.result;
   }
+
+  if (typeof error.body === "string") {
+    try {
+      return JSON.parse(error.body);
+    } catch (_parseError) {
+      return { message: error.body };
+    }
+  }
+
+  return undefined;
 };
 
-const getAccessToken = async () => {
+let ordersControllerCache = null;
+
+const getOrdersController = () => {
   ensureConfigured();
 
-  if (accessTokenCache.token && Date.now() < accessTokenCache.expiresAt) {
-    return accessTokenCache.token;
+  if (ordersControllerCache) {
+    return ordersControllerCache;
   }
 
-  const authorization = Buffer.from(
-    `${env.PAYPAL_CLIENT_ID}:${env.PAYPAL_CLIENT_SECRET}`
-  ).toString("base64");
-
-  const response = await fetch(`${getApiBaseUrl()}/v1/oauth2/token`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${authorization}`,
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: "grant_type=client_credentials"
+  const client = new Client({
+    environment: getSdkEnvironment(),
+    clientCredentialsAuthCredentials: {
+      oAuthClientId: env.PAYPAL_CLIENT_ID,
+      oAuthClientSecret: env.PAYPAL_CLIENT_SECRET
+    }
   });
 
-  const payload = await readResponseBody(response);
-
-  if (!response.ok || !payload.access_token) {
-    throw new ApiError(
-      response.status || 502,
-      payload.error_description || payload.message || "No se pudo autenticar con PayPal.",
-      payload
-    );
-  }
-
-  accessTokenCache = {
-    token: payload.access_token,
-    expiresAt: Date.now() + Math.max((Number(payload.expires_in || 0) - 60) * 1000, 60_000)
-  };
-
-  return payload.access_token;
+  ordersControllerCache = new OrdersController(client);
+  return ordersControllerCache;
 };
 
-const paypalRequest = async (path, { method = "GET", body, requestId } = {}) => {
-  const accessToken = await getAccessToken();
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-      ...(requestId ? { "PayPal-Request-Id": requestId } : {})
-    },
-    ...(body ? { body: JSON.stringify(body) } : {})
-  });
-
-  const payload = await readResponseBody(response);
-
-  if (!response.ok) {
-    throw new ApiError(
-      response.status || 502,
-      payload.message || payload.error_description || "PayPal devolvio un error.",
-      payload
-    );
+const handleSdkError = (error, fallbackMessage) => {
+  if (error instanceof ApiError) {
+    throw error;
   }
 
-  return payload;
+  const payload = readSdkErrorPayload(error);
+
+  throw new ApiError(
+    error?.statusCode || 502,
+    payload?.message || payload?.error_description || error?.message || fallbackMessage,
+    payload
+  );
 };
 
 export const paypalService = {
@@ -106,30 +99,48 @@ export const paypalService = {
   },
 
   async createOrder({ intent = "CAPTURE", purchaseUnits, returnUrl, cancelUrl, requestId }) {
-    return paypalRequest("/v2/checkout/orders", {
-      method: "POST",
-      requestId,
-      body: {
-        intent,
-        purchase_units: purchaseUnits,
-        payment_source: {
-          paypal: {
-            experience_context: {
-              brand_name: "BienesRaicesCR",
-              user_action: "PAY_NOW",
-              return_url: returnUrl,
-              cancel_url: cancelUrl
+    try {
+      const ordersController = getOrdersController();
+      const { result } = await ordersController.createOrder({
+        paypalRequestId: requestId,
+        prefer: "return=representation",
+        body: toSdkShape({
+          intent:
+            intent === "AUTHORIZE"
+              ? CheckoutPaymentIntent.Authorize
+              : CheckoutPaymentIntent.Capture,
+          purchase_units: purchaseUnits,
+          payment_source: {
+            paypal: {
+              experience_context: {
+                brand_name: "BienesRaicesCR",
+                user_action: PaypalExperienceUserAction.PayNow,
+                return_url: returnUrl,
+                cancel_url: cancelUrl
+              }
             }
           }
-        }
-      }
-    });
+        })
+      });
+
+      return result;
+    } catch (error) {
+      handleSdkError(error, "No se pudo crear la orden de PayPal.");
+    }
   },
 
   async captureOrder(orderId, requestId) {
-    return paypalRequest(`/v2/checkout/orders/${orderId}/capture`, {
-      method: "POST",
-      requestId
-    });
+    try {
+      const ordersController = getOrdersController();
+      const { result } = await ordersController.captureOrder({
+        id: orderId,
+        paypalRequestId: requestId,
+        prefer: "return=representation"
+      });
+
+      return result;
+    } catch (error) {
+      handleSdkError(error, "No se pudo capturar la orden de PayPal.");
+    }
   }
 };
