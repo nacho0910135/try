@@ -30,7 +30,7 @@ const getDonationConfig = () => ({
 });
 
 const getApprovalUrl = (order) =>
-  order?.links?.find?.((link) => link.rel === "approve")?.href || "";
+  order?.links?.find?.((link) => ["approve", "payer-action"].includes(link.rel))?.href || "";
 
 const buildAbsoluteFrontendUrl = (path) => new URL(path, `${getFrontendBaseUrl()}/`).toString();
 
