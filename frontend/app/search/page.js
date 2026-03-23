@@ -500,27 +500,19 @@ function SearchPageContent() {
   }, [updateFilters]);
 
   return (
-    <div className="app-shell section-pad space-y-6 sm:space-y-7">
+    <div className="app-shell section-pad space-y-5 sm:space-y-6">
       <div>
         <span className="eyebrow">{t("searchPage.eyebrow")}</span>
-        <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-4">
-            <div className="hidden flex-wrap gap-2 sm:flex">
-              <span className="stat-chip">
-                {language === "en" ? "Map-led exploration" : "Exploracion guiada por mapa"}
-              </span>
-              <span className="stat-chip">
-                {language === "en" ? "Live price field" : "Campo de precios en vivo"}
-              </span>
-            </div>
-            <h1 className="font-serif text-[2.4rem] font-semibold leading-[1.02] sm:text-[3.35rem] lg:text-[4rem]">
+        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-3">
+            <h1 className="font-serif text-[2.1rem] font-semibold leading-[1.02] sm:text-[2.9rem] lg:text-[3.35rem]">
               {t("searchPage.title")}
             </h1>
             <p className="max-w-3xl text-sm leading-6 text-ink/65 sm:text-[15px] sm:leading-7">
               {t("searchPage.description")}
             </p>
           </div>
-          <div className="surface-soft w-full border border-pine/15 bg-pine/10 p-4 lg:min-w-[280px] lg:max-w-[360px]">
+          <div className="surface-soft w-full border border-pine/15 bg-pine/10 p-3.5 lg:min-w-[260px] lg:max-w-[340px]">
             <p className="text-sm font-semibold text-pine">
               {token
                 ? t("searchPage.publishPromptLoggedIn")
