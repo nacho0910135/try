@@ -575,30 +575,13 @@ function SearchPageContent() {
         </div>
 
         <div className="order-1 xl:order-2">
-          <div className="surface-soft mb-4 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pine/70">
-                  {language === "en" ? "Main view" : "Vista principal"}
-                </div>
-                <h2 className="mt-2 text-base font-semibold text-ink sm:text-xl">
-                  {language === "en" ? "Price map" : "Mapa de precios"}
-                </h2>
-                <p className="mt-1 text-sm leading-6 text-ink/60">
-                  {language === "en"
-                    ? "The live price map stays front and center. Tap a price bubble to open the listing."
-                    : "El mapa de precios se mantiene como protagonista. Toca una nube de precio para abrir la publicacion."}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="stat-chip">
-                  {pagination.total} {language === "en" ? "matches" : "resultados"}
-                </span>
-                <span className="stat-chip">
-                  {filters.province || (language === "en" ? "All Costa Rica" : "Todo Costa Rica")}
-                </span>
-              </div>
-            </div>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-ink/10 bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-ink/68 shadow-soft">
+              {pagination.total} {language === "en" ? "results" : "resultados"}
+            </span>
+            <span className="rounded-full border border-ink/10 bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-ink/68 shadow-soft">
+              {filters.province || (language === "en" ? "All Costa Rica" : "Todo Costa Rica")}
+            </span>
           </div>
           <SectionErrorBoundary
             source="search-price-map"

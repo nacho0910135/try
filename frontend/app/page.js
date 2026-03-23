@@ -67,7 +67,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-6xl">
             <div className="max-w-lg lg:max-w-[34rem]">
               <h1
-                className="max-w-xl font-semibold leading-[1.2] text-[18px]"
+                className="max-w-xl text-[22px] font-bold leading-[1.2]"
                 style={{ fontFamily: '"Times New Roman", Times, serif' }}
               >
                 {t("homePage.title")}

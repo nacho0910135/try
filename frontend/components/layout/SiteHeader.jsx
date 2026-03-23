@@ -44,7 +44,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-white/60 bg-sand/80 backdrop-blur">
       <div className="app-shell py-3 sm:py-4">
         <div className="flex items-center justify-between gap-3">
-        <Link href="/" className="flex min-w-0 items-center gap-3">
+        <Link href="/" className="hidden min-w-0 items-center gap-3 sm:flex">
           <BrandLogo
             compact
             showTagline={false}
