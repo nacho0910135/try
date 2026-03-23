@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, MapPinned, Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import {
   businessTypes,
   currencies,
@@ -55,6 +56,41 @@ const SORT_OPTIONS = [
   { value: "distance", label: "filters.sortDistance" }
 ];
 
+const hasValue = (value) => {
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  return value !== undefined && value !== null && value !== "" && value !== false;
+};
+
+const countActiveFilters = (values) => values.filter(hasValue).length;
+
+function FilterSection({ title, caption, count, defaultOpen = false, children }) {
+  return (
+    <details
+      className="surface-soft overflow-hidden border border-ink/10 bg-white/82"
+      defaultOpen={defaultOpen}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3">
+        <div>
+          <div className="text-sm font-semibold text-ink">{title}</div>
+          {caption ? <p className="mt-1 text-xs leading-5 text-ink/56">{caption}</p> : null}
+        </div>
+        <div className="flex items-center gap-2">
+          {count ? (
+            <span className="rounded-full bg-pine/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-pine">
+              {count}
+            </span>
+          ) : null}
+          <ChevronDown className="h-4 w-4 text-ink/45" />
+        </div>
+      </summary>
+      <div className="border-t border-ink/8 px-4 pb-4 pt-4">{children}</div>
+    </details>
+  );
+}
+
 export function SearchFilters({
   values,
   onChange,
@@ -63,7 +99,7 @@ export function SearchFilters({
   onSaveSearch,
   canSave
 }) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const update = (key, value) => onChange({ [key]: value });
   const cantonOptions = ensureOptionInList(getCantonsByProvince(values.province), values.canton);
   const districtOptions = ensureOptionInList(
@@ -71,121 +107,161 @@ export function SearchFilters({
     values.district
   );
 
+  const locationCount = countActiveFilters([
+    values.canton,
+    values.district,
+    values.radiusKm,
+    values.lat,
+    values.lng,
+    values.bounds,
+    values.polygon
+  ]);
+
+  const pricingCount = countActiveFilters([
+    values.minPrice,
+    values.maxPrice,
+    values.currency,
+    values.marketStatus,
+    values.sort,
+    values.bedrooms,
+    values.bathrooms,
+    values.parkingSpaces,
+    values.minConstructionArea,
+    values.maxConstructionArea,
+    values.minLotArea,
+    values.maxLotArea
+  ]);
+
+  const smartCount = countActiveFilters([
+    values.rentalArrangement,
+    values.furnished,
+    values.petsAllowed,
+    values.depositRequired,
+    values.featured,
+    values.recent,
+    values.privateRoom,
+    values.privateBathroom,
+    values.utilitiesIncluded,
+    values.studentFriendly
+  ]);
+
   return (
-    <div className="surface-elevated space-y-5 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-pine/70">
-            {t("searchPage.eyebrow")}
-          </div>
-          <h3 className="mt-2 text-xl font-semibold text-ink">
+    <div className="surface-elevated space-y-4 p-4 md:p-5">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/72">
+            <SlidersHorizontal className="h-3.5 w-3.5" />
             {t("filters.title")}
-          </h3>
-          <p className="mt-2 max-w-3xl text-sm leading-7 text-ink/62">
-            {t("filters.description")}
-          </p>
+          </div>
+          <p className="max-w-3xl text-sm leading-6 text-ink/58">{t("filters.description")}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="stat-chip">
-            {t("filters.business")}
-          </span>
-          <span className="stat-chip">
-            {t("filters.province")}
-          </span>
-          <span className="stat-chip">
-            {t("filters.radius")}
-          </span>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Button
+            variant="accent"
+            onClick={onSaveSearch}
+            disabled={!canSave}
+            className="w-full sm:w-auto"
+          >
+            {t("filters.saveSearch")}
+          </Button>
+          <Button variant="ghost" onClick={onReset} className="w-full sm:w-auto">
+            {t("filters.clear")}
+          </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr]">
-        <div className="surface-soft space-y-4 p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/68">
-            {t("filters.searchText")}
+      {!canSave ? (
+        <div className="rounded-2xl bg-mist px-4 py-3 text-xs font-medium text-ink/56">
+          {t("searchPage.loginToSaveSearch")}
+        </div>
+      ) : null}
+
+      <div className="surface-soft border border-ink/10 bg-white/85 p-4">
+        <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-pine/68">
+          <Search className="h-3.5 w-3.5" />
+          {language === "en" ? "Quick filters" : "Filtros rapidos"}
+        </div>
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.7fr)_repeat(3,minmax(0,1fr))_auto]">
+          <div>
+            <label className="field-label">{t("filters.searchText")}</label>
+            <Input
+              value={values.q || ""}
+              onChange={(event) => update("q", event.target.value)}
+              placeholder={t("filters.searchPlaceholder")}
+            />
           </div>
-          <div className="grid gap-4 lg:grid-cols-5">
-            <div className="lg:col-span-2">
-              <label className="field-label">{t("filters.searchText")}</label>
-              <Input
-                value={values.q || ""}
-                onChange={(event) => update("q", event.target.value)}
-                placeholder={t("filters.searchPlaceholder")}
-              />
-            </div>
-            <div>
-              <label className="field-label">{t("filters.business")}</label>
-              <Select
-                value={values.businessType || ""}
-                onChange={(event) => update("businessType", event.target.value)}
-              >
-                <option value="">{t("common.all")}</option>
-                {businessTypes.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {t(BUSINESS_LABELS[item.value])}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <label className="field-label">{t("filters.propertyType")}</label>
-              <Select
-                value={values.propertyType || ""}
-                onChange={(event) => update("propertyType", event.target.value)}
-              >
-                <option value="">{t("common.all")}</option>
-                {propertyTypes.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {t(PROPERTY_LABELS[item.value])}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <label className="field-label">{t("filters.rentalArrangement")}</label>
-              <Select
-                value={values.rentalArrangement || ""}
-                onChange={(event) => update("rentalArrangement", event.target.value)}
-              >
-                <option value="">{t("common.allFeminine")}</option>
-                {rentalArrangements.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {t(RENTAL_LABELS[item.value])}
-                  </option>
-                ))}
-              </Select>
-            </div>
+          <div>
+            <label className="field-label">{t("filters.business")}</label>
+            <Select
+              value={values.businessType || ""}
+              onChange={(event) => update("businessType", event.target.value)}
+            >
+              <option value="">{t("common.all")}</option>
+              {businessTypes.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {t(BUSINESS_LABELS[item.value])}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <label className="field-label">{t("filters.propertyType")}</label>
+            <Select
+              value={values.propertyType || ""}
+              onChange={(event) => update("propertyType", event.target.value)}
+            >
+              <option value="">{t("common.all")}</option>
+              {propertyTypes.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {t(PROPERTY_LABELS[item.value])}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <label className="field-label">{t("filters.province")}</label>
+            <Select
+              value={values.province || ""}
+              onChange={(event) =>
+                onChange({
+                  province: event.target.value || undefined,
+                  canton: undefined,
+                  district: undefined,
+                  lat: undefined,
+                  lng: undefined,
+                  bounds: undefined,
+                  polygon: undefined
+                })
+              }
+            >
+              <option value="">{t("common.allFeminine")}</option>
+              {provinces.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex items-end">
+            <Button variant="success" className="w-full" onClick={onUseCurrentLocation}>
+              {t("filters.nearMe")}
+            </Button>
           </div>
         </div>
+      </div>
 
-        <div className="surface-soft space-y-4 p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/68">
-            {t("filters.location")}
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <div>
-              <label className="field-label">{t("filters.province")}</label>
-              <Select
-                value={values.province || ""}
-                onChange={(event) =>
-                  onChange({
-                    province: event.target.value || undefined,
-                    canton: undefined,
-                    district: undefined,
-                    lat: undefined,
-                    lng: undefined,
-                    bounds: undefined,
-                    polygon: undefined
-                  })
-                }
-              >
-                <option value="">{t("common.allFeminine")}</option>
-                {provinces.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </Select>
-            </div>
+      <div className="space-y-3">
+        <FilterSection
+          title={t("filters.location")}
+          caption={
+            language === "en"
+              ? "District precision, radius, and map-driven positioning."
+              : "Precision por canton, distrito, radio y posicion en mapa."
+          }
+          count={locationCount}
+          defaultOpen={locationCount > 0}
+        >
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div>
               <label className="field-label">{t("filters.canton")}</label>
               <Select
@@ -246,219 +322,261 @@ export function SearchFilters({
                 placeholder="20"
               />
             </div>
-            <div className="flex items-end">
-              <Button variant="success" className="w-full" onClick={onUseCurrentLocation}>
-                {t("filters.nearMe")}
-              </Button>
+            <div className="rounded-2xl bg-mist px-4 py-3 text-xs leading-5 text-ink/58">
+              <div className="flex items-center gap-2 font-semibold text-ink/70">
+                <MapPinned className="h-3.5 w-3.5 text-terracotta" />
+                {language === "en" ? "Map sync" : "Sincronizado con el mapa"}
+              </div>
+              <p className="mt-1.5">
+                {language === "en"
+                  ? "Province, district, drawn area, and nearby search stay connected with the live map."
+                  : "Provincia, distrito, zona dibujada y cercania se mantienen conectados con el mapa en vivo."}
+              </p>
             </div>
           </div>
-        </div>
-      </div>
+        </FilterSection>
 
-      <div className="surface-soft space-y-4 p-4">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/68">
-          {t("filters.priceAndFeatures")}
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <div>
-            <label className="field-label">{t("filters.minPrice")}</label>
-            <Input
-              type="number"
-              value={values.minPrice || ""}
-              onChange={(event) => update("minPrice", event.target.value)}
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <label className="field-label">{t("filters.maxPrice")}</label>
-            <Input
-              type="number"
-              value={values.maxPrice || ""}
-              onChange={(event) => update("maxPrice", event.target.value)}
-              placeholder="500000"
-            />
-          </div>
-          <div>
-            <label className="field-label">{t("filters.currency")}</label>
-            <Select
-              value={values.currency || ""}
-              onChange={(event) => update("currency", event.target.value)}
-            >
-              <option value="">{t("common.both")}</option>
-              {currencies.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <div>
-            <label className="field-label">{t("filters.status")}</label>
-            <Select
-              value={values.marketStatus || ""}
-              onChange={(event) => update("marketStatus", event.target.value)}
-            >
-              <option value="">{t("common.active")}</option>
-              {PUBLIC_MARKET_STATUSES.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {t(MARKET_LABELS[item.value])}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <div>
-            <label className="field-label">{t("filters.sortBy")}</label>
-            <Select
-              value={values.sort || ""}
-              onChange={(event) => update("sort", event.target.value || undefined)}
-            >
-              <option value="">{t("filters.sortDefault")}</option>
-              {SORT_OPTIONS.map((item) => (
-                <option
-                  key={item.value}
-                  value={item.value}
-                  disabled={item.value === "distance" && !(values.lat && values.lng)}
+        <FilterSection
+          title={t("filters.priceAndFeatures")}
+          caption={
+            language === "en"
+              ? "Budget, market status, sort, and physical attributes."
+              : "Presupuesto, estado comercial, orden y atributos fisicos."
+          }
+          count={pricingCount}
+          defaultOpen={pricingCount > 0}
+        >
+          <div className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <div>
+                <label className="field-label">{t("filters.minPrice")}</label>
+                <Input
+                  type="number"
+                  value={values.minPrice || ""}
+                  onChange={(event) => update("minPrice", event.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="field-label">{t("filters.maxPrice")}</label>
+                <Input
+                  type="number"
+                  value={values.maxPrice || ""}
+                  onChange={(event) => update("maxPrice", event.target.value)}
+                  placeholder="500000"
+                />
+              </div>
+              <div>
+                <label className="field-label">{t("filters.currency")}</label>
+                <Select
+                  value={values.currency || ""}
+                  onChange={(event) => update("currency", event.target.value)}
                 >
-                  {t(item.label)}
-                </option>
-              ))}
-            </Select>
-          </div>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-          <div>
-            <label className="field-label">{t("filters.bedrooms")}</label>
-            <Input
-              type="number"
-              value={values.bedrooms || ""}
-              onChange={(event) => update("bedrooms", event.target.value)}
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <label className="field-label">{t("filters.bathrooms")}</label>
-            <Input
-              type="number"
-              value={values.bathrooms || ""}
-              onChange={(event) => update("bathrooms", event.target.value)}
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <label className="field-label">{t("filters.parkingSpaces")}</label>
-            <Input
-              type="number"
-              value={values.parkingSpaces || ""}
-              onChange={(event) => update("parkingSpaces", event.target.value)}
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <label className="field-label">{t("filters.minConstructionArea")}</label>
-            <Input
-              type="number"
-              value={values.minConstructionArea || ""}
-              onChange={(event) => update("minConstructionArea", event.target.value)}
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <label className="field-label">{t("filters.maxConstructionArea")}</label>
-            <Input
-              type="number"
-              value={values.maxConstructionArea || ""}
-              onChange={(event) => update("maxConstructionArea", event.target.value)}
-              placeholder="400"
-            />
-          </div>
-          <div>
-            <label className="field-label">{t("filters.minLotArea")}</label>
-            <Input
-              type="number"
-              value={values.minLotArea || ""}
-              onChange={(event) => update("minLotArea", event.target.value)}
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <label className="field-label">{t("filters.maxLotArea")}</label>
-            <Input
-              type="number"
-              value={values.maxLotArea || ""}
-              onChange={(event) => update("maxLotArea", event.target.value)}
-              placeholder="1000"
-            />
-          </div>
-        </div>
-      </div>
+                  <option value="">{t("common.both")}</option>
+                  {currencies.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <label className="field-label">{t("filters.status")}</label>
+                <Select
+                  value={values.marketStatus || ""}
+                  onChange={(event) => update("marketStatus", event.target.value)}
+                >
+                  <option value="">{t("common.active")}</option>
+                  {PUBLIC_MARKET_STATUSES.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {t(MARKET_LABELS[item.value])}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <label className="field-label">{t("filters.sortBy")}</label>
+                <Select
+                  value={values.sort || ""}
+                  onChange={(event) => update("sort", event.target.value || undefined)}
+                >
+                  <option value="">{t("filters.sortDefault")}</option>
+                  {SORT_OPTIONS.map((item) => (
+                    <option
+                      key={item.value}
+                      value={item.value}
+                      disabled={item.value === "distance" && !(values.lat && values.lng)}
+                    >
+                      {t(item.label)}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
 
-      <div className="surface-soft space-y-4 p-4">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/68">
-          {t("filters.smartToggles")}
-        </div>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-          <Checkbox
-            label={t("filters.furnished")}
-            checked={Boolean(values.furnished)}
-            onChange={(event) => update("furnished", event.target.checked ? true : undefined)}
-          />
-          <Checkbox
-            label={t("filters.petsAllowed")}
-            checked={Boolean(values.petsAllowed)}
-            onChange={(event) => update("petsAllowed", event.target.checked ? true : undefined)}
-          />
-          <Checkbox
-            label={t("filters.depositRequired")}
-            checked={Boolean(values.depositRequired)}
-            onChange={(event) => update("depositRequired", event.target.checked ? true : undefined)}
-          />
-          <Checkbox
-            label={t("filters.featured")}
-            checked={Boolean(values.featured)}
-            onChange={(event) => update("featured", event.target.checked ? true : undefined)}
-          />
-          <Checkbox
-            label={t("filters.recent")}
-            checked={Boolean(values.recent)}
-            onChange={(event) => update("recent", event.target.checked ? true : undefined)}
-          />
-          <Checkbox
-            label={t("filters.privateRoom")}
-            checked={Boolean(values.privateRoom)}
-            onChange={(event) => update("privateRoom", event.target.checked ? true : undefined)}
-          />
-          <Checkbox
-            label={t("filters.privateBathroom")}
-            checked={Boolean(values.privateBathroom)}
-            onChange={(event) => update("privateBathroom", event.target.checked ? true : undefined)}
-          />
-          <Checkbox
-            label={t("filters.utilitiesIncluded")}
-            checked={Boolean(values.utilitiesIncluded)}
-            onChange={(event) => update("utilitiesIncluded", event.target.checked ? true : undefined)}
-          />
-          <Checkbox
-            label={t("filters.studentFriendly")}
-            checked={Boolean(values.studentFriendly)}
-            onChange={(event) => update("studentFriendly", event.target.checked ? true : undefined)}
-          />
-        </div>
-      </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+              <div>
+                <label className="field-label">{t("filters.bedrooms")}</label>
+                <Input
+                  type="number"
+                  value={values.bedrooms || ""}
+                  onChange={(event) => update("bedrooms", event.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="field-label">{t("filters.bathrooms")}</label>
+                <Input
+                  type="number"
+                  value={values.bathrooms || ""}
+                  onChange={(event) => update("bathrooms", event.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="field-label">{t("filters.parkingSpaces")}</label>
+                <Input
+                  type="number"
+                  value={values.parkingSpaces || ""}
+                  onChange={(event) => update("parkingSpaces", event.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="field-label">{t("filters.minConstructionArea")}</label>
+                <Input
+                  type="number"
+                  value={values.minConstructionArea || ""}
+                  onChange={(event) => update("minConstructionArea", event.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="field-label">{t("filters.maxConstructionArea")}</label>
+                <Input
+                  type="number"
+                  value={values.maxConstructionArea || ""}
+                  onChange={(event) => update("maxConstructionArea", event.target.value)}
+                  placeholder="400"
+                />
+              </div>
+              <div>
+                <label className="field-label">{t("filters.minLotArea")}</label>
+                <Input
+                  type="number"
+                  value={values.minLotArea || ""}
+                  onChange={(event) => update("minLotArea", event.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="field-label">{t("filters.maxLotArea")}</label>
+                <Input
+                  type="number"
+                  value={values.maxLotArea || ""}
+                  onChange={(event) => update("maxLotArea", event.target.value)}
+                  placeholder="1000"
+                />
+              </div>
+            </div>
+          </div>
+        </FilterSection>
 
-      <div className="grid gap-4 border-t border-ink/10 pt-5 md:grid-cols-[1fr_auto]">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Button variant="accent" onClick={onSaveSearch} disabled={!canSave} className="w-full sm:w-auto">
-            {t("filters.saveSearch")}
-          </Button>
-          {!canSave ? (
-            <span className="self-center text-xs font-medium text-ink/52">
-              {t("searchPage.loginToSaveSearch")}
-            </span>
-          ) : null}
-        </div>
-        <Button variant="ghost" onClick={onReset} className="w-full sm:w-auto">
-          {t("filters.clear")}
-        </Button>
+        <FilterSection
+          title={t("filters.smartToggles")}
+          caption={
+            language === "en"
+              ? "Rental mode and quick yes/no signals."
+              : "Modalidad de renta y senales rapidas de si/no."
+          }
+          count={smartCount}
+          defaultOpen={smartCount > 0}
+        >
+          <div className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div>
+                <label className="field-label">{t("filters.rentalArrangement")}</label>
+                <Select
+                  value={values.rentalArrangement || ""}
+                  onChange={(event) => update("rentalArrangement", event.target.value)}
+                >
+                  <option value="">{t("common.allFeminine")}</option>
+                  {rentalArrangements.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {t(RENTAL_LABELS[item.value])}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div className="rounded-2xl bg-mist px-4 py-3 text-xs leading-5 text-ink/56 md:col-span-1 xl:col-span-3">
+                <div className="flex items-center gap-2 font-semibold text-ink/70">
+                  <Sparkles className="h-3.5 w-3.5 text-terracotta" />
+                  {language === "en" ? "Smart toggles" : "Senales rapidas"}
+                </div>
+                <p className="mt-1.5">
+                  {language === "en"
+                    ? "Use these to narrow down furnished listings, pet-friendly rentals, featured inventory, or roommate-specific supply."
+                    : "Usa estas senales para acotar amueblados, mascotas, destacadas o inventario especifico para roomies."}
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-x-5 gap-y-3 md:grid-cols-2 xl:grid-cols-3">
+              <Checkbox
+                label={t("filters.furnished")}
+                checked={Boolean(values.furnished)}
+                onChange={(event) => update("furnished", event.target.checked ? true : undefined)}
+              />
+              <Checkbox
+                label={t("filters.petsAllowed")}
+                checked={Boolean(values.petsAllowed)}
+                onChange={(event) => update("petsAllowed", event.target.checked ? true : undefined)}
+              />
+              <Checkbox
+                label={t("filters.depositRequired")}
+                checked={Boolean(values.depositRequired)}
+                onChange={(event) =>
+                  update("depositRequired", event.target.checked ? true : undefined)
+                }
+              />
+              <Checkbox
+                label={t("filters.featured")}
+                checked={Boolean(values.featured)}
+                onChange={(event) => update("featured", event.target.checked ? true : undefined)}
+              />
+              <Checkbox
+                label={t("filters.recent")}
+                checked={Boolean(values.recent)}
+                onChange={(event) => update("recent", event.target.checked ? true : undefined)}
+              />
+              <Checkbox
+                label={t("filters.privateRoom")}
+                checked={Boolean(values.privateRoom)}
+                onChange={(event) => update("privateRoom", event.target.checked ? true : undefined)}
+              />
+              <Checkbox
+                label={t("filters.privateBathroom")}
+                checked={Boolean(values.privateBathroom)}
+                onChange={(event) =>
+                  update("privateBathroom", event.target.checked ? true : undefined)
+                }
+              />
+              <Checkbox
+                label={t("filters.utilitiesIncluded")}
+                checked={Boolean(values.utilitiesIncluded)}
+                onChange={(event) =>
+                  update("utilitiesIncluded", event.target.checked ? true : undefined)
+                }
+              />
+              <Checkbox
+                label={t("filters.studentFriendly")}
+                checked={Boolean(values.studentFriendly)}
+                onChange={(event) =>
+                  update("studentFriendly", event.target.checked ? true : undefined)
+                }
+              />
+            </div>
+          </div>
+        </FilterSection>
       </div>
     </div>
   );
