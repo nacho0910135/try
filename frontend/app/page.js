@@ -4,7 +4,6 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { getFeaturedProperties } from "@/lib/api";
-import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { MapLoadingShell } from "@/components/map/MapLoadingShell";
 import { PropertyCard } from "@/components/property/PropertyCard";
@@ -67,9 +66,7 @@ export default function HomePage() {
         <div className="surface-elevated overflow-hidden bg-hero-grid p-4 sm:p-8 lg:p-10">
           <div className="mx-auto max-w-5xl">
             <div className="max-w-3xl lg:max-w-4xl">
-              <BrandLogo className="mb-4" compact showTagline={false} />
-              <span className="eyebrow">{t("homePage.eyebrow")}</span>
-              <h1 className="mt-5 max-w-3xl font-serif text-[2.2rem] font-semibold leading-[1.02] sm:text-[3.15rem] lg:text-[3.5rem]">
+              <h1 className="max-w-3xl font-serif text-[2.2rem] font-semibold leading-[1.02] sm:text-[3.15rem] lg:text-[3.5rem]">
                 {t("homePage.title")}
               </h1>
               {t("homePage.description") ? (
