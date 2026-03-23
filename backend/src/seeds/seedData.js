@@ -30,7 +30,7 @@ export const seedUsers = [
     email: "sofia@casacr.com",
     password: "Sofia12345",
     phone: "+50670000004",
-    role: "user",
+    role: "owner",
     avatar: "https://placehold.co/200x200/png?text=Sofia"
   }
 ];

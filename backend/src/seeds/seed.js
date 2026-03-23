@@ -24,19 +24,21 @@ const runSeed = async () => {
     adminId: users.find((user) => user.role === "admin")._id,
     agentId: users.find((user) => user.role === "agent")._id,
     ownerId: users.find((user) => user.role === "owner")._id,
-    userId: users.find((user) => user.role === "user")._id
+    viewerId:
+      users.find((user) => user.email === "sofia@casacr.com")?._id ||
+      users.find((user) => user.role === "owner")._id
   };
 
   const properties = await Property.create(seedProperties(owners));
 
   await Favorite.create([
-    { user: owners.userId, property: properties[0]._id },
-    { user: owners.userId, property: properties[4]._id }
+    { user: owners.viewerId, property: properties[0]._id },
+    { user: owners.viewerId, property: properties[4]._id }
   ]);
 
   await SavedSearch.create([
     {
-      user: owners.userId,
+      user: owners.viewerId,
       name: "Casas en Escazu",
       filters: {
         businessType: "sale",
@@ -50,7 +52,7 @@ const runSeed = async () => {
   await Lead.create([
     {
       property: properties[0]._id,
-      fromUser: owners.userId,
+      fromUser: owners.viewerId,
       toUser: owners.agentId,
       name: "Sofia Rojas",
       email: "sofia@casacr.com",

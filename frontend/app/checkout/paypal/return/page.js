@@ -11,17 +11,19 @@ function PayPalReturnContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [errorMessage, setErrorMessage] = useState("");
+  const kind = searchParams.get("kind") || "donation";
+  const isBoostCheckout = kind === "boost";
+  const fallbackReturnPath = isBoostCheckout ? "/dashboard/properties" : "/donate";
 
   useEffect(() => {
     const cancelled = searchParams.get("cancelled") === "1";
     const orderId = searchParams.get("token");
-    const kind = searchParams.get("kind") || "donation";
 
     if (cancelled) {
       router.replace(
-        kind === "boost"
+        isBoostCheckout
           ? "/dashboard/properties?paypal=boost-cancelled"
-          : "/dashboard/business?paypal=donation-cancelled"
+          : "/donate?paypal=donation-cancelled"
       );
       return;
     }
@@ -34,7 +36,7 @@ function PayPalReturnContent() {
     const confirmOrder = async () => {
       try {
         const data = await capturePayPalOrder(orderId);
-        router.replace(data.capture.redirectPath || "/dashboard/business");
+        router.replace(data.capture.redirectPath || fallbackReturnPath);
       } catch (error) {
         const redirectPath = error.response?.data?.details?.redirectPath;
 
@@ -50,7 +52,7 @@ function PayPalReturnContent() {
     };
 
     confirmOrder();
-  }, [router, searchParams]);
+  }, [fallbackReturnPath, isBoostCheckout, router, searchParams]);
 
   if (!errorMessage) {
     return <LoadingState label="Confirmando tu pago con PayPal..." />;
@@ -62,12 +64,25 @@ function PayPalReturnContent() {
       <h1 className="mt-4 font-serif text-4xl font-semibold">No pudimos confirmar el checkout</h1>
       <p className="mt-3 text-sm leading-7 text-ink/65">{errorMessage}</p>
       <div className="mt-6 flex flex-wrap gap-3">
-        <Link href="/dashboard/business">
-          <Button>Volver al panel comercial</Button>
-        </Link>
-        <Link href="/dashboard/properties">
-          <Button variant="secondary">Volver a mis propiedades</Button>
-        </Link>
+        {isBoostCheckout ? (
+          <>
+            <Link href="/dashboard/business">
+              <Button>Volver al panel comercial</Button>
+            </Link>
+            <Link href="/dashboard/properties">
+              <Button variant="secondary">Volver a mis propiedades</Button>
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link href="/donate">
+              <Button>Volver a donaciones</Button>
+            </Link>
+            <Link href="/">
+              <Button variant="secondary">Ir al inicio</Button>
+            </Link>
+          </>
+        )}
       </div>
     </section>
   );
