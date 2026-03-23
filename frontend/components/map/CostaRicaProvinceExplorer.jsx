@@ -226,6 +226,38 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
     [focusProvince.name]
   );
 
+  const provinceLabelLayer = useMemo(
+    () => ({
+      id: "province-labels",
+      type: "symbol",
+      layout: {
+        "text-field": ["get", "name"],
+        "text-size": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          compact ? 12 : 15,
+          compact ? 10 : 13
+        ],
+        "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+        "text-letter-spacing": compact ? 0.02 : 0.04,
+        "text-allow-overlap": true,
+        "text-ignore-placement": true
+      },
+      paint: {
+        "text-color": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          "#0f172a",
+          "#1f3f52"
+        ],
+        "text-halo-color": "rgba(255,255,255,0.92)",
+        "text-halo-width": 1.4,
+        "text-halo-blur": 0.6
+      }
+    }),
+    [compact, focusProvince.name]
+  );
+
   const handleProvinceSelection = useCallback(
     (provinceName) => {
       onSelectProvince?.(provinceName);
@@ -363,6 +395,7 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
                 <Source id="cr-provinces" type="geojson" data={interactiveProvinceGeoJson}>
                   <Layer {...provinceFillLayer} />
                   <Layer {...provinceLineLayer} />
+                  <Layer {...provinceLabelLayer} />
                 </Source>
               ) : null}
             </Map>
