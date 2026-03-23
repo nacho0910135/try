@@ -12,6 +12,7 @@
     "lint": "node --check src/server.js"
   },
   "dependencies": {
+    "@paypal/paypal-server-sdk": "^2.2.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
     "cors": "^2.8.5",
