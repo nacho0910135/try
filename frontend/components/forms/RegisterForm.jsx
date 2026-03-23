@@ -25,7 +25,7 @@ export function RegisterForm() {
         name: z.string().min(2, t("registerForm.errorName")),
         email: z.string().email(t("registerForm.errorEmail")),
         phone: z.string().min(7, t("registerForm.errorPhone")),
-        role: z.enum(["user", "agent", "owner"]),
+        role: z.enum(["agent", "owner"]),
         password: z.string().min(8, t("registerForm.errorPassword"))
       }),
     [t]
@@ -41,7 +41,7 @@ export function RegisterForm() {
       name: "",
       email: "",
       phone: "",
-      role: "user",
+      role: "owner",
       password: ""
     }
   });
@@ -95,7 +95,6 @@ export function RegisterForm() {
         <div>
           <label className="field-label">{t("registerForm.profile")}</label>
           <Select {...register("role")}>
-            <option value="user">{t("registerForm.roleUser")}</option>
             <option value="agent">{t("registerForm.roleAgent")}</option>
             <option value="owner">{t("registerForm.roleOwner")}</option>
           </Select>
