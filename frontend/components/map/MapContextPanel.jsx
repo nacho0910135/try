@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import {
   BriefcaseBusiness,
   GraduationCap,
@@ -10,7 +11,7 @@ import {
   Palmtree
 } from "lucide-react";
 import { useLanguage } from "@/components/layout/LanguageProvider";
-import { mapContextLayers } from "@/lib/costa-rica-map-context";
+import { getMapContextPoint, mapContextLayers } from "@/lib/costa-rica-map-context";
 import { Button } from "@/components/ui/Button";
 
 const layerIcons = {
@@ -22,7 +23,7 @@ const layerIcons = {
   investment: LineChart
 };
 
-export function MapContextPanel({
+const MapContextPanelComponent = function MapContextPanel({
   activeLayerIds = [],
   focusedPointId,
   radiusKm,
@@ -31,9 +32,10 @@ export function MapContextPanel({
   onClearFocus
 }) {
   const { language } = useLanguage();
-  const focusedPoint = mapContextLayers
-    .flatMap((layer) => layer.points.map((point) => ({ ...point, layerId: layer.id })))
-    .find((point) => point.id === focusedPointId);
+  const focusedPoint = useMemo(
+    () => (focusedPointId ? getMapContextPoint(focusedPointId) : null),
+    [focusedPointId]
+  );
 
   return (
     <div className="surface-elevated space-y-5 p-5">
@@ -184,4 +186,6 @@ export function MapContextPanel({
       ) : null}
     </div>
   );
-}
+};
+
+export const MapContextPanel = memo(MapContextPanelComponent);

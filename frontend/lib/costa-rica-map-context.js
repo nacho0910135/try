@@ -901,14 +901,35 @@ export const mapContextLayers = [
   }
 ];
 
+const mapContextLayerById = new Map(mapContextLayers.map((layer) => [layer.id, layer]));
+const allMapContextPoints = mapContextLayers.flatMap((layer) =>
+  layer.points.map((pt) => ({
+    ...pt,
+    layerId: layer.id,
+    color: layer.color
+  }))
+);
+const mapContextPointById = new Map(allMapContextPoints.map((point) => [point.id, point]));
+const visiblePointsCache = new Map();
+
 export const getMapContextLayer = (layerId) =>
-  mapContextLayers.find((layer) => layer.id === layerId) || null;
+  mapContextLayerById.get(layerId) || null;
 
 export const getMapContextPoint = (pointId) =>
-  mapContextLayers.flatMap((layer) => layer.points).find((pt) => pt.id === pointId) || null;
+  mapContextPointById.get(pointId) || null;
 
-export const getVisibleMapContextPoints = (activeLayerIds = []) =>
-  mapContextLayers
+export const getVisibleMapContextPoints = (activeLayerIds = []) => {
+  if (!activeLayerIds.length) {
+    return [];
+  }
+
+  const cacheKey = [...activeLayerIds].sort().join("|");
+
+  if (visiblePointsCache.has(cacheKey)) {
+    return visiblePointsCache.get(cacheKey);
+  }
+
+  const visiblePoints = mapContextLayers
     .filter((layer) => activeLayerIds.includes(layer.id))
     .flatMap((layer) =>
       layer.points.map((pt) => ({
@@ -917,3 +938,7 @@ export const getVisibleMapContextPoints = (activeLayerIds = []) =>
         color: layer.color
       }))
     );
+
+  visiblePointsCache.set(cacheKey, visiblePoints);
+  return visiblePoints;
+};

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSavedSearch, getFavorites, getProperties } from "@/lib/api";
 import { serializePropertyQuery } from "@/lib/utils";
@@ -179,22 +179,25 @@ function SearchPageContent() {
     loadFavorites();
   }, [token]);
 
-  const updateFilters = (patch) => {
-    setPage(1);
-    if (
-      "province" in patch ||
-      "canton" in patch ||
-      "district" in patch ||
-      "lat" in patch ||
-      "lng" in patch ||
-      "bounds" in patch ||
-      "polygon" in patch
-    ) {
-      setFocusedContextPoint(null);
-      setSelectedPropertyId(null);
-    }
-    setFilters(patch);
-  };
+  const updateFilters = useCallback(
+    (patch) => {
+      setPage(1);
+      if (
+        "province" in patch ||
+        "canton" in patch ||
+        "district" in patch ||
+        "lat" in patch ||
+        "lng" in patch ||
+        "bounds" in patch ||
+        "polygon" in patch
+      ) {
+        setFocusedContextPoint(null);
+        setSelectedPropertyId(null);
+      }
+      setFilters(patch);
+    },
+    [setFilters, setSelectedPropertyId]
+  );
 
   const handleReset = () => {
     setPage(1);
@@ -265,50 +268,108 @@ function SearchPageContent() {
     }
   };
 
-  const handleProvinceAtlasSelection = (provinceName) => {
-    setSelectedPropertyId(null);
-    setPage(1);
-    setFocusedContextPoint(null);
-    setFilters({
-      province: provinceName,
-      canton: undefined,
-      district: undefined,
-      lat: undefined,
-      lng: undefined,
-      bounds: undefined,
-      polygon: undefined
-    });
-    setMessage("");
-  };
+  const handleProvinceAtlasSelection = useCallback(
+    (provinceName) => {
+      setSelectedPropertyId(null);
+      setPage(1);
+      setFocusedContextPoint(null);
+      setFilters({
+        province: provinceName,
+        canton: undefined,
+        district: undefined,
+        lat: undefined,
+        lng: undefined,
+        bounds: undefined,
+        polygon: undefined
+      });
+      setMessage("");
+    },
+    [setFilters, setSelectedPropertyId]
+  );
 
-  const toggleContextLayer = (layerId) => {
+  const toggleContextLayer = useCallback((layerId) => {
     setActiveContextLayers((current) =>
       current.includes(layerId)
         ? current.filter((item) => item !== layerId)
         : [...current, layerId]
     );
-  };
+  }, []);
 
-  const handleFocusContextPoint = (point) => {
-    setFocusedContextPoint(point);
-    setSelectedPropertyId(null);
-    setPage(1);
-    setFilters({
-      province: point.province,
-      canton: point.canton,
-      district: point.district,
-      lat: point.lat,
-      lng: point.lng,
-      radiusKm: filters.radiusKm || 8,
-      bounds: undefined,
-      polygon: undefined
+  const handleFocusContextPoint = useCallback(
+    (point) => {
+      setFocusedContextPoint(point);
+      setSelectedPropertyId(null);
+      setPage(1);
+      setFilters({
+        province: point.province,
+        canton: point.canton,
+        district: point.district,
+        lat: point.lat,
+        lng: point.lng,
+        radiusKm: filters.radiusKm || 8,
+        bounds: undefined,
+        polygon: undefined
+      });
+      setMessage(
+        language === "en"
+          ? `Showing listings near ${point.name}.`
+          : `Mostrando propiedades cerca de ${point.name}.`
+      );
+    },
+    [filters.radiusKm, language, setFilters, setSelectedPropertyId]
+  );
+
+  const handleMapDistrictSelection = useCallback(
+    ({ province, canton, district }) => {
+      setFocusedContextPoint(null);
+      updateFilters({
+        province,
+        canton,
+        district,
+        lat: undefined,
+        lng: undefined,
+        bounds: undefined,
+        polygon: undefined
+      });
+    },
+    [updateFilters]
+  );
+
+  const handleMapBoundsChange = useCallback(
+    (bounds) => {
+      setFocusedContextPoint(null);
+      updateFilters({
+        lat: undefined,
+        lng: undefined,
+        bounds,
+        polygon: undefined
+      });
+    },
+    [updateFilters]
+  );
+
+  const handleMapPolygonChange = useCallback(
+    (polygon) => {
+      setFocusedContextPoint(null);
+      updateFilters({
+        lat: undefined,
+        lng: undefined,
+        polygon,
+        bounds: undefined
+      });
+    },
+    [updateFilters]
+  );
+
+  const handleClearContextFocus = useCallback(() => {
+    setFocusedContextPoint(null);
+    updateFilters({
+      lat: undefined,
+      lng: undefined,
+      bounds: undefined
     });
-    setMessage(
-      language === "en"
-        ? `Showing listings near ${point.name}.`
-        : `Mostrando propiedades cerca de ${point.name}.`
-    );
-  };
+    setMessage("");
+  }, [updateFilters]);
 
   return (
     <div className="app-shell section-pad space-y-6 sm:space-y-7">
@@ -409,36 +470,9 @@ function SearchPageContent() {
             focusedContextPoint={focusedContextPoint}
             onSelectProperty={setSelectedPropertyId}
             onSelectContextPoint={handleFocusContextPoint}
-            onSelectDistrict={({ province, canton, district }) => {
-              setFocusedContextPoint(null);
-              updateFilters({
-                province,
-                canton,
-                district,
-                lat: undefined,
-                lng: undefined,
-                bounds: undefined,
-                polygon: undefined
-              });
-            }}
-            onBoundsChange={(bounds) => {
-              setFocusedContextPoint(null);
-              updateFilters({
-                lat: undefined,
-                lng: undefined,
-                bounds,
-                polygon: undefined
-              });
-            }}
-            onPolygonChange={(polygon) => {
-              setFocusedContextPoint(null);
-              updateFilters({
-                lat: undefined,
-                lng: undefined,
-                polygon,
-                bounds: undefined
-              });
-            }}
+            onSelectDistrict={handleMapDistrictSelection}
+            onBoundsChange={handleMapBoundsChange}
+            onPolygonChange={handleMapPolygonChange}
             minHeight={760}
           />
         </div>
@@ -450,15 +484,7 @@ function SearchPageContent() {
         radiusKm={filters.radiusKm}
         onToggleLayer={toggleContextLayer}
         onFocusPoint={handleFocusContextPoint}
-        onClearFocus={() => {
-          setFocusedContextPoint(null);
-          updateFilters({
-            lat: undefined,
-            lng: undefined,
-            bounds: undefined
-          });
-          setMessage("");
-        }}
+        onClearFocus={handleClearContextFocus}
       />
 
       <ConversationalSearchPanel onApply={handleConversationalSearch} />

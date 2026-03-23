@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPinned, Sparkles } from "lucide-react";
 import Map, { Layer, NavigationControl, Source } from "react-map-gl";
@@ -12,9 +12,19 @@ import { mapDefaultCenter } from "@/lib/constants";
 import { resolveMapStyle } from "@/lib/map-style";
 import { cn } from "@/lib/utils";
 
+const provinceGeoJsonCache = {
+  data: null,
+  promise: null
+};
+const provinceGeoJsonBoundsCache = new WeakMap();
+
 const getGeoJsonBounds = (featureCollection) => {
   if (!featureCollection?.features?.length) {
     return null;
+  }
+
+  if (provinceGeoJsonBoundsCache.has(featureCollection)) {
+    return provinceGeoJsonBoundsCache.get(featureCollection);
   }
 
   let minLng = Infinity;
@@ -47,13 +57,46 @@ const getGeoJsonBounds = (featureCollection) => {
     return null;
   }
 
-  return [
+  const bounds = [
     [minLng, minLat],
     [maxLng, maxLat]
   ];
+
+  provinceGeoJsonBoundsCache.set(featureCollection, bounds);
+  return bounds;
 };
 
-export function CostaRicaProvinceExplorer({
+const loadProvinceGeoJson = async () => {
+  if (provinceGeoJsonCache.data) {
+    return provinceGeoJsonCache.data;
+  }
+
+  if (provinceGeoJsonCache.promise) {
+    return provinceGeoJsonCache.promise;
+  }
+
+  provinceGeoJsonCache.promise = fetch("/geo/cr-provinces.json")
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error("Failed to load Costa Rica provinces GeoJSON");
+      }
+
+      const data = await response.json();
+      provinceGeoJsonCache.data = data;
+      provinceGeoJsonCache.promise = null;
+      return data;
+    })
+    .catch((error) => {
+      provinceGeoJsonCache.promise = null;
+      throw error;
+    });
+
+  return provinceGeoJsonCache.promise;
+};
+
+const interactiveLayerIds = ["province-fills"];
+
+const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
   selectedProvince,
   onSelectProvince,
   compact = false,
@@ -100,15 +143,23 @@ export function CostaRicaProvinceExplorer({
   }, [provinceGeoJson]);
 
   useEffect(() => {
-    const loadGeoJson = async () => {
-      const response = await fetch("/geo/cr-provinces.json");
-      const data = await response.json();
-      setProvinceGeoJson(data);
-    };
+    let cancelled = false;
 
-    loadGeoJson().catch(() => {
-      setProvinceGeoJson(null);
-    });
+    loadProvinceGeoJson()
+      .then((data) => {
+        if (!cancelled) {
+          setProvinceGeoJson(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setProvinceGeoJson(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -135,6 +186,87 @@ export function CostaRicaProvinceExplorer({
     });
   }, [provinceGeoJson]);
 
+  const provinceFillLayer = useMemo(
+    () => ({
+      id: "province-fills",
+      type: "fill",
+      paint: {
+        "fill-color": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          ["get", "activeFill"],
+          ["get", "fill"]
+        ],
+        "fill-opacity": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          0.8,
+          0.56
+        ]
+      }
+    }),
+    [focusProvince.name]
+  );
+
+  const provinceLineLayer = useMemo(
+    () => ({
+      id: "province-lines",
+      type: "line",
+      paint: {
+        "line-color": "#ffffff",
+        "line-width": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          3.2,
+          2.1
+        ],
+        "line-opacity": 0.95
+      }
+    }),
+    [focusProvince.name]
+  );
+
+  const handleProvinceSelection = useCallback(
+    (provinceName) => {
+      onSelectProvince?.(provinceName);
+
+      if (navigateOnSelect) {
+        router.push(`/search?province=${encodeURIComponent(provinceName)}`);
+      }
+    },
+    [navigateOnSelect, onSelectProvince, router]
+  );
+
+  const handleMouseMove = useCallback((event) => {
+    const provinceFeature = event.features?.find(
+      (feature) => feature.layer.id === "province-fills"
+    );
+    const nextHoveredProvince = provinceFeature?.properties?.name || null;
+
+    setHoveredProvince((current) =>
+      current === nextHoveredProvince ? current : nextHoveredProvince
+    );
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredProvince((current) => (current === null ? current : null));
+  }, []);
+
+  const handleProvinceClick = useCallback(
+    (event) => {
+      const provinceFeature = event.features?.find(
+        (feature) => feature.layer.id === "province-fills"
+      );
+
+      if (!provinceFeature?.properties?.name) {
+        return;
+      }
+
+      handleProvinceSelection(provinceFeature.properties.name);
+    },
+    [handleProvinceSelection]
+  );
+
   if (!token) {
     return (
         <div className="surface p-6 text-sm text-ink/65">
@@ -142,48 +274,6 @@ export function CostaRicaProvinceExplorer({
         </div>
       );
   }
-
-  const provinceFillLayer = {
-    id: "province-fills",
-    type: "fill",
-    paint: {
-      "fill-color": [
-        "case",
-        ["==", ["get", "name"], focusProvince.name],
-        ["get", "activeFill"],
-        ["get", "fill"]
-      ],
-      "fill-opacity": [
-        "case",
-        ["==", ["get", "name"], focusProvince.name],
-        0.8,
-        0.56
-      ]
-    }
-  };
-
-  const provinceLineLayer = {
-    id: "province-lines",
-    type: "line",
-    paint: {
-      "line-color": "#ffffff",
-      "line-width": [
-        "case",
-        ["==", ["get", "name"], focusProvince.name],
-        3.2,
-        2.1
-      ],
-      "line-opacity": 0.95
-    }
-  };
-
-  const handleProvinceSelection = (provinceName) => {
-    onSelectProvince?.(provinceName);
-
-    if (navigateOnSelect) {
-      router.push(`/search?province=${encodeURIComponent(provinceName)}`);
-    }
-  };
 
   return (
     <div className={cn(`surface overflow-hidden ${compact ? "p-0" : "p-3"}`, className)}>
@@ -247,30 +337,15 @@ export function CostaRicaProvinceExplorer({
               mapboxAccessToken={token}
               mapLib={mapboxgl}
               mapStyle={mapStyle}
+              reuseMaps
               initialViewState={{ ...mapDefaultCenter, zoom: 7.1 }}
-              interactiveLayerIds={["province-fills"]}
+              interactiveLayerIds={interactiveLayerIds}
               minZoom={5.7}
               maxZoom={8.5}
               attributionControl={false}
-              onMouseMove={(event) => {
-                const provinceFeature = event.features?.find(
-                  (feature) => feature.layer.id === "province-fills"
-                );
-
-                setHoveredProvince(provinceFeature?.properties?.name || null);
-              }}
-              onMouseLeave={() => setHoveredProvince(null)}
-              onClick={(event) => {
-                const provinceFeature = event.features?.find(
-                  (feature) => feature.layer.id === "province-fills"
-                );
-
-                if (!provinceFeature?.properties?.name) {
-                  return;
-                }
-
-                handleProvinceSelection(provinceFeature.properties.name);
-              }}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              onClick={handleProvinceClick}
         style={{
           width: "100%",
           height:
@@ -357,4 +432,6 @@ export function CostaRicaProvinceExplorer({
       </div>
     </div>
   );
-}
+};
+
+export const CostaRicaProvinceExplorer = memo(CostaRicaProvinceExplorerComponent);
