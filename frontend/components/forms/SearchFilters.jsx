@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, MapPinned, Search, SlidersHorizontal, Sparkles } from "lucide-react";
+import { ChevronDown, MapPinned, Search, Sparkles } from "lucide-react";
 import {
   businessTypes,
   currencies,
@@ -161,20 +161,15 @@ export function SearchFilters({
 
   return (
     <div className="surface-elevated space-y-4 p-4 md:p-5">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-pine/72">
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            {t("filters.title")}
-          </div>
-          <p className="max-w-3xl text-sm leading-6 text-ink/58">{t("filters.description")}</p>
-        </div>
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-          <div className="text-xs font-medium leading-5 text-ink/56">{autosaveCopy}</div>
-          <Button variant="ghost" onClick={onReset} className="w-full sm:w-auto">
-            {t("filters.clear")}
-          </Button>
-        </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+        <div className="text-xs font-medium leading-5 text-ink/56">{autosaveCopy}</div>
+        <Button
+          variant="secondary"
+          onClick={onReset}
+          className="w-full bg-lagoon/12 text-lagoon hover:bg-lagoon/18 sm:w-auto"
+        >
+          {t("filters.clear")}
+        </Button>
       </div>
 
       <div className="surface-soft border border-ink/10 bg-white/85 p-4">
