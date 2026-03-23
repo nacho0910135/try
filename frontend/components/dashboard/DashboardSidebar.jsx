@@ -16,6 +16,7 @@ const items = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const activePathname = pathname || "";
 
   return (
     <aside className="surface h-fit p-4">
@@ -29,7 +30,7 @@ export function DashboardSidebar() {
             href={item.href}
             className={cn(
               "block rounded-2xl px-4 py-3 text-sm font-medium transition",
-              pathname === item.href || pathname.startsWith(`${item.href}/`)
+              activePathname === item.href || activePathname.startsWith(`${item.href}/`)
                 ? "bg-ink text-white"
                 : "text-ink/70 hover:bg-mist"
             )}

@@ -88,21 +88,47 @@ export default function DashboardBusinessPage() {
     );
   }
 
-  const {
-    summary,
-    leadFunnel,
-    offerFunnel,
-    adPerformance,
-    timeline,
-    topPerformers,
-    provincePerformance,
-    trustCoverage,
-    optimizationBoard,
-    actionableInsights,
-    recentLeads,
-    recentOffers
-  } = overview;
-  const donationConfig = overview.billing?.donations;
+  const summary = {
+    activeListings: Number(overview.summary?.activeListings || 0),
+    totalListings: Number(overview.summary?.totalListings || 0),
+    totalViews: Number(overview.summary?.totalViews || 0),
+    totalLeads: Number(overview.summary?.totalLeads || 0),
+    totalOffers: Number(overview.summary?.totalOffers || 0),
+    leadConversionRate: Number(overview.summary?.leadConversionRate || 0),
+    offerConversionRate: Number(overview.summary?.offerConversionRate || 0)
+  };
+  const leadFunnel = Array.isArray(overview.leadFunnel) ? overview.leadFunnel : [];
+  const offerFunnel = Array.isArray(overview.offerFunnel) ? overview.offerFunnel : [];
+  const adPerformance = {
+    promotedListings: Number(overview.adPerformance?.promotedListings || 0),
+    promotedSlots: Number(overview.adPerformance?.promotedSlots || 0),
+    estimatedReach: Number(overview.adPerformance?.estimatedReach || 0),
+    views: Number(overview.adPerformance?.views || 0),
+    favorites: Number(overview.adPerformance?.favorites || 0),
+    leads: Number(overview.adPerformance?.leads || 0),
+    offers: Number(overview.adPerformance?.offers || 0),
+    ctr: Number(overview.adPerformance?.ctr || 0),
+    leadRate: Number(overview.adPerformance?.leadRate || 0),
+    offerRate: Number(overview.adPerformance?.offerRate || 0)
+  };
+  const timeline = Array.isArray(overview.timeline) ? overview.timeline : [];
+  const topPerformers = Array.isArray(overview.topPerformers) ? overview.topPerformers : [];
+  const provincePerformance = Array.isArray(overview.provincePerformance)
+    ? overview.provincePerformance
+    : [];
+  const trustCoverage = Array.isArray(overview.trustCoverage) ? overview.trustCoverage : [];
+  const optimizationBoard = Array.isArray(overview.optimizationBoard)
+    ? overview.optimizationBoard
+    : [];
+  const actionableInsights = Array.isArray(overview.actionableInsights)
+    ? overview.actionableInsights
+    : [];
+  const recentLeads = Array.isArray(overview.recentLeads) ? overview.recentLeads : [];
+  const recentOffers = Array.isArray(overview.recentOffers) ? overview.recentOffers : [];
+  const donationConfig = overview.billing?.donations || null;
+  const donationSuggestions = Array.isArray(donationConfig?.suggestedAmounts)
+    ? donationConfig.suggestedAmounts
+    : [];
 
   const handleDonation = async (amountOverride) => {
     try {
@@ -111,7 +137,13 @@ export default function DashboardBusinessPage() {
         amount: amountOverride ?? donationAmount,
         donorName
       });
-      window.location.href = data.order.approvalUrl;
+      const approvalUrl = data?.order?.approvalUrl;
+
+      if (!approvalUrl) {
+        throw new Error("PayPal no devolvio una URL de aprobacion valida.");
+      }
+
+      window.location.href = approvalUrl;
     } catch (error) {
       setFlashMessage(error.response?.data?.message || "No se pudo iniciar la donacion con PayPal.");
     } finally {
@@ -230,7 +262,7 @@ export default function DashboardBusinessPage() {
             mejorando la experiencia.
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {(donationConfig?.suggestedAmounts || []).map((amount) => (
+            {donationSuggestions.map((amount) => (
               <Button
                 key={amount}
                 variant="secondary"
@@ -314,14 +346,20 @@ export default function DashboardBusinessPage() {
             Siguientes acciones sugeridas
           </div>
           <div className="mt-4 space-y-3">
-            {actionableInsights.map((insight) => (
-              <div
-                key={insight}
-                className="rounded-[22px] border border-ink/10 bg-white p-4 text-sm leading-7 text-ink/70"
-              >
-                {insight}
+            {actionableInsights.length ? (
+              actionableInsights.map((insight) => (
+                <div
+                  key={insight}
+                  className="rounded-[22px] border border-ink/10 bg-white p-4 text-sm leading-7 text-ink/70"
+                >
+                  {insight}
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[22px] border border-ink/10 bg-white p-4 text-sm leading-7 text-ink/70">
+                Aun no hay suficientes datos para sugerir acciones comerciales.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>

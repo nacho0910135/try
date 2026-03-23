@@ -73,35 +73,56 @@ export default function DashboardPage() {
     );
   }
 
+  const safeSummary = {
+    activeProperties: Number(summary.activeProperties || 0),
+    properties: Number(summary.properties || 0),
+    totalViews: Number(summary.totalViews || 0),
+    leadsReceived: Number(summary.leadsReceived || 0),
+    totalLeadsOnListings: Number(summary.totalLeadsOnListings || 0),
+    offersReceived: Number(summary.offersReceived || 0),
+    totalOffersOnListings: Number(summary.totalOffersOnListings || 0),
+    conversionRate: Number(summary.conversionRate || 0),
+    featuredProperties: Number(summary.featuredProperties || 0)
+  };
+  const verification = {
+    status: "none",
+    requestedBadge: "Cuenta verificada",
+    ...(summary.verification || {})
+  };
+  const alertCenter = {
+    newSearchMatches: 0,
+    dueLeadActionsCount: 0,
+    highlightedSearches: [],
+    dueLeadActions: [],
+    ...(summary.alertCenter || {})
+  };
+
   const cards = [
     {
       label: "Propiedades activas",
-      value: summary.activeProperties,
-      helper: `${summary.properties} en total`,
+      value: safeSummary.activeProperties,
+      helper: `${safeSummary.properties} en total`,
       href: "/dashboard/properties"
     },
     {
       label: "Visualizaciones",
-      value: summary.totalViews?.toLocaleString("es-CR") || 0,
+      value: safeSummary.totalViews.toLocaleString("es-CR"),
       helper: "trafico acumulado",
       href: "/dashboard/business"
     },
     {
       label: "Leads recibidos",
-      value: summary.leadsReceived,
-      helper: `${summary.totalLeadsOnListings || 0} en tus anuncios`,
+      value: safeSummary.leadsReceived,
+      helper: `${safeSummary.totalLeadsOnListings} en tus anuncios`,
       href: "/dashboard/leads"
     },
     {
       label: "Ofertas recibidas",
-      value: summary.offersReceived || 0,
-      helper: `${summary.totalOffersOnListings || 0} en tus anuncios`,
+      value: safeSummary.offersReceived,
+      helper: `${safeSummary.totalOffersOnListings} en tus anuncios`,
       href: "/dashboard/offers"
     }
   ];
-
-  const verification = summary.verification || {};
-  const alertCenter = summary.alertCenter || {};
   const verificationToneClass =
     verification.status === "verified"
       ? "border-pine/20 bg-pine/10 text-pine"
@@ -160,7 +181,7 @@ export default function DashboardPage() {
               Ver propiedades y publicar es gratis mientras crecemos en afluencia.
             </div>
             <div className="mt-4 text-sm text-ink/70">
-              {summary.activeProperties || 0} activas - {summary.featuredProperties || 0} con boost de visibilidad
+              {safeSummary.activeProperties} activas - {safeSummary.featuredProperties} con boost de visibilidad
             </div>
           </div>
         </div>
@@ -235,7 +256,7 @@ export default function DashboardPage() {
           <Target className="h-5 w-5 text-terracotta" />
           <h2 className="mt-4 text-2xl font-semibold">Embudo comercial</h2>
           <p className="mt-3 text-sm leading-7 text-ink/65">
-            Tu tasa actual de conversion es de <strong>{summary.conversionRate || 0}%</strong>. Usa el panel de negocio para ver que anuncios convierten mejor en leads y ofertas.
+            Tu tasa actual de conversion es de <strong>{safeSummary.conversionRate}%</strong>. Usa el panel de negocio para ver que anuncios convierten mejor en leads y ofertas.
           </p>
           <Link href="/dashboard/business" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-lagoon">
             Abrir visibilidad y metricas
@@ -246,7 +267,7 @@ export default function DashboardPage() {
           <Sparkles className="h-5 w-5 text-lagoon" />
           <h2 className="mt-4 text-2xl font-semibold">Inventario y boost de visibilidad</h2>
           <p className="mt-3 text-sm leading-7 text-ink/65">
-            Tienes {summary.featuredProperties || 0} publicaciones destacadas. Ese es el unico upgrade comercial
+            Tienes {safeSummary.featuredProperties} publicaciones destacadas. Ese es el unico upgrade comercial
             activo en esta etapa: usar destacados como boost de visibilidad para conseguir mas alcance, leads y cierres.
           </p>
           <div className="mt-4 flex gap-3">
