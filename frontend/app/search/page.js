@@ -18,6 +18,7 @@ import { ConversationalSearchPanel } from "@/components/search/ConversationalSea
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { SectionErrorBoundary } from "@/components/ui/SectionErrorBoundary";
 import { hasCommercialDashboardAccess } from "@/lib/user-access";
 import {
   buildContextResultsSummary,
@@ -426,13 +427,24 @@ function SearchPageContent() {
 
       <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)] xl:gap-5">
         <div className="order-2 xl:order-1 xl:sticky xl:top-24 xl:h-fit xl:self-start">
-          <CostaRicaProvinceExplorer
-            selectedProvince={filters.province}
-            onSelectProvince={handleProvinceAtlasSelection}
-            compact
-            navigateOnSelect={false}
-            mapMinHeight={280}
-          />
+          <SectionErrorBoundary
+            source="search-province-explorer"
+            resetKeys={[filters.province, language]}
+            title={language === "en" ? "Province map unavailable" : "Mapa de provincias no disponible"}
+            description={
+              language === "en"
+                ? "The quick province explorer failed, but you can still use the filters and listings."
+                : "El explorador rapido de provincias fallo, pero aun puedes usar filtros y publicaciones."
+            }
+          >
+            <CostaRicaProvinceExplorer
+              selectedProvince={filters.province}
+              onSelectProvince={handleProvinceAtlasSelection}
+              compact
+              navigateOnSelect={false}
+              mapMinHeight={280}
+            />
+          </SectionErrorBoundary>
         </div>
 
         <div className="order-1 xl:order-2">
@@ -461,39 +473,79 @@ function SearchPageContent() {
               </div>
             </div>
           </div>
-          <SearchMap
-            properties={properties}
-            selectedPropertyId={selectedPropertyId}
-            selectedProvince={filters.province}
-            selectedDistrict={filters.district}
-            activeContextLayers={activeContextLayers}
-            focusedContextPoint={focusedContextPoint}
-            onSelectProperty={setSelectedPropertyId}
-            onSelectContextPoint={handleFocusContextPoint}
-            onSelectDistrict={handleMapDistrictSelection}
-            onBoundsChange={handleMapBoundsChange}
-            onPolygonChange={handleMapPolygonChange}
-            minHeight={760}
-          />
+          <SectionErrorBoundary
+            source="search-price-map"
+            resetKeys={[
+              filters.province,
+              filters.canton,
+              filters.district,
+              selectedPropertyId,
+              activeContextLayers.join("|"),
+              focusedContextPoint?.id || ""
+            ]}
+            title={language === "en" ? "Price map unavailable" : "Mapa de precios no disponible"}
+            description={
+              language === "en"
+                ? "The interactive map failed, but the rest of the search experience is still available below."
+                : "El mapa interactivo fallo, pero el resto de la busqueda sigue disponible mas abajo."
+            }
+          >
+            <SearchMap
+              properties={properties}
+              selectedPropertyId={selectedPropertyId}
+              selectedProvince={filters.province}
+              selectedDistrict={filters.district}
+              activeContextLayers={activeContextLayers}
+              focusedContextPoint={focusedContextPoint}
+              onSelectProperty={setSelectedPropertyId}
+              onSelectContextPoint={handleFocusContextPoint}
+              onSelectDistrict={handleMapDistrictSelection}
+              onBoundsChange={handleMapBoundsChange}
+              onPolygonChange={handleMapPolygonChange}
+              minHeight={760}
+            />
+          </SectionErrorBoundary>
         </div>
       </div>
 
-      <MapContextPanel
-        activeLayerIds={activeContextLayers}
-        focusedPointId={focusedContextPoint?.id}
-        radiusKm={filters.radiusKm}
-        onToggleLayer={toggleContextLayer}
-        onFocusPoint={handleFocusContextPoint}
-        onClearFocus={handleClearContextFocus}
-      />
+      <SectionErrorBoundary
+        source="search-context-panel"
+        resetKeys={[activeContextLayers.join("|"), focusedContextPoint?.id || "", filters.radiusKm || ""]}
+        title={language === "en" ? "Context panel unavailable" : "Panel de contexto no disponible"}
+        description={
+          language === "en"
+            ? "The context tools failed, but you can still browse properties."
+            : "Las herramientas de contexto fallaron, pero aun puedes explorar propiedades."
+        }
+      >
+        <MapContextPanel
+          activeLayerIds={activeContextLayers}
+          focusedPointId={focusedContextPoint?.id}
+          radiusKm={filters.radiusKm}
+          onToggleLayer={toggleContextLayer}
+          onFocusPoint={handleFocusContextPoint}
+          onClearFocus={handleClearContextFocus}
+        />
+      </SectionErrorBoundary>
 
       <ConversationalSearchPanel onApply={handleConversationalSearch} />
 
-      <MapContextInsights
-        summary={contextSummary}
-        radiusKm={contextRadiusKm}
-        focusedPoint={focusedContextPoint}
-      />
+      <SectionErrorBoundary
+        source="search-context-insights"
+        resetKeys={[activeContextLayers.join("|"), focusedContextPoint?.id || "", contextRadiusKm]}
+        title={language === "en" ? "Zone insights unavailable" : "Insights de zona no disponibles"}
+        description={
+          language === "en"
+            ? "The insight summary failed, but search results are still available."
+            : "El resumen de zona fallo, pero los resultados siguen disponibles."
+        }
+      >
+        <MapContextInsights
+          summary={contextSummary}
+          radiusKm={contextRadiusKm}
+          focusedPoint={focusedContextPoint}
+        />
+      </SectionErrorBoundary>
 
       <div className="space-y-5">
         <div className="surface-soft flex items-center justify-between px-4 py-3">
