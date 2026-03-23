@@ -49,8 +49,26 @@ export const objectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid id"
 export const emailSchema = z.string().email();
 export const passwordSchema = z.string().min(8).max(128);
 export const phoneSchema = z.string().min(7).max(30).optional().or(z.literal(""));
+export const urlLikeSchema = z
+  .string()
+  .trim()
+  .refine((value) => {
+    if (!value) {
+      return false;
+    }
+
+    if (value.startsWith("/") || value.startsWith("data:")) {
+      return true;
+    }
+
+    try {
+      new URL(value);
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  }, "Invalid url");
 export const numberField = () => z.preprocess(parseNumber, z.number().nonnegative().optional());
 export const integerField = () => z.preprocess(parseNumber, z.number().int().nonnegative().optional());
 export const booleanField = () => z.preprocess(parseBoolean, z.boolean().optional());
 export const jsonField = () => z.preprocess(parseJson, z.any().optional());
-

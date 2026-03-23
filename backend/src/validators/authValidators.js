@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { emailSchema, passwordSchema, phoneSchema } from "./common.js";
+import { emailSchema, passwordSchema, phoneSchema, urlLikeSchema } from "./common.js";
 
 export const registerSchema = z.object({
   body: z.object({
@@ -35,7 +35,7 @@ export const updateProfileSchema = z.object({
   body: z.object({
     name: z.string().min(2).max(120).optional(),
     phone: phoneSchema,
-    avatar: z.string().url().optional().or(z.literal("")),
+    avatar: urlLikeSchema.optional().or(z.literal("")),
     password: passwordSchema.optional()
   })
 });

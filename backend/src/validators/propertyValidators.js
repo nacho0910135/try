@@ -13,11 +13,12 @@ import {
   integerField,
   jsonField,
   numberField,
-  objectIdSchema
+  objectIdSchema,
+  urlLikeSchema
 } from "./common.js";
 
 const photoSchema = z.object({
-  url: z.string().url(),
+  url: urlLikeSchema,
   publicId: z.string().optional().nullable(),
   isPrimary: z.boolean().optional(),
   alt: z.string().optional(),
@@ -27,8 +28,8 @@ const photoSchema = z.object({
 
 const mediaSchema = z.object({
   type: z.enum(["image", "video"]),
-  url: z.string().url(),
-  thumbnailUrl: z.string().url().optional(),
+  url: urlLikeSchema,
+  thumbnailUrl: urlLikeSchema.optional(),
   publicId: z.string().optional().nullable(),
   provider: z.string().optional(),
   mimeType: z.string().optional(),
