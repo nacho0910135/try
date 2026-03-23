@@ -63,10 +63,10 @@ export default function HomePage() {
   return (
     <div className="section-pad">
       <section className="app-shell">
-        <div className="surface-elevated overflow-hidden bg-hero-grid px-3 py-3 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
-          <div className="mx-auto max-w-5xl">
-            <div className="max-w-xl lg:max-w-[38rem]">
-              <h1 className="max-w-2xl font-serif text-[2.15rem] font-semibold leading-[0.96] sm:text-[2.95rem] lg:text-[3.25rem]">
+        <div className="surface-elevated overflow-hidden bg-hero-grid px-3 py-3 sm:px-5 sm:py-4 lg:px-6 lg:py-5">
+          <div className="mx-auto max-w-6xl">
+            <div className="max-w-lg lg:max-w-[34rem]">
+              <h1 className="max-w-xl font-serif text-[2.1rem] font-semibold leading-[0.95] sm:text-[2.85rem] lg:text-[3.15rem]">
                 {t("homePage.title")}
               </h1>
               {t("homePage.description") ? (
@@ -76,11 +76,11 @@ export default function HomePage() {
               ) : null}
             </div>
 
-            <div className="mt-4 lg:mt-5">
+            <div className="mt-3 lg:mt-4">
               <CostaRicaProvinceExplorer
                 selectedProvince={province}
                 onSelectProvince={setProvince}
-                mapMinHeight={1100}
+                mapMinHeight={1180}
                 hero
               />
             </div>
