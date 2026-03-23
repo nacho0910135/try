@@ -10,6 +10,7 @@ import { BrandLogo } from "./BrandLogo";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useLanguage } from "./LanguageProvider";
 import { Button } from "../ui/Button";
+import { DonateButton } from "./DonateButton";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -67,6 +68,7 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           <LanguageSwitcher className="mr-0.5 sm:mr-1" />
+          <DonateButton compact className="px-2.5 py-2 sm:px-3.5 sm:py-2.5" />
           {user ? (
             <>
               <Link href="/dashboard">

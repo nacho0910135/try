@@ -130,6 +130,12 @@ export const createBillingCheckoutSession = (payload) =>
   unwrap(api.post("/billing/checkout-session", payload));
 export const createBillingPortalSession = () =>
   unwrap(api.post("/billing/portal-session"));
+export const createPayPalBoostOrder = (payload) =>
+  unwrap(api.post("/billing/paypal/boost-order", payload));
+export const createPayPalDonationOrder = (payload) =>
+  unwrap(api.post("/billing/paypal/donation-order", payload));
+export const capturePayPalOrder = (orderId) =>
+  unwrap(api.post("/billing/paypal/capture-order", { orderId }));
 
 export const getSavedSearches = () => unwrap(api.get("/saved-searches"));
 export const createSavedSearch = (payload) => unwrap(api.post("/saved-searches", payload));

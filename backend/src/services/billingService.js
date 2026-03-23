@@ -1,329 +1,313 @@
-import { User } from "../models/User.js";
-import { primaryFrontendUrl } from "../config/env.js";
+import { Property } from "../models/Property.js";
+import { Payment } from "../models/Payment.js";
+import { primaryFrontendUrl, env } from "../config/env.js";
+import { resolveEffectiveSubscription } from "../constants/plans.js";
 import { ApiError } from "../utils/apiError.js";
-import { COMMERCIAL_PLAN_CONFIG, resolveEffectiveSubscription } from "../constants/plans.js";
-import { stripeService } from "./stripeService.js";
-
-const BILLING_CYCLES = {
-  monthly: "month",
-  yearly: "year"
-};
+import { paypalService } from "./paypalService.js";
 
 const getFrontendBaseUrl = () => primaryFrontendUrl;
 
-const isPaidPlan = (planId) => Number(COMMERCIAL_PLAN_CONFIG[planId]?.monthlyPrice || 0) > 0;
+const toMoney = (value) => Number(Number(value || 0).toFixed(2));
 
-const buildUnitAmount = (planId, billingCycle) => {
-  const plan = COMMERCIAL_PLAN_CONFIG[planId];
+const parseSuggestedDonations = () =>
+  String(env.PAYPAL_DONATION_SUGGESTIONS || "5,10,25")
+    .split(",")
+    .map((item) => Number(item.trim()))
+    .filter((item) => Number.isFinite(item) && item > 0)
+    .map((item) => toMoney(item));
 
-  if (!plan) {
-    return 0;
-  }
-
-  if (billingCycle === "yearly") {
-    return Number(plan.yearlyPrice || 0) * 100;
-  }
-
-  return Number(plan.monthlyPrice || 0) * 100;
-};
-
-const buildPlanMetadata = ({ userId, planId, billingCycle }) => ({
-  userId: String(userId),
-  plan: planId,
-  billingCycle
+const getBoostConfig = () => ({
+  enabled: paypalService.isConfigured(),
+  price: toMoney(env.PAYPAL_BOOST_PRICE || 7),
+  currency: env.PAYPAL_DEFAULT_CURRENCY || "USD"
 });
 
-const mapStripeSubscriptionStatus = (status) => {
-  if (status === "trialing") {
-    return "trial";
+const getDonationConfig = () => ({
+  enabled: paypalService.isConfigured(),
+  minAmount: toMoney(env.PAYPAL_DONATION_MIN || 5),
+  suggestedAmounts: parseSuggestedDonations(),
+  currency: env.PAYPAL_DEFAULT_CURRENCY || "USD"
+});
+
+const getApprovalUrl = (order) =>
+  order?.links?.find?.((link) => link.rel === "approve")?.href || "";
+
+const buildAbsoluteFrontendUrl = (path) => new URL(path, `${getFrontendBaseUrl()}/`).toString();
+
+const buildSuccessPath = (payment) => {
+  if (payment.kind === "boost") {
+    return `/dashboard/properties?paypal=boost-success&propertyId=${payment.property}`;
   }
 
-  if (status === "active") {
-    return "active";
+  return "/donate?paypal=donation-success";
+};
+
+const buildErrorPath = (payment) => {
+  if (payment.kind === "boost") {
+    return "/dashboard/properties?paypal=boost-error";
   }
 
-  return "inactive";
+  return "/donate?paypal=donation-error";
 };
 
-const applySubscriptionToUser = async ({
-  user,
-  planId,
-  billingCycle = "monthly",
-  stripeCustomerId = "",
-  stripeSubscriptionId = "",
-  status = "active",
-  currentPeriodEnd,
-  cancelAtPeriodEnd = false
-}) => {
-  const plan = COMMERCIAL_PLAN_CONFIG[planId] || COMMERCIAL_PLAN_CONFIG.free;
+const buildCancelPath = (kind) => {
+  if (kind === "boost") {
+    return "/dashboard/properties?paypal=boost-cancelled";
+  }
 
-  user.subscription = {
-    ...(user.subscription || {}),
-    plan: plan.id,
-    status,
-    billingCycle,
-    monthlyPrice: billingCycle === "yearly" ? plan.yearlyPrice : plan.monthlyPrice,
-    propertyLimit: plan.propertyLimit,
-    promotedSlots: plan.promotedSlots,
-    stripeCustomerId: stripeCustomerId || user.subscription?.stripeCustomerId || "",
-    stripeSubscriptionId: stripeSubscriptionId || user.subscription?.stripeSubscriptionId || "",
-    currentPeriodEnd,
-    cancelAtPeriodEnd,
-    startedAt: user.subscription?.startedAt || new Date(),
-    trialEndsAt: undefined
-  };
-
-  await user.save();
-  return resolveEffectiveSubscription(user);
+  return "/donate?paypal=donation-cancelled";
 };
+
+const ensurePayPalConfigured = () => {
+  if (!paypalService.isConfigured()) {
+    throw new ApiError(503, "PayPal no esta configurado todavia.");
+  }
+};
+
+const ensureBoostableProperty = (property) => {
+  if (!property) {
+    throw new ApiError(404, "No encontramos la propiedad para activar el boost.");
+  }
+
+  if (property.featured) {
+    throw new ApiError(400, "Esta propiedad ya tiene boost activo.");
+  }
+
+  if (
+    property.status !== "published" ||
+    !["available", "reserved"].includes(property.marketStatus || "available")
+  ) {
+    throw new ApiError(
+      400,
+      "Solo puedes impulsar publicaciones publicadas y disponibles o reservadas."
+    );
+  }
+};
+
+const formatPaymentResponse = (payment) => ({
+  _id: payment._id,
+  provider: payment.provider,
+  kind: payment.kind,
+  status: payment.status,
+  amount: payment.amount,
+  currency: payment.currency,
+  orderId: payment.orderId,
+  captureId: payment.captureId,
+  property: payment.property
+});
 
 export const billingService = {
   getPublicStatus(user) {
     const subscription = resolveEffectiveSubscription(user);
     return {
-      configured: stripeService.isConfigured(),
-      webhookConfigured: stripeService.hasWebhookSecret(),
-      hasStripeCustomer: Boolean(subscription.stripeCustomerId),
-      hasActivePaidPlan:
-        Boolean(subscription.stripeSubscriptionId) &&
-        isPaidPlan(subscription.plan) &&
-        ["active", "trial"].includes(subscription.status),
+      configured: paypalService.isConfigured(),
+      provider: "paypal",
+      environment: paypalService.getEnvironment(),
+      webhookConfigured: false,
+      hasStripeCustomer: false,
+      hasActivePaidPlan: false,
+      boost: getBoostConfig(),
+      donations: getDonationConfig(),
       subscription
     };
   },
 
-  async createCheckoutSession(user, payload) {
-    void user;
-    void payload;
+  async createCheckoutSession(_user, _payload) {
     throw new ApiError(
       503,
-      "La venta de planes esta desactivada por ahora. BienesRaicesCR mantiene publicacion y exploracion gratuitas mientras activamos el boost destacado."
+      "La venta de planes sigue desactivada. El checkout activo ahora mismo es PayPal para boosts y donaciones."
     );
+  },
 
-    const stripe = await stripeService.getClient();
+  async createPortalSession() {
+    throw new ApiError(
+      503,
+      "El portal de planes sigue desactivado. Usa PayPal para boosts individuales."
+    );
+  },
 
-    if (!stripe) {
-      throw new ApiError(503, "Stripe no esta configurado todavia en el backend.");
+  async handleWebhook() {
+    return { received: true, ignored: true };
+  },
+
+  async createBoostOrder(user, payload) {
+    ensurePayPalConfigured();
+
+    const property = await Property.findById(payload.propertyId);
+
+    if (!property) {
+      throw new ApiError(404, "Property not found");
     }
 
-    const plan = COMMERCIAL_PLAN_CONFIG[payload.plan];
+    const ownerId = property.owner?.toString?.() || "";
 
-    if (!plan || !isPaidPlan(plan.id)) {
-      throw new ApiError(400, "Selecciona un plan pago para continuar al checkout.");
+    if (user.role !== "admin" && ownerId !== user._id.toString()) {
+      throw new ApiError(403, "You do not have access to this property");
     }
 
-    if (user.subscription?.stripeSubscriptionId && isPaidPlan(user.subscription?.plan)) {
+    ensureBoostableProperty(property);
+
+    const boost = getBoostConfig();
+    const payment = await Payment.create({
+      kind: "boost",
+      status: "created",
+      user: user._id,
+      property: property._id,
+      amount: boost.price,
+      currency: boost.currency,
+      note: `Boost para ${property.title}`
+    });
+
+    const order = await paypalService.createOrder({
+      requestId: `boost-${payment._id}`,
+      returnUrl: buildAbsoluteFrontendUrl("/checkout/paypal/return?kind=boost"),
+      cancelUrl: buildAbsoluteFrontendUrl("/checkout/paypal/return?kind=boost&cancelled=1"),
+      purchaseUnits: [
+        {
+          reference_id: `property-${property._id}`,
+          custom_id: String(payment._id),
+          invoice_id: `boost-${property._id}-${Date.now()}`,
+          description: `Boost de visibilidad para ${property.title}`,
+          amount: {
+            currency_code: boost.currency,
+            value: boost.price.toFixed(2)
+          }
+        }
+      ]
+    });
+
+    const approvalUrl = getApprovalUrl(order);
+
+    if (!approvalUrl) {
+      throw new ApiError(502, "PayPal no devolvio una URL de aprobacion valida.");
+    }
+
+    payment.orderId = order.id;
+    payment.approvalUrl = approvalUrl;
+    payment.rawOrder = order;
+    await payment.save();
+
+    return {
+      orderId: order.id,
+      approvalUrl,
+      amount: boost.price,
+      currency: boost.currency,
+      kind: "boost"
+    };
+  },
+
+  async createDonationOrder(payload, user = null) {
+    ensurePayPalConfigured();
+
+    const donation = getDonationConfig();
+    const amount = toMoney(payload.amount);
+
+    if (amount < donation.minAmount) {
       throw new ApiError(
         400,
-        "Ya tienes una suscripcion paga activa. Usa el portal de billing para cambiarla."
+        `La donacion minima es ${donation.currency} ${donation.minAmount.toFixed(2)}.`
       );
     }
 
-    const billingCycle = payload.billingCycle || "monthly";
-    const unitAmount = buildUnitAmount(plan.id, billingCycle);
-
-    if (!unitAmount) {
-      throw new ApiError(400, "Ese plan no tiene precio valido para checkout.");
-    }
-
-    const customerId = user.subscription?.stripeCustomerId || undefined;
-    const metadata = buildPlanMetadata({
-      userId: user._id,
-      planId: plan.id,
-      billingCycle
+    const payment = await Payment.create({
+      kind: "donation",
+      status: "created",
+      user: user?._id,
+      amount,
+      currency: donation.currency,
+      donorName: payload.donorName || user?.name || "",
+      note: payload.note || "Donacion voluntaria a BienesRaicesCR"
     });
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      success_url: `${getFrontendBaseUrl()}/dashboard/business?checkout=success`,
-      cancel_url: `${getFrontendBaseUrl()}/dashboard/business?checkout=cancel`,
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      allow_promotion_codes: true,
-      metadata,
-      line_items: [
+    const order = await paypalService.createOrder({
+      requestId: `donation-${payment._id}`,
+      returnUrl: buildAbsoluteFrontendUrl("/checkout/paypal/return?kind=donation"),
+      cancelUrl: buildAbsoluteFrontendUrl("/checkout/paypal/return?kind=donation&cancelled=1"),
+      purchaseUnits: [
         {
-          quantity: 1,
-          price_data: {
-            currency: "usd",
-            recurring: {
-              interval: BILLING_CYCLES[billingCycle] || "month"
-            },
-            unit_amount: unitAmount,
-            product_data: {
-              name: `BienesRaicesCR - ${plan.name}`,
-              description: plan.features.join(" • "),
-              metadata
-            }
+          reference_id: `donation-${payment._id}`,
+          custom_id: String(payment._id),
+          invoice_id: `donation-${Date.now()}-${payment._id}`,
+          description: "Donacion para BienesRaicesCR",
+          amount: {
+            currency_code: donation.currency,
+            value: amount.toFixed(2)
           }
         }
-      ],
-      subscription_data: {
-        metadata
-      }
+      ]
     });
 
+    const approvalUrl = getApprovalUrl(order);
+
+    if (!approvalUrl) {
+      throw new ApiError(502, "PayPal no devolvio una URL de aprobacion valida.");
+    }
+
+    payment.orderId = order.id;
+    payment.approvalUrl = approvalUrl;
+    payment.rawOrder = order;
+    await payment.save();
+
     return {
-      sessionId: session.id,
-      url: session.url
+      orderId: order.id,
+      approvalUrl,
+      amount,
+      currency: donation.currency,
+      kind: "donation"
     };
   },
 
-  async createPortalSession(user) {
-    void user;
-    throw new ApiError(
-      503,
-      "El portal de planes esta desactivado por ahora. La plataforma opera con publicacion gratuita y boost destacado aparte."
-    );
+  async capturePaypalOrder(orderId) {
+    ensurePayPalConfigured();
 
-    const stripe = await stripeService.getClient();
+    const payment = await Payment.findOne({ orderId });
 
-    if (!stripe) {
-      throw new ApiError(503, "Stripe no esta configurado todavia en el backend.");
+    if (!payment) {
+      throw new ApiError(404, "No encontramos el checkout de PayPal que intentas confirmar.");
     }
 
-    const customerId = user.subscription?.stripeCustomerId;
-
-    if (!customerId) {
-      throw new ApiError(400, "Todavia no existe un cliente de billing para este usuario.");
+    if (payment.status === "completed") {
+      return {
+        payment: formatPaymentResponse(payment),
+        redirectPath: buildSuccessPath(payment)
+      };
     }
 
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${getFrontendBaseUrl()}/dashboard/business`
-    });
+    const capture = await paypalService.captureOrder(orderId, `capture-${payment._id}`);
+    const captureId =
+      capture?.purchase_units?.[0]?.payments?.captures?.[0]?.id ||
+      capture?.purchase_units?.[0]?.payments?.authorizations?.[0]?.id ||
+      "";
+
+    payment.status = capture.status === "COMPLETED" ? "completed" : "failed";
+    payment.captureId = captureId;
+    payment.payerEmail = capture?.payer?.email_address || "";
+    payment.payerId = capture?.payer?.payer_id || "";
+    payment.rawCapture = capture;
+    await payment.save();
+
+    if (payment.status !== "completed") {
+      throw new ApiError(400, "PayPal no confirmo el pago correctamente.", {
+        redirectPath: buildErrorPath(payment)
+      });
+    }
+
+    if (payment.kind === "boost" && payment.property) {
+      const property = await Property.findById(payment.property);
+
+      if (property) {
+        property.featured = true;
+        await property.save();
+      }
+    }
 
     return {
-      url: session.url
+      payment: formatPaymentResponse(payment),
+      redirectPath: buildSuccessPath(payment)
     };
   },
 
-  async handleWebhook(rawBody, signature) {
-    const event = await stripeService.constructWebhookEvent(rawBody, signature);
-
-    switch (event.type) {
-      case "checkout.session.completed":
-        await this.handleCheckoutCompleted(event.data.object);
-        break;
-      case "customer.subscription.updated":
-      case "customer.subscription.created":
-        await this.handleSubscriptionUpdated(event.data.object);
-        break;
-      case "customer.subscription.deleted":
-        await this.handleSubscriptionDeleted(event.data.object);
-        break;
-      default:
-        break;
-    }
-
-    return { received: true };
-  },
-
-  async handleCheckoutCompleted(session) {
-    if (session.mode !== "subscription") {
-      return;
-    }
-
-    const userId = session.metadata?.userId;
-
-    if (!userId) {
-      return;
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return;
-    }
-
-    const stripe = await stripeService.getClient();
-    const subscription = session.subscription
-      ? await stripe.subscriptions.retrieve(session.subscription)
-      : null;
-
-    await applySubscriptionToUser({
-      user,
-      planId: session.metadata?.plan || user.subscription?.plan || "free",
-      billingCycle: session.metadata?.billingCycle || "monthly",
-      stripeCustomerId: String(session.customer || ""),
-      stripeSubscriptionId: String(session.subscription || ""),
-      status: mapStripeSubscriptionStatus(subscription?.status),
-      currentPeriodEnd: subscription?.current_period_end
-        ? new Date(subscription.current_period_end * 1000)
-        : undefined,
-      cancelAtPeriodEnd: Boolean(subscription?.cancel_at_period_end)
-    });
-  },
-
-  async handleSubscriptionUpdated(subscription) {
-    const userId = subscription.metadata?.userId;
-
-    if (!userId) {
-      const existingUser = await User.findOne({
-        "subscription.stripeSubscriptionId": subscription.id
-      });
-
-      if (!existingUser) {
-        return;
-      }
-
-      await applySubscriptionToUser({
-        user: existingUser,
-        planId: existingUser.subscription?.plan || "free",
-        billingCycle: existingUser.subscription?.billingCycle || "monthly",
-        stripeCustomerId: String(subscription.customer || ""),
-        stripeSubscriptionId: String(subscription.id || ""),
-        status: mapStripeSubscriptionStatus(subscription.status),
-        currentPeriodEnd: subscription.current_period_end
-          ? new Date(subscription.current_period_end * 1000)
-          : undefined,
-        cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end)
-      });
-      return;
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return;
-    }
-
-    await applySubscriptionToUser({
-      user,
-      planId: subscription.metadata?.plan || user.subscription?.plan || "free",
-      billingCycle: subscription.metadata?.billingCycle || user.subscription?.billingCycle || "monthly",
-      stripeCustomerId: String(subscription.customer || ""),
-      stripeSubscriptionId: String(subscription.id || ""),
-      status: mapStripeSubscriptionStatus(subscription.status),
-      currentPeriodEnd: subscription.current_period_end
-        ? new Date(subscription.current_period_end * 1000)
-        : undefined,
-      cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end)
-    });
-  },
-
-  async handleSubscriptionDeleted(subscription) {
-    const user =
-      (await User.findOne({
-        "subscription.stripeSubscriptionId": subscription.id
-      })) ||
-      (subscription.metadata?.userId
-        ? await User.findById(subscription.metadata.userId)
-        : null);
-
-    if (!user) {
-      return;
-    }
-
-    await applySubscriptionToUser({
-      user,
-      planId: "free",
-      billingCycle: "monthly",
-      stripeCustomerId: String(subscription.customer || user.subscription?.stripeCustomerId || ""),
-      stripeSubscriptionId: "",
-      status: "active",
-      currentPeriodEnd: undefined,
-      cancelAtPeriodEnd: false
-    });
+  getCancelPath(kind = "donation") {
+    return buildCancelPath(kind);
   }
 };

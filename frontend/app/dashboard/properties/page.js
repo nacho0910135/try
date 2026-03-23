@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  createPayPalBoostOrder,
   deleteProperty,
   getCommercialOverview,
   getMyProperties,
@@ -82,15 +83,26 @@ function DashboardPropertiesPageContent() {
     }
 
     const flash = window.sessionStorage.getItem("alquiventascr-property-flash");
+    const paypalStatus = searchParams.get("paypal");
 
-    if (!flash && !searchParams.get("saved")) {
+    if (paypalStatus === "boost-success") {
+      setFlashMessage("El pago se confirmo y tu boost de visibilidad ya esta activo.");
+    } else if (paypalStatus === "boost-cancelled") {
+      setFlashMessage("El checkout PayPal fue cancelado. Tu propiedad sigue organica.");
+    } else if (paypalStatus === "boost-error") {
+      setFlashMessage("No pudimos confirmar el pago PayPal. Intenta de nuevo.");
+    }
+
+    if (!flash && !searchParams.get("saved") && !paypalStatus) {
       return;
     }
 
-    setFlashMessage(flash || "Tu publicacion fue guardada correctamente.");
+    if (!paypalStatus) {
+      setFlashMessage(flash || "Tu publicacion fue guardada correctamente.");
+    }
     window.sessionStorage.removeItem("alquiventascr-property-flash");
 
-    if (searchParams.get("saved")) {
+    if (searchParams.get("saved") || paypalStatus) {
       const timeout = setTimeout(() => {
         router.replace("/dashboard/properties", { scroll: false });
       }, 1200);
@@ -152,22 +164,31 @@ function DashboardPropertiesPageContent() {
   const handleToggleFeatured = async (item) => {
     try {
       setSavingPropertyId(item._id);
-      await updatePropertyFeatured(item._id, !item.featured);
+
+      if (!item.featured) {
+        const data = await createPayPalBoostOrder({ propertyId: item._id });
+        window.location.href = data.order.approvalUrl;
+        return;
+      }
+
+      await updatePropertyFeatured(item._id, false);
       setRowFeedback((current) => ({
         ...current,
         [item._id]: {
           tone: "success",
           message: item.featured
             ? "El boost de visibilidad fue removido."
-            : "El boost de visibilidad quedo activo correctamente."
+            : "Redirigiendo a PayPal..."
         }
       }));
       setFlashMessage(
         item.featured
           ? "Quitaste una propiedad del bloque de destacados."
-          : "Activaste un boost de visibilidad para esta propiedad."
+          : "Te estamos enviando a PayPal para activar el boost."
       );
-      await Promise.all([loadProperties(), loadCommercialOverview()]);
+      if (item.featured) {
+        await Promise.all([loadProperties(), loadCommercialOverview()]);
+      }
     } catch (error) {
       setRowFeedback((current) => ({
         ...current,
@@ -436,6 +457,7 @@ function DashboardPropertiesPageContent() {
                       onClick={() => handleToggleFeatured(item)}
                       disabled={
                         savingPropertyId === item._id ||
+                        (!item.featured && !commercialOverview?.billing?.configured) ||
                         (!item.featured &&
                           (item.status !== "published" ||
                             !["available", "reserved"].includes(item.marketStatus || "available")))
@@ -445,7 +467,16 @@ function DashboardPropertiesPageContent() {
                         ? "Actualizando..."
                         : item.featured
                           ? "Quitar boost"
-                          : "Activar boost"}
+                          : !commercialOverview?.billing?.configured
+                            ? "Configura PayPal"
+                            : `Pagar boost${
+                                commercialOverview?.billing?.boost?.price
+                                  ? ` (${formatCurrency(
+                                      commercialOverview.billing.boost.price,
+                                      commercialOverview.billing.boost.currency
+                                    )})`
+                                  : ""
+                              }`}
                     </Button>
                     <Link href={`/dashboard/properties/${item._id}/edit`}>
                       <Button variant="secondary">Editar</Button>
@@ -470,6 +501,11 @@ function DashboardPropertiesPageContent() {
                     !["available", "reserved"].includes(item.marketStatus || "available")) ? (
                     <p className="mt-2 text-xs text-ink/50">
                       Solo publicaciones publicadas y disponibles o reservadas pueden recibir boost.
+                    </p>
+                  ) : null}
+                  {!item.featured && commercialOverview?.billing?.configured ? (
+                    <p className="mt-2 text-xs text-ink/50">
+                      El boost se cobra con PayPal y se activa en cuanto el pago se confirme.
                     </p>
                   ) : null}
                 </td>

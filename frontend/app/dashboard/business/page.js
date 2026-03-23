@@ -7,19 +7,25 @@ import {
   Megaphone,
   TrendingUp
 } from "lucide-react";
-import { getCommercialOverview } from "@/lib/api";
+import { createPayPalDonationOrder, getCommercialOverview } from "@/lib/api";
 import {
   MiniLineChart,
   HorizontalBarList,
   VerticalBarChart
 } from "@/components/analysis/VisualCharts";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { formatCurrency } from "@/lib/utils";
 
 const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
 
 export default function DashboardBusinessPage() {
   const [overview, setOverview] = useState(null);
+  const [flashMessage, setFlashMessage] = useState("");
+  const [donationAmount, setDonationAmount] = useState(10);
+  const [donorName, setDonorName] = useState("");
+  const [donationLoading, setDonationLoading] = useState(false);
 
   useEffect(() => {
     const loadOverview = async () => {
@@ -28,6 +34,29 @@ export default function DashboardBusinessPage() {
     };
 
     loadOverview();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const paypalStatus = params.get("paypal");
+
+    if (paypalStatus === "donation-success") {
+      setFlashMessage("Gracias por apoyar BienesRaicesCR. Tu donacion ya fue confirmada.");
+    } else if (paypalStatus === "donation-cancelled") {
+      setFlashMessage("La donacion con PayPal fue cancelada.");
+    } else if (paypalStatus === "donation-error") {
+      setFlashMessage("No pudimos confirmar la donacion en PayPal. Intenta de nuevo.");
+    }
+
+    if (paypalStatus) {
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.delete("paypal");
+      window.history.replaceState({}, "", nextUrl.toString());
+    }
   }, []);
 
   if (!overview) {
@@ -48,6 +77,22 @@ export default function DashboardBusinessPage() {
     recentLeads,
     recentOffers
   } = overview;
+  const donationConfig = overview.billing?.donations;
+
+  const handleDonation = async (amountOverride) => {
+    try {
+      setDonationLoading(true);
+      const data = await createPayPalDonationOrder({
+        amount: amountOverride ?? donationAmount,
+        donorName
+      });
+      window.location.href = data.order.approvalUrl;
+    } catch (error) {
+      setFlashMessage(error.response?.data?.message || "No se pudo iniciar la donacion con PayPal.");
+    } finally {
+      setDonationLoading(false);
+    }
+  };
 
   const cards = [
     {
@@ -109,6 +154,12 @@ export default function DashboardBusinessPage() {
         </div>
       </section>
 
+      {flashMessage ? (
+        <div className="rounded-2xl border border-pine/20 bg-pine/10 px-4 py-3 text-sm font-medium text-pine">
+          {flashMessage}
+        </div>
+      ) : null}
+
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
           <div key={card.label} className="surface p-6">
@@ -117,6 +168,88 @@ export default function DashboardBusinessPage() {
             <div className="mt-3 text-sm text-ink/55">{card.helper}</div>
           </div>
         ))}
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="surface p-6">
+          <div className="flex items-center gap-2 text-sm font-semibold text-lagoon">
+            <Megaphone className="h-4 w-4" />
+            Checkout PayPal
+          </div>
+          <h2 className="mt-3 text-2xl font-semibold">Boost de visibilidad para tus publicaciones</h2>
+          <p className="mt-2 text-sm text-ink/60">
+            Cada boost se paga una sola vez y activa la propiedad destacada dentro del marketplace.
+          </p>
+          <div className="mt-5 rounded-[24px] border border-ink/10 bg-white p-5">
+            <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Precio actual</div>
+            <div className="mt-2 text-4xl font-semibold text-ink">
+              {overview.billing?.boost
+                ? formatCurrency(overview.billing.boost.price, overview.billing.boost.currency)
+                : "Configura PayPal"}
+            </div>
+            <p className="mt-3 text-sm text-ink/60">
+              La compra del boost se inicia desde <strong>Mis propiedades</strong>, justo en la fila del anuncio
+              que quieres impulsar.
+            </p>
+          </div>
+        </div>
+
+        <div className="surface p-6">
+          <div className="flex items-center gap-2 text-sm font-semibold text-pine">
+            <BriefcaseBusiness className="h-4 w-4" />
+            Donaciones
+          </div>
+          <h2 className="mt-3 text-2xl font-semibold">Apoya el crecimiento de la plataforma</h2>
+          <p className="mt-2 text-sm text-ink/60">
+            Si quieres apoyar BienesRaicesCR, puedes enviar una donacion por PayPal y nos ayudas a seguir
+            mejorando la experiencia.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {(donationConfig?.suggestedAmounts || []).map((amount) => (
+              <Button
+                key={amount}
+                variant="secondary"
+                className="w-full"
+                onClick={() => handleDonation(amount)}
+                disabled={donationLoading || !donationConfig?.enabled}
+              >
+                Donar {formatCurrency(amount, donationConfig?.currency || "USD")}
+              </Button>
+            ))}
+          </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="field-label">Nombre para la donacion</label>
+              <Input
+                value={donorName}
+                onChange={(event) => setDonorName(event.target.value)}
+                placeholder="Tu nombre o alias"
+              />
+            </div>
+            <div>
+              <label className="field-label">Monto personalizado</label>
+              <Input
+                type="number"
+                min={donationConfig?.minAmount || 1}
+                step="0.01"
+                value={donationAmount}
+                onChange={(event) => setDonationAmount(event.target.value)}
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button
+              onClick={() => handleDonation()}
+              disabled={donationLoading || !donationConfig?.enabled}
+            >
+              {donationLoading ? "Abriendo PayPal..." : "Donar con PayPal"}
+            </Button>
+            <span className="text-sm text-ink/55">
+              Donacion minima:{" "}
+              {formatCurrency(donationConfig?.minAmount || 0, donationConfig?.currency || "USD")}
+            </span>
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">

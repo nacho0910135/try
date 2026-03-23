@@ -753,9 +753,16 @@ export const propertyService = {
       );
     }
 
-    property.featured = true;
-    await property.save();
-    return enrichPropertyForClient(property);
+    if (user.role === "admin") {
+      property.featured = true;
+      await property.save();
+      return enrichPropertyForClient(property);
+    }
+
+    throw new ApiError(
+      402,
+      "El boost ahora se activa desde checkout PayPal. Inicia el pago para destacar esta propiedad."
+    );
   },
 
   async remove(propertyId, user) {
