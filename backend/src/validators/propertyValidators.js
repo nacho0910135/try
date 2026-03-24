@@ -195,6 +195,7 @@ export const listPropertiesSchema = z.object({
     province: z.string().optional(),
     canton: z.string().optional(),
     district: z.string().optional(),
+    surface: z.enum(["map"]).optional(),
     lat: numberField(),
     lng: numberField(),
     radiusKm: numberField(),
