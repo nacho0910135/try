@@ -227,8 +227,6 @@ export default function HomePage() {
       return;
     }
 
-    let cancelled = false;
-
     setProvinceSummaryCache((current) => ({
       ...current,
       [provinceSummaryKey]: {
@@ -240,7 +238,6 @@ export default function HomePage() {
     const loadProvinceSummary = async () => {
       try {
         const data = await getZoneSeoData({ province: previewProvince });
-        if (cancelled) return;
 
         setProvinceSummaryCache((current) => ({
           ...current,
@@ -250,8 +247,6 @@ export default function HomePage() {
           }
         }));
       } catch (_error) {
-        if (cancelled) return;
-
         setProvinceSummaryCache((current) => ({
           ...current,
           [provinceSummaryKey]: {
@@ -263,10 +258,6 @@ export default function HomePage() {
     };
 
     void loadProvinceSummary();
-
-    return () => {
-      cancelled = true;
-    };
   }, [previewProvince, provinceSummaryEntry?.status, provinceSummaryKey]);
 
   useEffect(() => {
