@@ -150,12 +150,12 @@ export function PropertyCard({
     <Link
       href={buildBoostPropertyHref(property.slug, boostSurface, Boolean(property.featured))}
       onMouseEnter={() => onSelected?.(property._id)}
-      className={`surface-elevated group block overflow-hidden transition duration-300 ${
+      className={`surface-elevated group block overflow-hidden border transition duration-300 ${
         selected
-          ? "ring-2 ring-terracotta/40 shadow-[0_30px_80px_rgba(228,93,53,0.16)]"
+          ? "ring-2 ring-terracotta/40 shadow-[0_34px_86px_rgba(184,100,67,0.16)]"
           : property.featured
-            ? "ring-1 ring-[#f0dab4] shadow-[0_28px_76px_rgba(214,146,48,0.16)] hover:-translate-y-1.5 hover:shadow-[0_34px_82px_rgba(214,146,48,0.22)]"
-          : "hover:-translate-y-1.5 hover:shadow-[0_32px_80px_rgba(17,34,54,0.14)]"
+            ? "border-[#edd3ab] ring-1 ring-[#f0dab4] shadow-[0_30px_82px_rgba(214,146,48,0.18)] hover:-translate-y-1.5 hover:shadow-[0_36px_90px_rgba(214,146,48,0.24)]"
+          : "border-white/80 hover:-translate-y-1.5 hover:shadow-[0_34px_88px_rgba(15,31,49,0.16)]"
       }`}
     >
       <div className={`relative overflow-hidden ${compact ? "aspect-[4/3] sm:aspect-[16/9]" : "aspect-[16/10]"}`}>
@@ -175,7 +175,9 @@ export function PropertyCard({
             event.currentTarget.src = fallbackSrc;
           }}
         />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(9,20,34,0.02),rgba(9,20,34,0.26))]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/22 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/40 via-black/8 to-transparent" />
         <div className="absolute left-3 top-3 flex flex-wrap gap-2">
           <Badge variant="accent">{businessLabel}</Badge>
           {property.rentalArrangement === "roommate" ? (
@@ -199,7 +201,7 @@ export function PropertyCard({
           className={`absolute right-3 top-3 rounded-full shadow-soft transition ${
             favoriteState
               ? "bg-rose-50 text-rose-500 ring-2 ring-rose-200"
-              : "bg-white/90 text-ink hover:bg-white"
+              : "bg-white/92 text-ink hover:bg-white"
           } ${compact ? "p-2" : "p-2.5"}`}
           aria-label={t("propertyCard.favoriteAria")}
         >
@@ -226,17 +228,21 @@ export function PropertyCard({
         </div>
       </div>
 
-      <div className={`${compact ? "space-y-3 p-4 sm:space-y-2.5 sm:p-[14px]" : "space-y-3.5 p-[18px]"}`}>
+      <div
+        className={`bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))] ${
+          compact ? "space-y-3 p-4 sm:space-y-2.5 sm:p-[14px]" : "space-y-3.5 p-[18px]"
+        }`}
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className={compact ? "text-lg font-semibold text-ink sm:text-lg" : "text-[1.3rem] font-semibold text-ink sm:text-[1.45rem]"}>
+            <div className={compact ? "text-lg font-semibold tracking-tight text-ink sm:text-lg" : "text-[1.3rem] font-semibold tracking-tight text-ink sm:text-[1.45rem]"}>
               {formatCurrency(property.price, property.currency)}
             </div>
             <h3 className={`font-semibold leading-snug text-ink ${compact ? "mt-1 text-[15px] sm:text-sm" : "mt-1.5 text-[15px] sm:text-base"}`}>
               {property.title}
             </h3>
           </div>
-          <span className={`rounded-full bg-mist px-2.5 py-1 font-semibold ${compact ? "text-[10px] text-ink/55" : "text-[11px] text-ink/55 sm:text-xs"}`}>
+          <span className={`rounded-full border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,240,231,0.72))] px-2.5 py-1 font-semibold shadow-[0_10px_22px_rgba(15,31,49,0.06)] ${compact ? "text-[10px] text-ink/55" : "text-[11px] text-ink/55 sm:text-xs"}`}>
             {typeLabel}
           </span>
         </div>
