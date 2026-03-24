@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import dynamic from "next/dynamic";
 import { ArrowRight, BrainCircuit, MapPinned, Radar, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getProperties, getZoneSeoData } from "@/lib/api";
-import { buildBoostPropertyHref, boostMetrics, trackBoostMetricOnce } from "@/lib/boost-metrics";
+import { boostMetrics, trackBoostMetricOnce } from "@/lib/boost-metrics";
 import { slugifyLocation } from "@/lib/zone-seo";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { MapLoadingShell } from "@/components/map/MapLoadingShell";
@@ -14,7 +13,7 @@ import { PropertyCard } from "@/components/property/PropertyCard";
 import { Button } from "@/components/ui/Button";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { hasCommercialDashboardAccess } from "@/lib/user-access";
-import { formatCurrency, getMainPhoto } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 
 const CostaRicaProvinceExplorer = dynamic(
@@ -48,10 +47,8 @@ export default function HomePage() {
   const [marketSummaryFailed, setMarketSummaryFailed] = useState(false);
   const [hoveredProvince, setHoveredProvince] = useState(null);
   const [provinceSummaryCache, setProvinceSummaryCache] = useState({});
-  const [provinceShowcaseCache, setProvinceShowcaseCache] = useState({});
   const [hasSuggestedProvince, setHasSuggestedProvince] = useState(false);
   const [province, setProvince] = useState("San Jose");
-  const fallbackSrc = "/property-placeholder.svg";
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const publishHref = canAccessDashboard ? "/dashboard/properties/new" : "/login";
   const previewProvince = hoveredProvince || province;
@@ -61,8 +58,6 @@ export default function HomePage() {
   const provinceSummary = provinceSummaryEntry?.summary || null;
   const provinceSummaryLoading = provinceSummaryEntry?.status === "loading";
   const provinceSummaryFailed = provinceSummaryEntry?.status === "error";
-  const provinceShowcaseEntry = provinceShowcaseCache[provinceSummaryKey];
-  const provinceShowcaseItems = provinceShowcaseEntry?.items ?? EMPTY_ITEMS;
 
   const copy =
     language === "en"
@@ -75,12 +70,20 @@ export default function HomePage() {
           publish: "Publish a listing",
           selectedProvince: "Active province",
           focusProvince: "Province in focus",
-          radarTitle: "Live read",
-          radarDescription: "A quick view of the active inventory and featured sample in this province.",
+          radarTitle: "Rent radar",
+          radarDescription:
+            "Average rent by canton and district inside this province, sorted from highest to lowest.",
+          radarCta: "Open province",
           hoverHint: "Move across the map to preview another province instantly.",
           activeNow: "active now",
           forSale: "for sale",
           forRent: "for rent",
+          rentByCanton: "Cantons",
+          rentByDistrict: "Districts",
+          dominantCurrency: "Main currency",
+          avgRent: "avg rent",
+          rentalListings: "rentals",
+          rentalLoading: "Calculating rent averages...",
           utilityEyebrow: "Useful by design",
           utilityTitle: "A marketplace built around signals, not clutter.",
           utilityCards: [
@@ -107,7 +110,8 @@ export default function HomePage() {
           featuredCta: "Open featured",
           featuredSearch: "Open search",
           featuredFailed: "Featured listings could not be loaded right now.",
-          noProvinceData: "There is no visible sample for this province yet. Open the map and explore wider."
+          noProvinceData:
+            "There is not enough rental inventory in this province yet to calculate a reliable average."
         }
       : {
           eyebrow: "Costa Rica, sin ruido",
@@ -118,12 +122,20 @@ export default function HomePage() {
           publish: "Publicar propiedad",
           selectedProvince: "Provincia activa",
           focusProvince: "Provincia en foco",
-          radarTitle: "Lectura en vivo",
-          radarDescription: "Una vista rapida del inventario activo y la muestra destacada de esta provincia.",
+          radarTitle: "Radar de renta",
+          radarDescription:
+            "Promedio de alquiler por canton y distrito dentro de esta provincia, ordenado del mas alto al mas bajo.",
+          radarCta: "Abrir provincia",
           hoverHint: "Pasa el cursor por el mapa para cambiar esta lectura al instante.",
           activeNow: "activas ahora",
           forSale: "en venta",
           forRent: "en renta",
+          rentByCanton: "Cantones",
+          rentByDistrict: "Distritos",
+          dominantCurrency: "Moneda dominante",
+          avgRent: "renta promedio",
+          rentalListings: "alquileres",
+          rentalLoading: "Calculando promedios de renta...",
           utilityEyebrow: "Util por diseno",
           utilityTitle: "Un marketplace pensado en senales, no en ruido.",
           utilityCards: [
@@ -151,7 +163,7 @@ export default function HomePage() {
           featuredSearch: "Abrir busqueda",
           featuredFailed: "No se pudieron cargar las propiedades destacadas en este momento.",
           noProvinceData:
-            "Todavia no hay muestra visible para esta provincia. Abre el mapa y explora mas amplio."
+            "Todavia no hay suficiente inventario de alquiler en esta provincia para calcular un promedio util."
         };
 
   useEffect(() => {
@@ -258,63 +270,6 @@ export default function HomePage() {
   }, [previewProvince, provinceSummaryEntry?.status, provinceSummaryKey]);
 
   useEffect(() => {
-    if (
-      !previewProvince ||
-      provinceShowcaseEntry?.status === "ready" ||
-      provinceShowcaseEntry?.status === "loading"
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-
-    setProvinceShowcaseCache((current) => ({
-      ...current,
-      [provinceSummaryKey]: {
-        status: "loading",
-        items: current[provinceSummaryKey]?.items || []
-      }
-    }));
-
-    const loadProvinceShowcase = async () => {
-      try {
-        const data = await getProperties({
-          province: previewProvince,
-          limit: 2,
-          page: 1,
-          sort: "recent"
-        });
-
-        if (cancelled) return;
-
-        setProvinceShowcaseCache((current) => ({
-          ...current,
-          [provinceSummaryKey]: {
-            status: "ready",
-            items: data.items || []
-          }
-        }));
-      } catch (_error) {
-        if (cancelled) return;
-
-        setProvinceShowcaseCache((current) => ({
-          ...current,
-          [provinceSummaryKey]: {
-            status: "error",
-            items: current[provinceSummaryKey]?.items || []
-          }
-        }));
-      }
-    };
-
-    void loadProvinceShowcase();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [previewProvince, provinceShowcaseEntry?.status, provinceSummaryKey]);
-
-  useEffect(() => {
     featured.forEach((property) => {
       if (!property?.featured || !property?._id) {
         return;
@@ -356,20 +311,6 @@ export default function HomePage() {
     provinceSummary,
     provinceSummaryLoading
   ]);
-
-  const featuredForProvince = useMemo(
-    () =>
-      featured.filter(
-        (property) =>
-          normalizeProvinceName(property.address?.province) === normalizeProvinceName(previewProvince)
-      ),
-    [featured, previewProvince]
-  );
-
-  const visibleProvinceShowcase = useMemo(
-    () => (provinceShowcaseItems.length ? provinceShowcaseItems : featuredForProvince),
-    [featuredForProvince, provinceShowcaseItems]
-  );
 
   const featuredMarketCounts = useMemo(() => {
     const saleCount = featured.filter((item) => item.businessType === "sale").length;
@@ -435,6 +376,15 @@ export default function HomePage() {
     ],
     [language]
   );
+
+  const rentalMarket = provinceSummary?.rentalMarket || null;
+  const cantonRentRows = rentalMarket?.byCanton || EMPTY_ITEMS;
+  const districtRentRows = rentalMarket?.byDistrict || EMPTY_ITEMS;
+  const hasRentalMarket = cantonRentRows.length > 0 || districtRentRows.length > 0;
+  const rentalColumns = [
+    { title: copy.rentByCanton, items: cantonRentRows },
+    { title: copy.rentByDistrict, items: districtRentRows }
+  ].filter((column) => column.items.length > 0);
 
   return (
     <div className="section-pad">
@@ -509,55 +459,65 @@ export default function HomePage() {
               <p className="mt-3 max-w-sm text-xs font-medium uppercase tracking-[0.18em] text-ink/38">
                 {copy.hoverHint}
               </p>
+              {rentalMarket?.currency ? (
+                <div className="mt-4 inline-flex rounded-full border border-[#eccb8e] bg-[#fff4dc] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8f540d]">
+                  {copy.dominantCurrency}: {rentalMarket.currency}
+                </div>
+              ) : null}
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link href={provincePath}>
                   <Button variant="ghost" className="px-0 py-0 text-sm text-pine hover:bg-transparent">
-                    {copy.radarTitle}
+                    {copy.radarCta}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            {visibleProvinceShowcase.length ? (
-              <div className="grid gap-4 lg:grid-cols-2">
-                {visibleProvinceShowcase.slice(0, 2).map((property) => {
-                  const mainPhoto = getMainPhoto(property);
+            {provinceSummaryLoading && !hasRentalMarket && !provinceSummaryFailed ? (
+              <div className="surface-soft flex items-center justify-center p-5 text-sm leading-6 text-ink/62">
+                {copy.rentalLoading}
+              </div>
+            ) : hasRentalMarket ? (
+              <div className={`grid gap-4 ${rentalColumns.length > 1 ? "xl:grid-cols-2" : ""}`}>
+                {rentalColumns.map((column) => (
+                  <div key={column.title} className="surface-soft p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
+                        {column.title}
+                      </div>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/34">
+                        {copy.avgRent}
+                      </div>
+                    </div>
 
-                  return (
-                    <Link
-                      key={property._id}
-                      href={buildBoostPropertyHref(property.slug, "home", Boolean(property.featured))}
-                      className="surface-soft grid gap-4 p-4 sm:grid-cols-[180px_1fr]"
-                    >
-                      <div className="relative aspect-[4/3] overflow-hidden rounded-[22px]">
-                        <Image
-                          src={mainPhoto?.url || fallbackSrc}
-                          alt={mainPhoto?.alt || property.title}
-                          fill
-                          unoptimized
-                          sizes="(max-width: 639px) 100vw, 180px"
-                          className="object-cover"
-                          onError={(event) => {
-                            event.currentTarget.onerror = null;
-                            event.currentTarget.src = fallbackSrc;
-                          }}
-                        />
-                      </div>
-                      <div className="flex flex-col justify-between gap-3">
-                        <div>
-                          <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-terracotta">
-                            {property.businessType === "rent" ? copy.forRent : copy.forSale}
+                    <div className="mt-4 space-y-3">
+                      {column.items.map((item, index) => (
+                        <div
+                          key={`${column.title}-${item.label}`}
+                          className="flex items-center justify-between gap-3 rounded-[22px] border border-white/70 bg-white/84 px-4 py-3"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-3">
+                              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff4dc] text-xs font-semibold text-[#8f540d]">
+                                {index + 1}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-semibold text-ink">{item.label}</div>
+                                <div className="text-xs text-ink/52">
+                                  {item.listings} {copy.rentalListings}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <h2 className="mt-2 text-xl font-semibold text-ink">{property.title}</h2>
+                          <div className="shrink-0 text-right text-sm font-semibold text-ink">
+                            {formatCurrency(item.averagePrice, rentalMarket?.currency || "USD")}
+                          </div>
                         </div>
-                        <div className="text-2xl font-semibold text-ink">
-                          {formatCurrency(property.price, property.currency)}
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="surface-soft p-5 text-sm leading-6 text-ink/62">{copy.noProvinceData}</div>

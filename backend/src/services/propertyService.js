@@ -126,6 +126,36 @@ const buildZoneSearchPath = ({ province, canton, district }) => {
   return query ? `/search?${query}` : "/search";
 };
 
+const RENT_MARKET_LIMIT = 6;
+
+const buildRentMarketFilter = (filter, currency) => ({
+  ...filter,
+  operationType: "rent",
+  price: { $gt: 0 },
+  ...(currency ? { currency } : {})
+});
+
+const buildCantonRentLabel = (zone) =>
+  zone.province || zone.canton || zone.district
+    ? "$_id.canton"
+    : { $concat: ["$_id.canton", ", ", "$_id.province"] };
+
+const buildDistrictRentLabel = (zone) => {
+  if (zone.district) {
+    return "$_id.district";
+  }
+
+  if (zone.canton) {
+    return "$_id.district";
+  }
+
+  if (zone.province) {
+    return { $concat: ["$_id.district", ", ", "$_id.canton"] };
+  }
+
+  return { $concat: ["$_id.district", ", ", "$_id.canton", ", ", "$_id.province"] };
+};
+
 const buildFilterQuery = (query) => {
   const filter = buildPublicFilter();
 
@@ -514,8 +544,17 @@ export const propertyService = {
       district: query.district || ""
     };
     const filter = buildZoneFilter(zone);
+    const shouldBuildRentalMarket = Boolean(zone.province || zone.canton || zone.district);
 
-    const [items, total, saleCount, rentCount, featuredCount, propertyTypeBreakdown, currencyBreakdown] =
+    const rentCurrencyBreakdownPromise = shouldBuildRentalMarket
+      ? Property.aggregate([
+          { $match: buildRentMarketFilter(filter) },
+          { $group: { _id: "$currency", count: { $sum: 1 } } },
+          { $sort: { count: -1, _id: 1 } }
+        ])
+      : Promise.resolve([]);
+
+    const [items, total, saleCount, rentCount, featuredCount, propertyTypeBreakdown, currencyBreakdown, rentCurrencyBreakdown] =
       await Promise.all([
         Property.find(filter)
           .populate("owner", "name phone avatar role verification")
@@ -541,8 +580,75 @@ export const propertyService = {
               maxPrice: { $max: "$price" }
             }
           }
-        ])
+        ]),
+        rentCurrencyBreakdownPromise
       ]);
+
+    const primaryRentCurrency = shouldBuildRentalMarket ? rentCurrencyBreakdown[0]?._id || null : null;
+    const rentMarketFilter = buildRentMarketFilter(filter, primaryRentCurrency);
+
+    const [rentByCanton, rentByDistrict] = primaryRentCurrency
+      ? await Promise.all([
+          Property.aggregate([
+            {
+              $match: {
+                ...rentMarketFilter,
+                "address.canton": { $nin: ["", null] }
+              }
+            },
+            {
+              $group: {
+                _id: {
+                  province: "$address.province",
+                  canton: "$address.canton"
+                },
+                averagePrice: { $avg: "$price" },
+                listings: { $sum: 1 }
+              }
+            },
+            { $sort: { averagePrice: -1, listings: -1, "_id.canton": 1 } },
+            { $limit: RENT_MARKET_LIMIT },
+            {
+              $project: {
+                _id: 0,
+                label: buildCantonRentLabel(zone),
+                averagePrice: { $round: ["$averagePrice", 0] },
+                listings: 1
+              }
+            }
+          ]),
+          Property.aggregate([
+            {
+              $match: {
+                ...rentMarketFilter,
+                "address.district": { $nin: ["", null] },
+                "address.canton": { $nin: ["", null] }
+              }
+            },
+            {
+              $group: {
+                _id: {
+                  province: "$address.province",
+                  canton: "$address.canton",
+                  district: "$address.district"
+                },
+                averagePrice: { $avg: "$price" },
+                listings: { $sum: 1 }
+              }
+            },
+            { $sort: { averagePrice: -1, listings: -1, "_id.district": 1 } },
+            { $limit: RENT_MARKET_LIMIT },
+            {
+              $project: {
+                _id: 0,
+                label: buildDistrictRentLabel(zone),
+                averagePrice: { $round: ["$averagePrice", 0] },
+                listings: 1
+              }
+            }
+          ])
+        ])
+      : [[], []];
 
     return {
       zone: {
@@ -565,7 +671,24 @@ export const propertyService = {
           averagePrice: Math.round(item.averagePrice || 0),
           minPrice: Math.round(item.minPrice || 0),
           maxPrice: Math.round(item.maxPrice || 0)
-        }))
+        })),
+        rentalMarket: {
+          currency: primaryRentCurrency,
+          currencies: rentCurrencyBreakdown.map((item) => ({
+            currency: item._id,
+            count: item.count
+          })),
+          byCanton: rentByCanton.map((item) => ({
+            label: item.label,
+            averagePrice: Math.round(item.averagePrice || 0),
+            listings: item.listings
+          })),
+          byDistrict: rentByDistrict.map((item) => ({
+            label: item.label,
+            averagePrice: Math.round(item.averagePrice || 0),
+            listings: item.listings
+          }))
+        }
       },
       items: enrichPropertyCollection(items)
     };
