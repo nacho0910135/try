@@ -28,13 +28,20 @@ export const formatCurrency = (value, currency = "USD") =>
     maximumFractionDigits: currency === "CRC" ? 0 : 0
   }).format(value || 0);
 
+const buildCompactCurrencyLabel = (amount, currency = "USD") => {
+  const compactDisplay = currency === "CRC" ? "long" : "short";
+
+  return new Intl.NumberFormat("es-CR", {
+    notation: "compact",
+    compactDisplay,
+    maximumFractionDigits: 1
+  }).format(amount);
+};
+
 const legacyFormatCompactCurrency = (value, currency = "USD") => {
   const amount = Number(value || 0);
   const symbol = currency === "CRC" ? "CRC " : "$";
-  const compact = new Intl.NumberFormat("es-CR", {
-    notation: "compact",
-    maximumFractionDigits: 1
-  }).format(amount);
+  const compact = buildCompactCurrencyLabel(amount, currency);
 
   return `${symbol}${compact}`;
 };
@@ -42,10 +49,7 @@ const legacyFormatCompactCurrency = (value, currency = "USD") => {
 export const formatCompactCurrency = (value, currency = "USD") => {
   const amount = Number(value || 0);
   const symbol = currency === "CRC" ? "CRC " : "$";
-  const compact = new Intl.NumberFormat("es-CR", {
-    notation: "compact",
-    maximumFractionDigits: 1
-  }).format(amount);
+  const compact = buildCompactCurrencyLabel(amount, currency);
 
   return `${symbol}${compact}`;
 };
