@@ -223,6 +223,7 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const initializedRef = useRef(false);
   const requestSequenceRef = useRef(0);
+  const mapRequestSequenceRef = useRef(0);
   const autosaveIdRef = useRef(null);
   const autosaveSequenceRef = useRef(0);
   const { token, user } = useAuthStore();
@@ -231,6 +232,7 @@ function SearchPageContent() {
     useSearchStore();
   const [properties, setProperties] = useState([]);
   const [promotedProperties, setPromotedProperties] = useState([]);
+  const [mapProperties, setMapProperties] = useState([]);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
@@ -412,6 +414,39 @@ function SearchPageContent() {
 
     return () => clearTimeout(timeout);
   }, [filters, page, retryNonce, router, t]);
+
+  useEffect(() => {
+    if (!initializedRef.current) return;
+
+    const requestId = ++mapRequestSequenceRef.current;
+    setMapProperties([]);
+
+    const timeout = setTimeout(async () => {
+      try {
+        const data = await getProperties({
+          ...filters,
+          page: 1,
+          limit: 50,
+          promotedLimit: 0,
+          surface: "map"
+        });
+
+        if (requestId !== mapRequestSequenceRef.current) {
+          return;
+        }
+
+        setMapProperties(data.items || []);
+      } catch (_error) {
+        if (requestId !== mapRequestSequenceRef.current) {
+          return;
+        }
+
+        setMapProperties([]);
+      }
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [filters, retryNonce]);
 
   useEffect(() => {
     if (!token) {
@@ -1106,7 +1141,7 @@ function SearchPageContent() {
             }
           >
             <SearchMap
-              properties={properties}
+              properties={mapProperties.length ? mapProperties : properties}
               selectedPropertyId={selectedPropertyId}
               selectedProvince={filters.province}
               selectedDistrict={filters.district}

@@ -44,6 +44,22 @@ const buildFeaturedPrioritySort = (fallback = {}) => ({
   ...fallback
 });
 
+const buildMapSurfaceSort = (sort, query = {}) => {
+  switch (sort) {
+    case "price-asc":
+      return { price: 1, publishedAt: -1, createdAt: -1 };
+    case "price-desc":
+      return { price: -1, publishedAt: -1, createdAt: -1 };
+    case "distance":
+      return query.lat !== undefined && query.lng !== undefined
+        ? {}
+        : { publishedAt: -1, createdAt: -1 };
+    case "recent":
+    default:
+      return { publishedAt: -1, createdAt: -1 };
+  }
+};
+
 const boostMetricFieldMap = {
   "home-impression": "boostMetrics.homeImpressions",
   "search-rail-impression": "boostMetrics.searchRailImpressions",
@@ -53,6 +69,10 @@ const boostMetricFieldMap = {
 };
 
 const buildSort = (sort, query = {}) => {
+  if (query.surface === "map") {
+    return buildMapSurfaceSort(sort, query);
+  }
+
   if (!sort && query.lat !== undefined && query.lng !== undefined) {
     return {};
   }
@@ -485,7 +505,10 @@ export const propertyService = {
     const pagination = buildPagination(query.page, query.limit);
     const filter = buildFilterQuery(query);
     const sort = buildSort(query.sort, query);
-    const promotedLimit = Math.min(Math.max(Number(query.promotedLimit || 3), 0), 4);
+    const promotedLimit =
+      query.surface === "map"
+        ? 0
+        : Math.min(Math.max(Number(query.promotedLimit || 3), 0), 4);
 
     const promotedPromise =
       query.featured === false || promotedLimit === 0
