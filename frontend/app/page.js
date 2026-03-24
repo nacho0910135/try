@@ -44,15 +44,20 @@ export default function HomePage() {
   const [marketSummary, setMarketSummary] = useState(null);
   const [marketSummaryLoading, setMarketSummaryLoading] = useState(true);
   const [marketSummaryFailed, setMarketSummaryFailed] = useState(false);
-  const [provinceSummary, setProvinceSummary] = useState(null);
-  const [provinceSummaryLoading, setProvinceSummaryLoading] = useState(true);
-  const [provinceSummaryFailed, setProvinceSummaryFailed] = useState(false);
+  const [hoveredProvince, setHoveredProvince] = useState(null);
+  const [provinceSummaryCache, setProvinceSummaryCache] = useState({});
   const [hasSuggestedProvince, setHasSuggestedProvince] = useState(false);
   const [province, setProvince] = useState("San Jose");
   const fallbackSrc = "/property-placeholder.svg";
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const publishHref = canAccessDashboard ? "/dashboard/properties/new" : "/login";
-  const provincePath = `/zona/${slugifyLocation(province)}`;
+  const previewProvince = hoveredProvince || province;
+  const provincePath = `/zona/${slugifyLocation(previewProvince)}`;
+  const provinceSummaryKey = normalizeProvinceName(previewProvince);
+  const provinceSummaryEntry = provinceSummaryCache[provinceSummaryKey];
+  const provinceSummary = provinceSummaryEntry?.summary || null;
+  const provinceSummaryLoading = provinceSummaryEntry?.status === "loading";
+  const provinceSummaryFailed = provinceSummaryEntry?.status === "error";
 
   const copy =
     language === "en"
@@ -64,8 +69,10 @@ export default function HomePage() {
           explore: "Open the map",
           publish: "Publish a listing",
           selectedProvince: "Active province",
+          focusProvince: "Province in focus",
           radarTitle: "Live read",
           radarDescription: "A quick view of the active inventory and featured sample in this province.",
+          hoverHint: "Move across the map to preview another province instantly.",
           activeNow: "active now",
           forSale: "for sale",
           forRent: "for rent",
@@ -102,8 +109,10 @@ export default function HomePage() {
           explore: "Abrir mapa",
           publish: "Publicar propiedad",
           selectedProvince: "Provincia activa",
+          focusProvince: "Provincia en foco",
           radarTitle: "Lectura en vivo",
           radarDescription: "Una vista rapida del inventario activo y la muestra destacada de esta provincia.",
+          hoverHint: "Pasa el cursor por el mapa para cambiar esta lectura al instante.",
           activeNow: "activas ahora",
           forSale: "en venta",
           forRent: "en renta",
@@ -191,24 +200,42 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (!previewProvince || provinceSummaryEntry?.status === "ready" || provinceSummaryEntry?.status === "loading") {
+      return;
+    }
+
     let cancelled = false;
 
-    const loadProvinceSummary = async () => {
-      setProvinceSummaryLoading(true);
+    setProvinceSummaryCache((current) => ({
+      ...current,
+      [provinceSummaryKey]: {
+        status: "loading",
+        summary: current[provinceSummaryKey]?.summary || null
+      }
+    }));
 
+    const loadProvinceSummary = async () => {
       try {
-        const data = await getZoneSeoData({ province });
+        const data = await getZoneSeoData({ province: previewProvince });
         if (cancelled) return;
-        setProvinceSummary(data.summary || null);
-        setProvinceSummaryFailed(false);
+
+        setProvinceSummaryCache((current) => ({
+          ...current,
+          [provinceSummaryKey]: {
+            status: "ready",
+            summary: data.summary || null
+          }
+        }));
       } catch (_error) {
         if (cancelled) return;
-        setProvinceSummary(null);
-        setProvinceSummaryFailed(true);
-      } finally {
-        if (!cancelled) {
-          setProvinceSummaryLoading(false);
-        }
+
+        setProvinceSummaryCache((current) => ({
+          ...current,
+          [provinceSummaryKey]: {
+            status: "error",
+            summary: null
+          }
+        }));
       }
     };
 
@@ -217,7 +244,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [province]);
+  }, [previewProvince, provinceSummaryEntry?.status, provinceSummaryKey]);
 
   useEffect(() => {
     featured.forEach((property) => {
@@ -266,9 +293,9 @@ export default function HomePage() {
     () =>
       featured.filter(
         (property) =>
-          normalizeProvinceName(property.address?.province) === normalizeProvinceName(province)
+          normalizeProvinceName(property.address?.province) === normalizeProvinceName(previewProvince)
       ),
-    [featured, province]
+    [featured, previewProvince]
   );
 
   const featuredMarketCounts = useMemo(() => {
@@ -353,7 +380,7 @@ export default function HomePage() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Link href={`/search?province=${encodeURIComponent(province)}`}>
+                <Link href={`/search?province=${encodeURIComponent(previewProvince)}`}>
                   <Button variant="primary">
                     {copy.explore}
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -392,6 +419,7 @@ export default function HomePage() {
               <CostaRicaProvinceExplorer
                 selectedProvince={province}
                 onSelectProvince={setProvince}
+                onHoverProvince={setHoveredProvince}
                 mapMinHeight={860}
                 hero
               />
@@ -401,10 +429,13 @@ export default function HomePage() {
           <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <div className="surface-soft p-5">
               <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
-                {copy.selectedProvince}
+                {hoveredProvince ? copy.focusProvince : copy.selectedProvince}
               </div>
-              <div className="mt-2 text-3xl font-semibold text-ink">{province}</div>
+              <div className="mt-2 text-3xl font-semibold text-ink">{previewProvince}</div>
               <p className="mt-3 max-w-sm text-sm leading-6 text-ink/62">{copy.radarDescription}</p>
+              <p className="mt-3 max-w-sm text-xs font-medium uppercase tracking-[0.18em] text-ink/38">
+                {copy.hoverHint}
+              </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link href={provincePath}>
                   <Button variant="ghost" className="px-0 py-0 text-sm text-pine hover:bg-transparent">

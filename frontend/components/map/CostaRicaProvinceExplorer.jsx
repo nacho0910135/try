@@ -99,6 +99,7 @@ const interactiveLayerIds = ["province-fills"];
 const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
   selectedProvince,
   onSelectProvince,
+  onHoverProvince,
   compact = false,
   hero = false,
   navigateOnSelect = true,
@@ -321,21 +322,29 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
     [navigateOnSelect, onSelectProvince, router]
   );
 
-  const handleMouseMove = useCallback((event) => {
-    const provinceFeature = event.features?.find(
-      (feature) => feature.layer.id === "province-fills"
-    );
-    const nextHoveredProvince = provinceFeature?.properties?.name || null;
-    const map = mapRef.current?.getMap?.();
+  const handleMouseMove = useCallback(
+    (event) => {
+      const provinceFeature = event.features?.find(
+        (feature) => feature.layer.id === "province-fills"
+      );
+      const nextHoveredProvince = provinceFeature?.properties?.name || null;
+      const map = mapRef.current?.getMap?.();
 
-    if (map) {
-      map.getCanvas().style.cursor = nextHoveredProvince ? "pointer" : "";
-    }
+      if (map) {
+        map.getCanvas().style.cursor = nextHoveredProvince ? "pointer" : "";
+      }
 
-    setHoveredProvince((current) =>
-      current === nextHoveredProvince ? current : nextHoveredProvince
-    );
-  }, []);
+      setHoveredProvince((current) => {
+        if (current === nextHoveredProvince) {
+          return current;
+        }
+
+        onHoverProvince?.(nextHoveredProvince);
+        return nextHoveredProvince;
+      });
+    },
+    [onHoverProvince]
+  );
 
   const handleMouseLeave = useCallback(() => {
     const map = mapRef.current?.getMap?.();
@@ -344,8 +353,9 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
       map.getCanvas().style.cursor = "";
     }
 
+    onHoverProvince?.(null);
     setHoveredProvince((current) => (current === null ? current : null));
-  }, []);
+  }, [onHoverProvince]);
 
   const handleProvinceClick = useCallback(
     (event) => {
