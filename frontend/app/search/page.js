@@ -885,7 +885,7 @@ function SearchPageContent() {
         priceAlert={priceAlertPrompt}
       />
 
-      {token && hasAutosaivableSearch ? (
+      {token ? (
         <section className="surface-soft border border-ink/10 bg-white/88 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex max-w-3xl items-start gap-3">
@@ -900,7 +900,11 @@ function SearchPageContent() {
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-ink">
-                  {savedSearchMeta.alertsEnabled
+                  {!hasAutosaivableSearch
+                    ? language === "en"
+                      ? "Program this search"
+                      : "Programa tu busqueda"
+                    : savedSearchMeta.alertsEnabled
                     ? language === "en"
                       ? "Search scheduled in your bell"
                       : "Busqueda programada en tu campanita"
@@ -913,7 +917,11 @@ function SearchPageContent() {
                         : "Programa tu busqueda"}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-ink/62">
-                  {savedSearchMeta.alertsEnabled
+                  {!hasAutosaivableSearch
+                    ? language === "en"
+                      ? "Choose province, property type, price, or any other filter and we will turn this into a notification-ready search."
+                      : "Elige provincia, tipo de propiedad, precio u otro filtro y convertiremos esto en una busqueda lista para notificaciones."
+                    : savedSearchMeta.alertsEnabled
                     ? language === "en"
                       ? "If someone publishes a listing that matches these criteria, we will notify you so you can see it first."
                       : "Si alguien publica una propiedad que coincida con estos criterios, te avisaremos para que seas de los primeros en verla."
@@ -949,6 +957,7 @@ function SearchPageContent() {
               </label>
               <Input
                 value={savedSearchMeta.name || generatedAlertName}
+                disabled={!hasAutosaivableSearch}
                 onChange={(event) => {
                   setSavedSearchMeta((current) => ({
                     ...current,
@@ -962,7 +971,9 @@ function SearchPageContent() {
               <div className="flex items-end gap-3">
                 <Button
                   variant={savedSearchMeta.alertsEnabled ? "secondary" : "success"}
-                  disabled={alertActionBusy || autosaveStatus === "saving"}
+                  disabled={
+                    !hasAutosaivableSearch || alertActionBusy || autosaveStatus === "saving"
+                  }
                   onClick={handleAlertToggle}
                 >
                   {alertActionBusy
@@ -982,9 +993,13 @@ function SearchPageContent() {
           </div>
 
           <div className="mt-3 text-xs leading-6 text-ink/58">
-            {language === "en"
-              ? "This search stays synced with your current filters and will keep living inside your bell."
-              : "Esta busqueda seguira sincronizada con tus filtros actuales y quedara guardada dentro de tu campanita."}
+            {!hasAutosaivableSearch
+              ? language === "en"
+                ? "As soon as you define criteria, this panel will stay here and let you schedule the notification."
+                : "En cuanto definas criterios, este panel seguira aqui y te permitira programar la notificacion."
+              : language === "en"
+                ? "This search stays synced with your current filters and will keep living inside your bell."
+                : "Esta busqueda seguira sincronizada con tus filtros actuales y quedara guardada dentro de tu campanita."}
           </div>
 
           {alertFeedback ? (
@@ -1010,21 +1025,21 @@ function SearchPageContent() {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <span className="eyebrow text-[#8f540d]">
-                {language === "en" ? "Boost active" : "Boost activo"}
+                {language === "en" ? "Featured" : "Destacadas"}
               </span>
               <h2 className="mt-3 text-2xl font-semibold text-ink">
                 {language === "en"
-                  ? "Listings with extra visibility"
-                  : "Listings con visibilidad extra"}
+                  ? "Featured listings"
+                  : "Propiedades destacadas"}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/62">
                 {language === "en"
-                  ? "They stay visible before the organic grid and stand out on the map with a premium price bubble."
-                  : "Se muestran antes del bloque organico y resaltan en el mapa con una burbuja premium."}
+                  ? "They appear first in this block and keep a stronger visual presence on the map."
+                  : "Aparecen primero en este bloque y mantienen una presencia visual mas fuerte en el mapa."}
               </p>
             </div>
             <span className="rounded-full border border-[#eccb8e] bg-white/82 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f540d] shadow-soft">
-              {boostedResultsCount} {language === "en" ? "boosted now" : "con boost ahora"}
+              {boostedResultsCount} {language === "en" ? "featured now" : "destacadas ahora"}
             </span>
           </div>
 
@@ -1081,7 +1096,7 @@ function SearchPageContent() {
             </span>
             {boostedResultsCount && !filters.featured ? (
               <span className="rounded-full border border-[#f0dab4] bg-[#fff8ea] px-3 py-1.5 text-[11px] font-semibold text-[#8f540d] shadow-soft">
-                {boostedResultsCount} {language === "en" ? "boosted" : "con boost"}
+                {boostedResultsCount} {language === "en" ? "featured" : "destacadas"}
               </span>
             ) : null}
             <span className="rounded-full border border-ink/10 bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-ink/68 shadow-soft">

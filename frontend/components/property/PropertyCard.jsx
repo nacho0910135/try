@@ -124,7 +124,7 @@ export function PropertyCard({
     MARKET_LABELS[property.marketStatus]?.[language] || property.marketStatus;
   const rentalLabel =
     RENTAL_LABELS[property.rentalArrangement]?.[language] || property.rentalArrangement;
-  const featuredBadgeLabel = language === "en" ? "Boost" : "Boost";
+  const featuredBadgeLabel = language === "en" ? "Featured" : "Destacada";
   const trustLabel =
     property.trustProfile?.level === "high"
       ? language === "en"

@@ -40,7 +40,7 @@ export function SiteFooter() {
                   href="/destacadas"
                   className="transition hover:translate-x-0.5 hover:text-pine"
                 >
-                  {language === "en" ? "Boost showcase" : "Vitrina boost"}
+                  {language === "en" ? "Featured listings" : "Propiedades destacadas"}
                 </Link>
                 <Link href="/analysis" className="transition hover:translate-x-0.5 hover:text-pine">
                   {t("footer.analysis")}

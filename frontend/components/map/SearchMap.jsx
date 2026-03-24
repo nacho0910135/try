@@ -108,7 +108,7 @@ export function SearchMap({
   const activeContextLayerMeta = mapContextLayers.filter((layer) =>
     activeContextLayers.includes(layer.id)
   );
-  const boostLabel = language === "en" ? "Boost" : "Boost";
+  const boostLabel = language === "en" ? "Featured" : "Destacada";
 
   useEffect(() => {
     const loadDistricts = async () => {
@@ -539,12 +539,12 @@ export function SearchMap({
           {boostedProperties.length ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-[#f1d9ae] bg-[#fff8ea] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8f540d]">
-                {boostedProperties.length} {language === "en" ? "boosted" : "con boost"}
+                {boostedProperties.length} {language === "en" ? "featured" : "destacadas"}
               </span>
               <span>
                 {language === "en"
-                  ? "Paid listings keep a premium bubble and top map presence."
-                  : "Los anuncios pagados mantienen una burbuja premium y presencia alta en el mapa."}
+                  ? "Featured listings keep a premium bubble and stronger map presence."
+                  : "Las destacadas mantienen una burbuja premium y una presencia mas fuerte en el mapa."}
               </span>
             </div>
           ) : null}

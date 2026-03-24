@@ -1,23 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, MapPinned, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getProperties } from "@/lib/api";
+import { getProperties, getZoneSeoData } from "@/lib/api";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { hasCommercialDashboardAccess } from "@/lib/user-access";
+import { costaRicaProvinces } from "@/lib/costa-rica-provinces";
 import { useAuthStore } from "@/store/auth-store";
-
-const normalizeProvinceName = (value = "") =>
-  value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
 
 export default function FeaturedListingsPage() {
   const { language } = useLanguage();
@@ -27,49 +21,54 @@ export default function FeaturedListingsPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [summary, setSummary] = useState(null);
   const [provinceFilter, setProvinceFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
 
   const copy =
     language === "en"
       ? {
-          eyebrow: "Boost showcase",
-          title: "Listings with extra visibility",
+          eyebrow: "Featured",
+          title: "Featured listings",
           description:
-            "This is the premium showcase for listings that paid for boost. They stay ahead of organic inventory and stand out harder inside the marketplace.",
-          total: "boosted now",
+            "A cleaner way to start exploring. Featured listings appear first, followed by the most recent inventory in the area you want to see.",
+          total: "visible now",
           forSale: "for sale",
           forRent: "for rent",
           allCostaRica: "All Costa Rica",
-          openSearch: "Open boosted search",
-          publish: "Publish and boost",
-          whyTitle: "Where boost gets seen",
+          openSearch: "Open search",
+          publish: "Publish property",
+          whyTitle: "Smart ordering",
           whyDescription:
-            "Homepage showcase, search rail before the organic grid, and premium map price bubbles.",
-          emptyTitle: "No boosted listings yet",
+            "Featured listings stay first, then the freshest inventory continues below without breaking the browsing flow.",
+          emptyTitle: "No listings available right now",
           emptyDescription:
-            "As soon as a listing activates boost, it will appear here with priority visibility.",
+            "Try another province or come back in a moment for a fresher view.",
           retry: "Retry",
-          loadError: "Boosted listings could not be loaded right now."
+          loadError: "Featured listings could not be loaded right now.",
+          loadMore: "Load more"
         }
       : {
-          eyebrow: "Vitrina boost",
-          title: "Propiedades con visibilidad extra",
+          eyebrow: "Destacadas",
+          title: "Propiedades destacadas",
           description:
-            "Aqui vive la vitrina premium de las publicaciones que pagaron boost. Se muestran antes del inventario organico y resaltan mas fuerte dentro del marketplace.",
-          total: "con boost ahora",
+            "Una forma mas limpia de explorar. Primero aparecen las propiedades destacadas y luego el inventario mas reciente de la zona que quieras ver.",
+          total: "visibles ahora",
           forSale: "en venta",
           forRent: "en renta",
           allCostaRica: "Todo Costa Rica",
-          openSearch: "Abrir busqueda con boost",
-          publish: "Publicar y destacar",
-          whyTitle: "Donde se ve el boost",
+          openSearch: "Abrir busqueda",
+          publish: "Publicar propiedad",
+          whyTitle: "Orden inteligente",
           whyDescription:
-            "Portada, rail de busqueda antes del bloque organico y burbujas premium dentro del mapa.",
-          emptyTitle: "Todavia no hay publicaciones con boost",
+            "Las destacadas quedan primero y luego sigue el inventario mas reciente, sin romper el flujo natural de exploracion.",
+          emptyTitle: "Todavia no hay propiedades para mostrar",
           emptyDescription:
-            "En cuanto una propiedad active boost, aparecera aqui con prioridad de visibilidad.",
+            "Prueba otra provincia o vuelve en un momento para ver una lectura mas fresca.",
           retry: "Intentar de nuevo",
-          loadError: "No se pudieron cargar las publicaciones con boost en este momento."
+          loadError: "No se pudieron cargar las propiedades destacadas en este momento.",
+          loadMore: "Cargar mas"
         };
 
   useEffect(() => {
@@ -79,13 +78,22 @@ export default function FeaturedListingsPage() {
       setLoading(true);
 
       try {
-        const data = await getProperties({ featured: true, limit: 48, page: 1, sort: "recent" });
+        const data = await getProperties({
+          limit: 24,
+          page,
+          sort: "recent",
+          province: provinceFilter === "all" ? undefined : provinceFilter
+        });
         if (cancelled) return;
-        setItems(data.items || []);
+        setItems((current) => (page === 1 ? data.items || [] : [...current, ...(data.items || [])]));
+        setPagination(data.pagination || { page: 1, totalPages: 1, total: 0 });
         setLoadFailed(false);
       } catch (_error) {
         if (cancelled) return;
-        setItems([]);
+        if (page === 1) {
+          setItems([]);
+          setPagination({ page: 1, totalPages: 1, total: 0 });
+        }
         setLoadFailed(true);
       } finally {
         if (!cancelled) {
@@ -99,41 +107,48 @@ export default function FeaturedListingsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page, provinceFilter]);
 
-  const provinces = useMemo(() => {
-    const unique = new Map();
+  useEffect(() => {
+    let cancelled = false;
 
-    items.forEach((item) => {
-      if (item?.address?.province) {
-        unique.set(normalizeProvinceName(item.address.province), item.address.province);
+    const loadSummary = async () => {
+      try {
+        const data = await getZoneSeoData(
+          provinceFilter === "all" ? {} : { province: provinceFilter }
+        );
+        if (cancelled) return;
+        setSummary(data.summary || null);
+      } catch (_error) {
+        if (cancelled) return;
+        setSummary(null);
       }
-    });
+    };
 
-    return [copy.allCostaRica, ...Array.from(unique.values())];
-  }, [copy.allCostaRica, items]);
+    void loadSummary();
 
-  const visibleItems = useMemo(() => {
-    if (provinceFilter === "all") {
-      return items;
-    }
+    return () => {
+      cancelled = true;
+    };
+  }, [provinceFilter]);
 
-    return items.filter(
-      (item) =>
-        normalizeProvinceName(item.address?.province) === normalizeProvinceName(provinceFilter)
-    );
-  }, [items, provinceFilter]);
+  const provinces = useMemo(
+    () => [copy.allCostaRica, ...costaRicaProvinces.map((item) => item.name)],
+    [copy.allCostaRica]
+  );
 
   const stats = useMemo(() => {
-    const saleCount = items.filter((item) => item.businessType === "sale").length;
-    const rentCount = items.filter((item) => item.businessType === "rent").length;
+    const saleCount = Number(summary?.saleListings || 0);
+    const rentCount = Number(summary?.rentListings || 0);
 
     return [
-      { label: copy.total, value: items.length },
+      { label: copy.total, value: Number(summary?.totalListings || pagination.total || items.length) },
       { label: copy.forSale, value: saleCount },
       { label: copy.forRent, value: rentCount }
     ];
-  }, [copy.forRent, copy.forSale, copy.total, items]);
+  }, [copy.forRent, copy.forSale, copy.total, items.length, pagination.total, summary]);
+
+  const hasMore = pagination.page < pagination.totalPages;
 
   return (
     <div className="section-pad">
@@ -151,7 +166,7 @@ export default function FeaturedListingsPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Link href="/search?featured=true">
+              <Link href="/search">
                 <Button variant="accent">
                   {copy.openSearch}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -170,10 +185,6 @@ export default function FeaturedListingsPage() {
                 {copy.whyTitle}
               </div>
               <p className="mt-3 max-w-sm text-sm leading-6 text-ink/62">{copy.whyDescription}</p>
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#eccb8e] bg-white/82 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f540d] shadow-soft">
-                <MapPinned className="h-3.5 w-3.5" />
-                Boost
-              </div>
             </div>
 
             <div className="surface-soft grid gap-3 p-4 sm:grid-cols-3">
@@ -200,7 +211,10 @@ export default function FeaturedListingsPage() {
               <button
                 key={item}
                 type="button"
-                onClick={() => setProvinceFilter(value)}
+                onClick={() => {
+                  setProvinceFilter(value);
+                  setPage(1);
+                }}
                 className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
                   active
                     ? "border-[#eccb8e] bg-[#fff4dc] text-[#8f540d] shadow-soft"
@@ -217,8 +231,8 @@ export default function FeaturedListingsPage() {
           <LoadingState
             label={
               language === "en"
-                ? "Loading boosted listings..."
-                : "Cargando publicaciones con boost..."
+                ? "Loading featured listings..."
+                : "Cargando propiedades destacadas..."
             }
           />
         ) : loadFailed ? (
@@ -228,15 +242,23 @@ export default function FeaturedListingsPage() {
             actionLabel={copy.retry}
             onAction={() => window.location.reload()}
           />
-        ) : visibleItems.length ? (
+        ) : items.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
-            {visibleItems.map((property) => (
+            {items.map((property) => (
               <PropertyCard key={property._id} property={property} />
             ))}
           </div>
         ) : (
           <EmptyState title={copy.emptyTitle} description={copy.emptyDescription} />
         )}
+
+        {!loading && !loadFailed && hasMore ? (
+          <div className="flex justify-center">
+            <Button variant="secondary" onClick={() => setPage((current) => current + 1)}>
+              {copy.loadMore}
+            </Button>
+          </div>
+        ) : null}
       </section>
     </div>
   );

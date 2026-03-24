@@ -5,7 +5,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { ArrowRight, BrainCircuit, MapPinned, Radar, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getFeaturedProperties, getZoneSeoData } from "@/lib/api";
+import { getProperties, getZoneSeoData } from "@/lib/api";
 import { buildBoostPropertyHref, boostMetrics, trackBoostMetricOnce } from "@/lib/boost-metrics";
 import { slugifyLocation } from "@/lib/zone-seo";
 import { useLanguage } from "@/components/layout/LanguageProvider";
@@ -95,14 +95,14 @@ export default function HomePage() {
               href: publishHref
             }
           ],
-          featuredEyebrow: "Boost showcase",
-          featuredTitle: "Boosted listings with premium placement",
+          featuredEyebrow: "Featured",
+          featuredTitle: "Featured listings",
           featuredDescription:
-            "This is where paid boost gets tangible. These listings stay ahead of the organic grid and feed the premium surfaces across the marketplace.",
-          featuredCta: "Open showcase",
-          featuredSearch: "Boosted search",
-          featuredFailed: "Featured inventory could not be loaded right now.",
-          noProvinceData: "No featured sample for this province yet. Open the map and explore wider."
+            "A cleaner way to start exploring. Featured listings appear first and then the freshest inventory continues right behind them.",
+          featuredCta: "Open featured",
+          featuredSearch: "Open search",
+          featuredFailed: "Featured listings could not be loaded right now.",
+          noProvinceData: "There is no visible sample for this province yet. Open the map and explore wider."
         }
       : {
           eyebrow: "Costa Rica, sin ruido",
@@ -138,15 +138,15 @@ export default function HomePage() {
               href: publishHref
             }
           ],
-          featuredEyebrow: "Vitrina boost",
-          featuredTitle: "Publicaciones con ubicacion premium",
+          featuredEyebrow: "Destacadas",
+          featuredTitle: "Propiedades destacadas",
           featuredDescription:
-            "Aqui el boost se vuelve visible de verdad. Estas publicaciones van antes del bloque organico y alimentan las superficies premium del marketplace.",
-          featuredCta: "Abrir vitrina",
-          featuredSearch: "Buscar con boost",
-          featuredFailed: "No se pudo cargar el inventario destacado en este momento.",
+            "Una forma mas limpia de empezar a explorar. Primero aparecen las destacadas y luego sigue el inventario mas reciente.",
+          featuredCta: "Ver destacadas",
+          featuredSearch: "Abrir busqueda",
+          featuredFailed: "No se pudieron cargar las propiedades destacadas en este momento.",
           noProvinceData:
-            "Todavia no hay muestra destacada para esta provincia. Abre el mapa y explora mas amplio."
+            "Todavia no hay muestra visible para esta provincia. Abre el mapa y explora mas amplio."
         };
 
   useEffect(() => {
@@ -154,7 +154,7 @@ export default function HomePage() {
 
     const loadFeatured = async () => {
       try {
-        const data = await getFeaturedProperties();
+        const data = await getProperties({ limit: 6, page: 1, sort: "recent" });
         if (cancelled) return;
         setFeatured(data.items || []);
         setFeaturedLoadFailed(false);
