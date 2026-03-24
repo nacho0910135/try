@@ -885,7 +885,7 @@ function SearchPageContent() {
         priceAlert={priceAlertPrompt}
       />
 
-      {token ? (
+      {token && hasAutosaivableSearch ? (
         <section className="surface-soft border border-ink/10 bg-white/88 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex max-w-3xl items-start gap-3">
@@ -900,11 +900,7 @@ function SearchPageContent() {
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-ink">
-                  {!hasAutosaivableSearch
-                    ? language === "en"
-                      ? "Program this search"
-                      : "Programa tu busqueda"
-                    : savedSearchMeta.alertsEnabled
+                  {savedSearchMeta.alertsEnabled
                     ? language === "en"
                       ? "Search scheduled in your bell"
                       : "Busqueda programada en tu campanita"
@@ -917,11 +913,7 @@ function SearchPageContent() {
                         : "Programa tu busqueda"}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-ink/62">
-                  {!hasAutosaivableSearch
-                    ? language === "en"
-                      ? "Choose province, property type, price, or any other filter and we will turn this into a notification-ready search."
-                      : "Elige provincia, tipo de propiedad, precio u otro filtro y convertiremos esto en una busqueda lista para notificaciones."
-                    : savedSearchMeta.alertsEnabled
+                  {savedSearchMeta.alertsEnabled
                     ? language === "en"
                       ? "If someone publishes a listing that matches these criteria, we will notify you so you can see it first."
                       : "Si alguien publica una propiedad que coincida con estos criterios, te avisaremos para que seas de los primeros en verla."
@@ -957,7 +949,6 @@ function SearchPageContent() {
               </label>
               <Input
                 value={savedSearchMeta.name || generatedAlertName}
-                disabled={!hasAutosaivableSearch}
                 onChange={(event) => {
                   setSavedSearchMeta((current) => ({
                     ...current,
@@ -971,9 +962,7 @@ function SearchPageContent() {
               <div className="flex items-end gap-3">
                 <Button
                   variant={savedSearchMeta.alertsEnabled ? "secondary" : "success"}
-                  disabled={
-                    !hasAutosaivableSearch || alertActionBusy || autosaveStatus === "saving"
-                  }
+                  disabled={alertActionBusy || autosaveStatus === "saving"}
                   onClick={handleAlertToggle}
                 >
                   {alertActionBusy
@@ -993,13 +982,9 @@ function SearchPageContent() {
           </div>
 
           <div className="mt-3 text-xs leading-6 text-ink/58">
-            {!hasAutosaivableSearch
-              ? language === "en"
-                ? "As soon as you define criteria, this panel will stay here and let you schedule the notification."
-                : "En cuanto definas criterios, este panel seguira aqui y te permitira programar la notificacion."
-              : language === "en"
-                ? "This search stays synced with your current filters and will keep living inside your bell."
-                : "Esta busqueda seguira sincronizada con tus filtros actuales y quedara guardada dentro de tu campanita."}
+            {language === "en"
+              ? "This search stays synced with your current filters and will keep living inside your bell."
+              : "Esta busqueda seguira sincronizada con tus filtros actuales y quedara guardada dentro de tu campanita."}
           </div>
 
           {alertFeedback ? (
