@@ -92,10 +92,10 @@ export function SiteFooter() {
                 Pagina de contacto y soporte
               </Link>
               <a
-                href="mailto:jose17mp@hotmail.com"
+                href="mailto:bienesraicescrnet@gmail.com"
                 className="mt-3 inline-flex rounded-full border border-white/80 bg-white/76 px-3.5 py-2 text-sm font-semibold text-pine shadow-soft transition hover:bg-white hover:text-lagoon"
               >
-                jose17mp@hotmail.com
+                bienesraicescrnet@gmail.com
               </a>
             </div>
           </div>
