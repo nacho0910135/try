@@ -44,6 +44,14 @@ const buildFeaturedPrioritySort = (fallback = {}) => ({
   ...fallback
 });
 
+const boostMetricFieldMap = {
+  "home-impression": "boostMetrics.homeImpressions",
+  "search-rail-impression": "boostMetrics.searchRailImpressions",
+  "map-impression": "boostMetrics.mapImpressions",
+  "card-open": "boostMetrics.cardOpens",
+  lead: "boostMetrics.leads"
+};
+
 const buildSort = (sort, query = {}) => {
   if (!sort && query.lat !== undefined && query.lng !== undefined) {
     return {};
@@ -795,6 +803,26 @@ export const propertyService = {
       402,
       "El boost ahora se activa desde checkout PayPal. Inicia el pago para destacar esta propiedad."
     );
+  },
+
+  async recordBoostMetric(propertyId, metric) {
+    const metricField = boostMetricFieldMap[metric];
+
+    if (!metricField) {
+      throw new ApiError(400, "Boost metric not supported");
+    }
+
+    const result = await Property.updateOne(
+      { _id: propertyId, featured: true },
+      {
+        $inc: { [metricField]: 1 },
+        $set: { "boostMetrics.lastTrackedAt": new Date() }
+      }
+    );
+
+    return {
+      recorded: result.modifiedCount > 0
+    };
   },
 
   async remove(propertyId, user) {

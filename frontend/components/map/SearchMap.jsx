@@ -7,6 +7,11 @@ import { Expand, MapPinned, Sparkles } from "lucide-react";
 import Map, { GeolocateControl, Layer, Marker, NavigationControl, Source } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
 import { useLanguage } from "@/components/layout/LanguageProvider";
+import {
+  buildBoostPropertyHref,
+  boostMetrics,
+  trackBoostMetricOnce
+} from "@/lib/boost-metrics";
 import { getVisibleMapContextPoints, mapContextLayers } from "@/lib/costa-rica-map-context";
 import { cn, formatCompactCurrency } from "@/lib/utils";
 import { mapDefaultCenter } from "@/lib/constants";
@@ -230,6 +235,16 @@ export function SearchMap({
   }, [autoFitKey, districtGeoJson, focusedContextPoint, visibleProperties]);
 
   useEffect(() => {
+    boostedProperties.forEach((property) => {
+      if (!property?._id) {
+        return;
+      }
+
+      void trackBoostMetricOnce(property._id, boostMetrics.mapImpression, "map");
+    });
+  }, [boostedProperties]);
+
+  useEffect(() => {
     if (!drawControlsEnabled || !token || !mapRef.current || drawRef.current) {
       return;
     }
@@ -442,7 +457,13 @@ export function SearchMap({
                 onClick={() => {
                   onSelectProperty?.(property._id);
                   if (property.slug) {
-                    router.push(`/properties/${property.slug}`);
+                    router.push(
+                      buildBoostPropertyHref(
+                        property.slug,
+                        isBoosted ? "map" : "",
+                        isBoosted
+                      )
+                    );
                   }
                 }}
                 className="group relative -m-2 rounded-full p-2 focus:outline-none"

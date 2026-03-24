@@ -152,6 +152,33 @@ const engagementSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const boostMetricsSchema = new mongoose.Schema(
+  {
+    homeImpressions: {
+      type: Number,
+      default: 0
+    },
+    searchRailImpressions: {
+      type: Number,
+      default: 0
+    },
+    mapImpressions: {
+      type: Number,
+      default: 0
+    },
+    cardOpens: {
+      type: Number,
+      default: 0
+    },
+    leads: {
+      type: Number,
+      default: 0
+    },
+    lastTrackedAt: Date
+  },
+  { _id: false }
+);
+
 const roommateDetailsSchema = new mongoose.Schema(
   {
     privateRoom: {
@@ -462,6 +489,10 @@ const propertySchema = new mongoose.Schema(
     },
     engagement: {
       type: engagementSchema,
+      default: () => ({})
+    },
+    boostMetrics: {
+      type: boostMetricsSchema,
       default: () => ({})
     },
     approvedBy: {

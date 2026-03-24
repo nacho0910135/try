@@ -11,7 +11,7 @@ export const MARKET_STATUSES = ["available", "reserved", "sold", "rented", "inac
 export const MEDIA_TYPES = ["image", "video"];
 export const RENTAL_ARRANGEMENTS = ["full-property", "roommate"];
 export const ROOMMATE_GENDER_PREFERENCES = ["any", "female-only", "male-only"];
-export const LEAD_SOURCES = ["property-page", "search", "whatsapp", "direct"];
+export const LEAD_SOURCES = ["property-page", "search", "home", "search-rail", "map", "whatsapp", "direct"];
 export const LEAD_STATUSES = ["new", "contacted", "qualified", "closed"];
 export const LEAD_PRIORITIES = ["low", "medium", "high"];
 export const OFFER_SOURCES = ["property-page", "dashboard", "analysis", "direct"];
@@ -31,6 +31,14 @@ export const COSTA_RICA_PROVINCES = [
   "Guanacaste",
   "Puntarenas",
   "Limon"
+];
+
+export const BOOST_METRIC_EVENTS = [
+  "home-impression",
+  "search-rail-impression",
+  "map-impression",
+  "card-open",
+  "lead"
 ];
 
 export const DEFAULT_PROPERTY_SORT = "-featured -publishedAt -createdAt";

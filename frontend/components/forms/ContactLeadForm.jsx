@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { createLead } from "@/lib/api";
 import { analyticsEvents, trackEvent } from "@/lib/analytics";
+import { readRememberedBoostSurface } from "@/lib/boost-metrics";
 import { useAuthStore } from "@/store/auth-store";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -54,9 +55,11 @@ export function ContactLeadForm({
   const onSubmit = async (values) => {
     try {
       setFeedback("");
+      const boostSurface = readRememberedBoostSurface(propertyId);
       await createLead({
         propertyId,
-        ...values
+        ...values,
+        source: boostSurface || "property-page"
       });
       trackEvent(analyticsEvents.leadSubmitted, {
         propertyId,

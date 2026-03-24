@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  BOOST_METRIC_EVENTS,
   BUSINESS_TYPES,
   CURRENCIES,
   MARKET_STATUSES,
@@ -153,6 +154,15 @@ export const propertyFeaturedSchema = z.object({
   }),
   body: z.object({
     featured: z.boolean()
+  })
+});
+
+export const propertyBoostMetricSchema = z.object({
+  params: z.object({
+    propertyId: objectIdSchema
+  }),
+  body: z.object({
+    metric: z.enum(BOOST_METRIC_EVENTS)
   })
 });
 

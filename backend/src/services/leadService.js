@@ -9,6 +9,8 @@ const canReceiveLeads = (property) =>
   property.status === "published" &&
   ["available", "reserved"].includes(property.marketStatus || "available");
 
+const boostAttributionSources = new Set(["home", "search-rail", "map"]);
+
 const startOfToday = () => {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
@@ -68,6 +70,16 @@ export const leadService = {
     });
 
     await Property.updateOne({ _id: property._id }, { $inc: { "engagement.leads": 1 } });
+
+    if (property.featured && boostAttributionSources.has(payload.source || "property-page")) {
+      await Property.updateOne(
+        { _id: property._id },
+        {
+          $inc: { "boostMetrics.leads": 1 },
+          $set: { "boostMetrics.lastTrackedAt": new Date() }
+        }
+      );
+    }
 
     try {
       await notificationService.sendLeadNotification({

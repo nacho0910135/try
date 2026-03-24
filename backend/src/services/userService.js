@@ -102,6 +102,14 @@ const buildProvincePerformance = (properties) => {
     .slice(0, 6);
 };
 
+const buildBoostSurfaceMetrics = (properties) => ({
+  homeImpressions: sumBy(properties, (item) => item.boostMetrics?.homeImpressions),
+  searchRailImpressions: sumBy(properties, (item) => item.boostMetrics?.searchRailImpressions),
+  mapImpressions: sumBy(properties, (item) => item.boostMetrics?.mapImpressions),
+  cardOpens: sumBy(properties, (item) => item.boostMetrics?.cardOpens),
+  leads: sumBy(properties, (item) => item.boostMetrics?.leads)
+});
+
 const buildTrustCoverage = (properties) => {
   const total = Math.max(properties.length, 1);
   const count = (predicate) => properties.filter(predicate).length;
@@ -366,7 +374,7 @@ export const userService = {
       await Promise.all([
         Property.find({ owner: user._id })
           .select(
-            "title slug address price currency propertyType businessType status marketStatus featured publishedAt soldAt rentedAt inactivatedAt views engagement photos media sellerInfo serviceDistances description isApproved analyticsSnapshot finalPrice createdAt constructionArea lotArea landArea address"
+            "title slug address price currency propertyType businessType status marketStatus featured publishedAt soldAt rentedAt inactivatedAt views engagement boostMetrics photos media sellerInfo serviceDistances description isApproved analyticsSnapshot finalPrice createdAt constructionArea lotArea landArea address"
           )
           .lean(),
         Lead.find({ toUser: user._id }).sort({ createdAt: -1 }).limit(8).populate("property", "title slug").lean(),
@@ -438,6 +446,13 @@ export const userService = {
         const favorites = Number(property.engagement?.favorites || 0);
         const leads = Number(property.engagement?.leads || 0);
         const offers = Number(property.engagement?.offers || 0);
+        const boostMetrics = {
+          homeImpressions: Number(property.boostMetrics?.homeImpressions || 0),
+          searchRailImpressions: Number(property.boostMetrics?.searchRailImpressions || 0),
+          mapImpressions: Number(property.boostMetrics?.mapImpressions || 0),
+          cardOpens: Number(property.boostMetrics?.cardOpens || 0),
+          leads: Number(property.boostMetrics?.leads || 0)
+        };
         const estimatedReach = property.featured
           ? Math.max(views * 7 + favorites * 14 + leads * 22 + offers * 28, views)
           : Math.max(views * 3 + favorites * 8, views);
@@ -456,6 +471,7 @@ export const userService = {
           favorites,
           leads,
           offers,
+          boostMetrics,
           estimatedReach,
           leadRate: percent(leads, views),
           offerRate: percent(offers, views),
@@ -470,6 +486,11 @@ export const userService = {
     const adLeads = sumBy(promotedListings, (item) => item.leads);
     const adOffers = sumBy(promotedListings, (item) => item.offers);
     const estimatedReach = sumBy(promotedListings, (item) => item.estimatedReach);
+    const boostSurfaceMetrics = buildBoostSurfaceMetrics(promotedListings);
+    const boostSurfaceExposure =
+      boostSurfaceMetrics.homeImpressions +
+      boostSurfaceMetrics.searchRailImpressions +
+      boostSurfaceMetrics.mapImpressions;
     const totalViews = sumBy(listingPerformance, (item) => item.views);
     const totalLeads = sumBy(listingPerformance, (item) => item.leads);
     const totalOffers = sumBy(listingPerformance, (item) => item.offers);
@@ -567,12 +588,26 @@ export const userService = {
         offers: adOffers,
         ctr: percent(adViews, estimatedReach),
         leadRate: percent(adLeads, adViews),
-        offerRate: percent(adOffers, adViews)
+        offerRate: percent(adOffers, adViews),
+        boostSurfaceMetrics,
+        boostSurfaceExposure,
+        boostOpenRate: percent(boostSurfaceMetrics.cardOpens, boostSurfaceExposure),
+        attributedLeadRate: percent(boostSurfaceMetrics.leads, boostSurfaceMetrics.cardOpens)
       },
       timeline,
       topPerformers,
       provincePerformance,
       listingPerformance: listingPerformance.slice(0, 12),
+      boostedListingPerformance: promotedListings.slice(0, 8).map((item) => ({
+        id: item.id,
+        label: item.title,
+        slug: item.slug,
+        homeImpressions: item.boostMetrics.homeImpressions,
+        searchRailImpressions: item.boostMetrics.searchRailImpressions,
+        mapImpressions: item.boostMetrics.mapImpressions,
+        cardOpens: item.boostMetrics.cardOpens,
+        leads: item.boostMetrics.leads
+      })),
       trustCoverage,
       optimizationBoard,
       recentLeads: leadsReceived,

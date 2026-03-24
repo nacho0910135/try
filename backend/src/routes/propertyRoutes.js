@@ -5,6 +5,7 @@ import {
   getManageProperty,
   getPropertyBySlug,
   getPropertySeoBySlug,
+  recordPropertyBoostMetric,
   getZoneSeoData,
   listFeaturedProperties,
   listPropertySitemapEntries,
@@ -19,6 +20,7 @@ import { propertySearchLimiter } from "../middlewares/rateLimiters.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 import {
   createPropertySchema,
+  propertyBoostMetricSchema,
   listPropertiesSchema,
   propertyFeaturedSchema,
   propertyIdSchema,
@@ -34,6 +36,7 @@ propertyRoutes.get("/", propertySearchLimiter, validate(listPropertiesSchema), l
 propertyRoutes.get("/seo/zone", validate(zoneSeoSchema), getZoneSeoData);
 propertyRoutes.get("/seo/sitemap", listPropertySitemapEntries);
 propertyRoutes.get("/featured", listFeaturedProperties);
+propertyRoutes.post("/:propertyId/boost-metrics", validate(propertyBoostMetricSchema), recordPropertyBoostMetric);
 propertyRoutes.get("/my/listings", requireAuth, authorize("agent", "owner", "admin"), listMyProperties);
 propertyRoutes.get("/slug/:slug/seo", optionalAuth, validate(propertySlugSchema), getPropertySeoBySlug);
 propertyRoutes.get("/slug/:slug", optionalAuth, validate(propertySlugSchema), getPropertyBySlug);

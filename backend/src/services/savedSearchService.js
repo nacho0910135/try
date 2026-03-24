@@ -24,7 +24,7 @@ const ALERT_CARD_FIELDS = "title slug price currency photos media address market
 
 const roundToSingleDecimal = (value) => Math.round(value * 10) / 10;
 
-const buildPriceDropEntry = (property, thresholdDate) => {
+export const buildPriceDropEntry = (property, thresholdDate) => {
   const history = (property.priceHistory || [])
     .filter((entry) => Number.isFinite(Number(entry?.price)) && entry?.changedAt)
     .map((entry) => ({

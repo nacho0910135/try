@@ -97,6 +97,8 @@ export const getFeaturedProperties = () => unwrap(api.get("/properties/featured"
 export const getProperties = (filters = {}) =>
   unwrap(api.get(`/properties?${serializePropertyQuery(filters)}`));
 export const getPropertyBySlug = (slug) => unwrap(api.get(`/properties/slug/${slug}`));
+export const trackPropertyBoostMetric = (propertyId, payload) =>
+  unwrap(api.post(`/properties/${propertyId}/boost-metrics`, payload));
 export const getMyProperties = () => unwrap(api.get("/properties/my/listings"));
 export const getManageProperty = (propertyId) =>
   unwrap(api.get(`/properties/manage/${propertyId}`));

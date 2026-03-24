@@ -73,6 +73,11 @@ export const updatePropertyFeatured = asyncHandler(async (req, res) => {
   res.json({ success: true, property });
 });
 
+export const recordPropertyBoostMetric = asyncHandler(async (req, res) => {
+  const result = await propertyService.recordBoostMetric(req.params.propertyId, req.body.metric);
+  res.json({ success: true, ...result });
+});
+
 export const deleteProperty = asyncHandler(async (req, res) => {
   await propertyService.remove(req.params.propertyId, req.user);
   res.json({ success: true, message: "Property deleted" });

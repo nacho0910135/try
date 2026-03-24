@@ -17,11 +17,13 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useLanguage } from "@/components/layout/LanguageProvider";
 import { formatCurrency } from "@/lib/utils";
 
 const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
 
 export default function DashboardBusinessPage() {
+  const { language } = useLanguage();
   const [overview, setOverview] = useState(null);
   const [flashMessage, setFlashMessage] = useState("");
   const [donationAmount, setDonationAmount] = useState(10);
@@ -109,7 +111,18 @@ export default function DashboardBusinessPage() {
     offers: Number(overview.adPerformance?.offers || 0),
     ctr: Number(overview.adPerformance?.ctr || 0),
     leadRate: Number(overview.adPerformance?.leadRate || 0),
-    offerRate: Number(overview.adPerformance?.offerRate || 0)
+    offerRate: Number(overview.adPerformance?.offerRate || 0),
+    boostOpenRate: Number(overview.adPerformance?.boostOpenRate || 0),
+    attributedLeadRate: Number(overview.adPerformance?.attributedLeadRate || 0),
+    boostSurfaceMetrics: {
+      homeImpressions: Number(overview.adPerformance?.boostSurfaceMetrics?.homeImpressions || 0),
+      searchRailImpressions: Number(
+        overview.adPerformance?.boostSurfaceMetrics?.searchRailImpressions || 0
+      ),
+      mapImpressions: Number(overview.adPerformance?.boostSurfaceMetrics?.mapImpressions || 0),
+      cardOpens: Number(overview.adPerformance?.boostSurfaceMetrics?.cardOpens || 0),
+      leads: Number(overview.adPerformance?.boostSurfaceMetrics?.leads || 0)
+    }
   };
   const timeline = Array.isArray(overview.timeline) ? overview.timeline : [];
   const topPerformers = Array.isArray(overview.topPerformers) ? overview.topPerformers : [];
@@ -125,10 +138,60 @@ export default function DashboardBusinessPage() {
     : [];
   const recentLeads = Array.isArray(overview.recentLeads) ? overview.recentLeads : [];
   const recentOffers = Array.isArray(overview.recentOffers) ? overview.recentOffers : [];
+  const boostedListingPerformance = Array.isArray(overview.boostedListingPerformance)
+    ? overview.boostedListingPerformance
+    : [];
   const donationConfig = overview.billing?.donations || null;
   const donationSuggestions = Array.isArray(donationConfig?.suggestedAmounts)
     ? donationConfig.suggestedAmounts
     : [];
+  const numberLocale = language === "en" ? "en-US" : "es-CR";
+  const boostCopy =
+    language === "en"
+      ? {
+          surfaceEyebrow: "Boost surfaces",
+          surfaceTitle: "Where the boost is getting seen",
+          surfaceDescription:
+            "Internal counts for the premium placements that boosted listings receive inside the marketplace.",
+          home: "Home",
+          searchRail: "Search rail",
+          map: "Map",
+          cardOpens: "Detail opens",
+          leads: "Attributed leads",
+          homeHint: "homepage featured visibility",
+          searchRailHint: "premium search module",
+          mapHint: "premium map bubble",
+          cardOpensHint: "opens after a boosted click",
+          leadsHint: "leads attributed to boosted journeys",
+          openRate: "Open rate from surfaces",
+          attributedLeadRate: "Lead rate from boosted opens",
+          byListingTitle: "Boost breakdown by listing",
+          byListingDescription:
+            "Useful to see which boosted property converts better by placement.",
+          emptyByListing: "No active boosted listings yet."
+        }
+      : {
+          surfaceEyebrow: "Superficies del boost",
+          surfaceTitle: "Donde se esta viendo el boost",
+          surfaceDescription:
+            "Conteos internos de las ubicaciones premium que reciben tus anuncios con boost dentro del marketplace.",
+          home: "Portada",
+          searchRail: "Rail de busqueda",
+          map: "Mapa",
+          cardOpens: "Aperturas de ficha",
+          leads: "Leads atribuidos",
+          homeHint: "visibilidad destacada en portada",
+          searchRailHint: "modulo premium del buscador",
+          mapHint: "burbuja premium en el mapa",
+          cardOpensHint: "aperturas despues de un click impulsado",
+          leadsHint: "leads nacidos desde recorridos con boost",
+          openRate: "Tasa de apertura desde superficies",
+          attributedLeadRate: "Tasa de lead desde aperturas impulsadas",
+          byListingTitle: "Desglose del boost por anuncio",
+          byListingDescription:
+            "Sirve para ver que propiedad con boost convierte mejor segun la ubicacion premium.",
+          emptyByListing: "Todavia no hay publicaciones con boost activas."
+        };
 
   const handleDonation = async (amountOverride) => {
     try {
@@ -176,6 +239,33 @@ export default function DashboardBusinessPage() {
       label: "Boost activos",
       value: adPerformance.promotedListings,
       helper: "publicaciones destacadas ahora mismo"
+    }
+  ];
+  const boostSurfaceCards = [
+    {
+      label: boostCopy.home,
+      value: adPerformance.boostSurfaceMetrics.homeImpressions,
+      helper: boostCopy.homeHint
+    },
+    {
+      label: boostCopy.searchRail,
+      value: adPerformance.boostSurfaceMetrics.searchRailImpressions,
+      helper: boostCopy.searchRailHint
+    },
+    {
+      label: boostCopy.map,
+      value: adPerformance.boostSurfaceMetrics.mapImpressions,
+      helper: boostCopy.mapHint
+    },
+    {
+      label: boostCopy.cardOpens,
+      value: adPerformance.boostSurfaceMetrics.cardOpens,
+      helper: boostCopy.cardOpensHint
+    },
+    {
+      label: boostCopy.leads,
+      value: adPerformance.boostSurfaceMetrics.leads,
+      helper: boostCopy.leadsHint
     }
   ];
 
@@ -468,7 +558,7 @@ export default function DashboardBusinessPage() {
             <div className="rounded-[22px] bg-mist p-4">
               <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Alcance estimado</div>
               <div className="mt-2 text-2xl font-semibold">
-                {adPerformance.estimatedReach.toLocaleString("es-CR")}
+                {adPerformance.estimatedReach.toLocaleString(numberLocale)}
               </div>
               <div className="mt-1 text-sm text-ink/60">visibilidad interna acumulada</div>
             </div>
@@ -491,6 +581,45 @@ export default function DashboardBusinessPage() {
               <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Favoritos impulsados</div>
               <div className="mt-2 text-2xl font-semibold">{adPerformance.favorites}</div>
               <div className="mt-1 text-sm text-ink/60">{adPerformance.views} vistas desde destacados</div>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[24px] border border-ink/10 bg-white p-5">
+            <div className="text-xs uppercase tracking-[0.18em] text-ink/45">
+              {boostCopy.surfaceEyebrow}
+            </div>
+            <h3 className="mt-3 text-xl font-semibold text-ink">{boostCopy.surfaceTitle}</h3>
+            <p className="mt-2 text-sm leading-7 text-ink/60">{boostCopy.surfaceDescription}</p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              {boostSurfaceCards.map((item) => (
+                <div key={item.label} className="rounded-[22px] bg-mist p-4">
+                  <div className="text-xs uppercase tracking-[0.18em] text-ink/45">{item.label}</div>
+                  <div className="mt-2 text-2xl font-semibold text-ink">
+                    {Number(item.value || 0).toLocaleString(numberLocale)}
+                  </div>
+                  <div className="mt-1 text-sm text-ink/60">{item.helper}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-[22px] border border-ink/10 bg-mist/60 p-4">
+                <div className="text-xs uppercase tracking-[0.18em] text-ink/45">
+                  {boostCopy.openRate}
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-ink">
+                  {formatPercent(adPerformance.boostOpenRate)}
+                </div>
+              </div>
+              <div className="rounded-[22px] border border-ink/10 bg-mist/60 p-4">
+                <div className="text-xs uppercase tracking-[0.18em] text-ink/45">
+                  {boostCopy.attributedLeadRate}
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-ink">
+                  {formatPercent(adPerformance.attributedLeadRate)}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -535,6 +664,29 @@ export default function DashboardBusinessPage() {
                   ))
                 ) : (
                   <p className="text-sm text-ink/55">Todavia no has recibido ofertas.</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm font-semibold text-ink">{boostCopy.byListingTitle}</div>
+              <p className="mt-2 text-sm leading-6 text-ink/55">{boostCopy.byListingDescription}</p>
+              <div className="mt-3 space-y-3">
+                {boostedListingPerformance.length ? (
+                  boostedListingPerformance.map((item) => (
+                    <div key={item.id} className="rounded-[22px] border border-ink/10 bg-white p-4">
+                      <div className="font-semibold text-ink">{item.label}</div>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-ink/65">
+                        <span className="data-pill">{boostCopy.home}: {item.homeImpressions}</span>
+                        <span className="data-pill">{boostCopy.searchRail}: {item.searchRailImpressions}</span>
+                        <span className="data-pill">{boostCopy.map}: {item.mapImpressions}</span>
+                        <span className="data-pill">{boostCopy.cardOpens}: {item.cardOpens}</span>
+                        <span className="data-pill">{boostCopy.leads}: {item.leads}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-ink/55">{boostCopy.emptyByListing}</p>
                 )}
               </div>
             </div>

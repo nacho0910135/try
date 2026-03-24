@@ -4,7 +4,14 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createSavedSearch, getFavorites, getProperties, updateSavedSearch } from "@/lib/api";
+import {
+  createSavedSearch,
+  getFavorites,
+  getProperties,
+  getSavedSearches,
+  updateSavedSearch
+} from "@/lib/api";
+import { boostMetrics, trackBoostMetricOnce } from "@/lib/boost-metrics";
 import { serializePropertyQuery } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { useSearchStore } from "@/store/search-store";
@@ -17,6 +24,7 @@ import { PropertyCard } from "@/components/property/PropertyCard";
 import { ConversationalSearchPanel } from "@/components/search/ConversationalSearchPanel";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Input } from "@/components/ui/Input";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { SectionErrorBoundary } from "@/components/ui/SectionErrorBoundary";
 import { hasCommercialDashboardAccess } from "@/lib/user-access";
@@ -79,6 +87,79 @@ const toPolygonGeometry = (polygon) => {
 
 const SEARCH_AUTOSAVE_STORAGE_KEY = "alquiventascr-search-autosave-id";
 
+const buildSearchAlertName = (filters = {}, language = "es") => {
+  const location = filters.district || filters.canton || filters.province || "";
+  const typeLabel =
+    filters.propertyType === "house"
+      ? language === "en"
+        ? "House"
+        : "Casa"
+      : filters.propertyType === "lot"
+        ? language === "en"
+          ? "Lot"
+          : "Terreno"
+        : filters.propertyType === "apartment"
+          ? language === "en"
+            ? "Apartment"
+            : "Apartamento"
+          : filters.propertyType === "room"
+            ? language === "en"
+              ? "Room"
+              : "Habitacion"
+            : filters.propertyType === "commercial"
+              ? language === "en"
+                ? "Commercial"
+                : "Comercial"
+              : "";
+  const businessLabel =
+    filters.businessType === "rent"
+      ? language === "en"
+        ? "Rent"
+        : "Alquiler"
+      : filters.businessType === "sale"
+        ? language === "en"
+          ? "Sale"
+          : "Compra"
+        : "";
+  const budget =
+    filters.maxPrice !== undefined && filters.maxPrice !== ""
+      ? language === "en"
+        ? `under ${filters.maxPrice}`
+        : `menos de ${filters.maxPrice}`
+      : "";
+
+  return [businessLabel, typeLabel, location, budget].filter(Boolean).join(" · ") ||
+    (language === "en" ? "Current search alert" : "Alerta de busqueda actual");
+};
+
+const buildSearchAlertSummary = (filters = {}, language = "es") => {
+  const parts = [];
+
+  if (filters.businessType === "rent") {
+    parts.push(language === "en" ? "rent" : "alquiler");
+  } else if (filters.businessType === "sale") {
+    parts.push(language === "en" ? "sale" : "venta");
+  }
+
+  if (filters.propertyType) {
+    parts.push(filters.propertyType);
+  }
+
+  if (filters.district) {
+    parts.push(language === "en" ? `district ${filters.district}` : `distrito ${filters.district}`);
+  } else if (filters.canton) {
+    parts.push(language === "en" ? `canton ${filters.canton}` : `canton ${filters.canton}`);
+  } else if (filters.province) {
+    parts.push(language === "en" ? `province ${filters.province}` : `provincia ${filters.province}`);
+  }
+
+  if (filters.maxPrice !== undefined && filters.maxPrice !== "") {
+    parts.push(language === "en" ? `max price ${filters.maxPrice}` : `precio tope ${filters.maxPrice}`);
+  }
+
+  return parts.join(" · ");
+};
+
 const hasMeaningfulSearchState = (filters = {}) =>
   Object.entries(filters).some(([key, value]) => {
     if (key === "bounds") {
@@ -118,19 +199,35 @@ function SearchPageContent() {
   const [focusedContextPoint, setFocusedContextPoint] = useState(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const [autosaveStatus, setAutosaveStatus] = useState("idle");
+  const [savedSearchMeta, setSavedSearchMeta] = useState({
+    id: "",
+    name: "",
+    alertsEnabled: false
+  });
+  const [alertActionBusy, setAlertActionBusy] = useState(false);
+  const [alertFeedback, setAlertFeedback] = useState("");
+  const [alertFeedbackTone, setAlertFeedbackTone] = useState("success");
   const contextRadiusKm = Number(filters.radiusKm || 8);
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const publishHref = canAccessDashboard ? "/dashboard/properties/new" : token ? "/favorites" : "/login";
   const hasAutosaivableSearch = useMemo(() => hasMeaningfulSearchState(filters), [filters]);
+  const generatedAlertName = useMemo(
+    () => buildSearchAlertName(filters, language),
+    [filters, language]
+  );
+  const alertSummary = useMemo(
+    () => buildSearchAlertSummary(filters, language),
+    [filters, language]
+  );
   const autosavePayload = useMemo(
     () => ({
-      name: language === "en" ? "Current search" : "Busqueda actual",
+      name: savedSearchMeta.name?.trim() || generatedAlertName,
       filters,
       mapArea: toPolygonGeometry(filters.polygon),
       bounds: filters.bounds,
-      alertsEnabled: false
+      alertsEnabled: Boolean(savedSearchMeta.alertsEnabled)
     }),
-    [filters, language]
+    [filters, generatedAlertName, savedSearchMeta.alertsEnabled, savedSearchMeta.name]
   );
   const autoFitKey = useMemo(
     () =>
@@ -201,6 +298,20 @@ function SearchPageContent() {
   }, [boostedResults, promotedProperties]);
 
   const boostedResultsCount = promotedShowcase.length;
+
+  useEffect(() => {
+    promotedShowcase.forEach((property) => {
+      if (!property?.featured || !property?._id) {
+        return;
+      }
+
+      void trackBoostMetricOnce(
+        property._id,
+        boostMetrics.searchRailImpression,
+        "search-rail"
+      );
+    });
+  }, [promotedShowcase]);
 
   const contextSummary = useMemo(
     () => buildContextResultsSummary(properties, activeContextLayers, contextRadiusKm),
@@ -286,10 +397,39 @@ function SearchPageContent() {
     if (!token) {
       autosaveIdRef.current = null;
       setAutosaveStatus("idle");
+      setSavedSearchMeta({ id: "", name: "", alertsEnabled: false });
       return;
     }
 
-    autosaveIdRef.current = window.localStorage.getItem(SEARCH_AUTOSAVE_STORAGE_KEY) || null;
+    const storedId = window.localStorage.getItem(SEARCH_AUTOSAVE_STORAGE_KEY) || "";
+    autosaveIdRef.current = storedId || null;
+
+    if (!storedId) {
+      setSavedSearchMeta({ id: "", name: "", alertsEnabled: false });
+      return;
+    }
+
+    const loadSavedSearchMeta = async () => {
+      try {
+        const data = await getSavedSearches();
+        const match = (data.items || []).find((item) => item._id === storedId);
+
+        if (!match) {
+          setSavedSearchMeta({ id: storedId, name: "", alertsEnabled: false });
+          return;
+        }
+
+        setSavedSearchMeta({
+          id: match._id,
+          name: match.name || "",
+          alertsEnabled: Boolean(match.alertsEnabled)
+        });
+      } catch (_error) {
+        setSavedSearchMeta({ id: storedId, name: "", alertsEnabled: false });
+      }
+    };
+
+    void loadSavedSearchMeta();
   }, [token]);
 
   useEffect(() => {
@@ -306,18 +446,33 @@ function SearchPageContent() {
     const timeout = setTimeout(async () => {
       const persistNewAutosave = async () => {
         const created = await createSavedSearch(autosavePayload);
-        const nextId = created?.item?._id;
+        const nextItem = created?.item;
+        const nextId = nextItem?._id;
 
         if (typeof window !== "undefined" && nextId) {
           window.localStorage.setItem(SEARCH_AUTOSAVE_STORAGE_KEY, nextId);
         }
 
         autosaveIdRef.current = nextId || null;
+        setSavedSearchMeta({
+          id: nextId || "",
+          name: nextItem?.name || autosavePayload.name,
+          alertsEnabled: Boolean(nextItem?.alertsEnabled ?? autosavePayload.alertsEnabled)
+        });
       };
 
       try {
         if (autosaveIdRef.current) {
-          await updateSavedSearch(autosaveIdRef.current, autosavePayload);
+          const updated = await updateSavedSearch(autosaveIdRef.current, autosavePayload);
+          const nextItem = updated?.item;
+
+          if (nextItem?._id) {
+            setSavedSearchMeta({
+              id: nextItem._id,
+              name: nextItem.name || autosavePayload.name,
+              alertsEnabled: Boolean(nextItem.alertsEnabled ?? autosavePayload.alertsEnabled)
+            });
+          }
         } else {
           await persistNewAutosave();
         }
@@ -373,6 +528,93 @@ function SearchPageContent() {
     setActiveContextLayers([]);
     replaceFilters({});
     setMessage("");
+    setAlertFeedback("");
+  };
+
+  const persistAlertConfiguration = async (patch = {}) => {
+    if (!token || !hasAutosaivableSearch) {
+      return null;
+    }
+
+    const payload = {
+      ...autosavePayload,
+      ...patch,
+      name: patch.name?.trim() || savedSearchMeta.name?.trim() || generatedAlertName
+    };
+
+    if (savedSearchMeta.id || autosaveIdRef.current) {
+      const updated = await updateSavedSearch(savedSearchMeta.id || autosaveIdRef.current, payload);
+      const item = updated?.item;
+
+      if (item?._id && typeof window !== "undefined") {
+        window.localStorage.setItem(SEARCH_AUTOSAVE_STORAGE_KEY, item._id);
+      }
+
+      autosaveIdRef.current = item?._id || autosaveIdRef.current;
+      setSavedSearchMeta({
+        id: item?._id || savedSearchMeta.id || "",
+        name: item?.name || payload.name,
+        alertsEnabled: Boolean(item?.alertsEnabled ?? payload.alertsEnabled)
+      });
+
+      return item;
+    }
+
+    const created = await createSavedSearch(payload);
+    const item = created?.item;
+
+    if (item?._id && typeof window !== "undefined") {
+      window.localStorage.setItem(SEARCH_AUTOSAVE_STORAGE_KEY, item._id);
+    }
+
+    autosaveIdRef.current = item?._id || null;
+    setSavedSearchMeta({
+      id: item?._id || "",
+      name: item?.name || payload.name,
+      alertsEnabled: Boolean(item?.alertsEnabled ?? payload.alertsEnabled)
+    });
+
+    return item;
+  };
+
+  const handleAlertToggle = async () => {
+    if (!hasAutosaivableSearch) {
+      setAlertFeedbackTone("error");
+      setAlertFeedback(
+        language === "en"
+          ? "Define the search first so we can turn it into an alert."
+          : "Define primero la busqueda para convertirla en alerta."
+      );
+      return;
+    }
+
+    setAlertActionBusy(true);
+    setAlertFeedback("");
+    setAlertFeedbackTone("success");
+
+    try {
+      const nextValue = !savedSearchMeta.alertsEnabled;
+      await persistAlertConfiguration({ alertsEnabled: nextValue });
+      setAlertFeedback(
+        nextValue
+          ? language === "en"
+            ? "Alerts activated for this search."
+            : "Alertas activadas para esta busqueda."
+          : language === "en"
+            ? "Alerts muted for this search."
+            : "Alertas silenciadas para esta busqueda."
+      );
+    } catch (error) {
+      setAlertFeedbackTone("error");
+      setAlertFeedback(
+        error.response?.data?.message ||
+          (language === "en"
+            ? "We could not update this alert right now."
+            : "No se pudo actualizar esta alerta en este momento.")
+      );
+    } finally {
+      setAlertActionBusy(false);
+    }
   };
 
   const handleConversationalSearch = (result) => {
@@ -565,6 +807,92 @@ function SearchPageContent() {
         autosaveStatus={autosaveStatus}
       />
 
+      {token && hasAutosaivableSearch ? (
+        <section className="surface-elevated border border-pine/15 bg-pine/5 p-4 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-3xl">
+              <span className="eyebrow">{language === "en" ? "Alerts" : "Alertas"}</span>
+              <h2 className="mt-3 text-2xl font-semibold text-ink">
+                {language === "en"
+                  ? "Turn this search into a live alert"
+                  : "Convierte esta busqueda en una alerta viva"}
+              </h2>
+              <p className="mt-2 text-sm leading-7 text-ink/65">
+                {language === "en"
+                  ? "Useful for cases like rental houses below a budget in one district, or lots for sale under a price cap in a specific canton."
+                  : "Sirve para casos como casas en alquiler por debajo de un presupuesto en un distrito, o terrenos en venta bajo un tope de precio en un canton especifico."}
+              </p>
+              {alertSummary ? (
+                <div className="mt-3 inline-flex rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink/68 shadow-soft">
+                  {alertSummary}
+                </div>
+              ) : null}
+            </div>
+
+            <Link href="/dashboard/saved-searches">
+              <Button variant="secondary">
+                {language === "en" ? "View alerts" : "Ver alertas"}
+              </Button>
+            </Link>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+            <div>
+              <label className="field-label">
+                {language === "en" ? "Alert name" : "Nombre de la alerta"}
+              </label>
+              <Input
+                value={savedSearchMeta.name || generatedAlertName}
+                onChange={(event) => {
+                  setSavedSearchMeta((current) => ({
+                    ...current,
+                    name: event.target.value
+                  }));
+                }}
+                placeholder={generatedAlertName}
+              />
+            </div>
+            <div className="flex items-end gap-3">
+              <Button
+                variant={savedSearchMeta.alertsEnabled ? "secondary" : "success"}
+                disabled={alertActionBusy || autosaveStatus === "saving"}
+                onClick={handleAlertToggle}
+              >
+                {alertActionBusy
+                  ? language === "en"
+                    ? "Updating..."
+                    : "Actualizando..."
+                  : savedSearchMeta.alertsEnabled
+                    ? language === "en"
+                      ? "Mute alert"
+                      : "Silenciar alerta"
+                    : language === "en"
+                      ? "Activate alert"
+                      : "Activar alerta"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-3 text-xs leading-6 text-ink/58">
+            {language === "en"
+              ? "The search stays synced with your current filters. If a matching listing appears or a matching property drops in price, it will show up in your alert center."
+              : "La busqueda queda sincronizada con tus filtros actuales. Si aparece una propiedad que coincide o una coincidencia baja de precio, se reflejara en tu centro de alertas."}
+          </div>
+
+          {alertFeedback ? (
+            <div
+              className={`mt-3 rounded-2xl px-4 py-3 text-sm font-medium ${
+                alertFeedbackTone === "error"
+                  ? "bg-red-50 text-red-600"
+                  : "bg-white text-pine"
+              }`}
+            >
+              {alertFeedback}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       {message ? (
         <p className="rounded-2xl bg-mist px-4 py-3 text-sm leading-6 text-ink/70">{message}</p>
       ) : null}
@@ -597,6 +925,7 @@ function SearchPageContent() {
               <PropertyCard
                 key={`promoted-${property._id}`}
                 property={property}
+                boostSurface="search-rail"
                 selected={selectedPropertyId === property._id}
                 isFavorite={favoriteIds.includes(property._id)}
                 contextMatches={property.contextMatches || []}

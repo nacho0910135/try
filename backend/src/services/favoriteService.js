@@ -1,6 +1,7 @@
 import { Favorite } from "../models/Favorite.js";
 import { Property } from "../models/Property.js";
 import { ApiError } from "../utils/apiError.js";
+import { buildPriceDropEntry } from "./savedSearchService.js";
 
 const isPubliclyVisibleProperty = (property) =>
   Boolean(property) &&
@@ -19,7 +20,16 @@ export const favoriteService = {
       })
       .sort({ createdAt: -1 });
 
-    return favorites.filter((favorite) => isPubliclyVisibleProperty(favorite.property));
+    return favorites
+      .filter((favorite) => isPubliclyVisibleProperty(favorite.property))
+      .map((favorite) => {
+        const plain = favorite.toObject();
+
+        return {
+          ...plain,
+          priceDrop: buildPriceDropEntry(plain.property, new Date(plain.createdAt))
+        };
+      });
   },
 
   async add(user, propertyId) {

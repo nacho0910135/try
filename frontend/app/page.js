@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { ArrowRight, BrainCircuit, MapPinned, Radar, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getFeaturedProperties } from "@/lib/api";
+import { buildBoostPropertyHref, boostMetrics, trackBoostMetricOnce } from "@/lib/boost-metrics";
 import { slugifyLocation } from "@/lib/zone-seo";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { MapLoadingShell } from "@/components/map/MapLoadingShell";
@@ -146,6 +147,16 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    featured.forEach((property) => {
+      if (!property?.featured || !property?._id) {
+        return;
+      }
+
+      void trackBoostMetricOnce(property._id, boostMetrics.homeImpression, "home");
+    });
+  }, [featured]);
+
   const featuredForProvince = useMemo(
     () => featured.filter((property) => property.address?.province === province),
     [featured, province]
@@ -271,7 +282,7 @@ export default function HomePage() {
                   return (
                     <Link
                       key={property._id}
-                      href={`/properties/${property.slug}`}
+                      href={buildBoostPropertyHref(property.slug, "home", Boolean(property.featured))}
                       className="surface-soft grid gap-4 p-4 sm:grid-cols-[180px_1fr]"
                     >
                       <div className="relative aspect-[4/3] overflow-hidden rounded-[22px]">
@@ -368,7 +379,11 @@ export default function HomePage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
             {featured.map((property) => (
-              <PropertyCard key={property._id} property={property} />
+              <PropertyCard
+                key={property._id}
+                property={property}
+                boostSurface="home"
+              />
             ))}
           </div>
         )}

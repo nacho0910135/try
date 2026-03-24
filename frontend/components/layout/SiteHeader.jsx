@@ -22,12 +22,14 @@ export function SiteHeader() {
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const publishHref = canAccessDashboard ? "/dashboard/properties/new" : "/login";
   const publishLabel = language === "en" ? "Publish" : "Publicar";
+  const alertsLabel = language === "en" ? "Alerts" : "Alertas";
   const navItems = [
     { href: "/", label: t("nav.home") },
     { href: "/search", label: t("nav.explore") },
     { href: "/analysis", label: t("nav.analysis") },
     { href: "/battle", label: t("nav.battle") },
-    { href: "/favorites", label: t("nav.favorites") }
+    { href: "/favorites", label: t("nav.favorites") },
+    ...(user ? [{ href: "/dashboard/saved-searches", label: alertsLabel }] : [])
   ];
 
   const handleLogout = async () => {

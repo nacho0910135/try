@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   CheckCircle2,
   ChevronDown,
@@ -16,6 +17,12 @@ import {
 } from "lucide-react";
 import { addFavorite, getFavorites, getPropertyBySlug, removeFavorite } from "@/lib/api";
 import { analyticsEvents, trackEvent } from "@/lib/analytics";
+import {
+  boostMetrics,
+  readBoostSurfaceFromSearchParams,
+  rememberBoostSurface,
+  trackBoostMetricOnce
+} from "@/lib/boost-metrics";
 import { ContactLeadForm } from "@/components/forms/ContactLeadForm";
 import { OfferForm } from "@/components/forms/OfferForm";
 import { MapLoadingShell } from "@/components/map/MapLoadingShell";
@@ -91,6 +98,7 @@ function DetailDisclosure({ title, subtitle, defaultOpen = false, children }) {
 
 export default function PropertyDetailPageClient({ slug, initialProperty = null }) {
   const { token } = useAuthStore();
+  const searchParams = useSearchParams();
   const trackedSlugRef = useRef("");
   const [property, setProperty] = useState(initialProperty);
   const [loading, setLoading] = useState(!initialProperty);
@@ -159,6 +167,21 @@ export default function PropertyDetailPageClient({ slug, initialProperty = null 
     property?.address?.canton,
     property?.address?.district
   ]);
+
+  useEffect(() => {
+    if (!property?._id || !property?.featured) {
+      return;
+    }
+
+    const boostSurface = readBoostSurfaceFromSearchParams(searchParams);
+
+    if (!boostSurface) {
+      return;
+    }
+
+    rememberBoostSurface(property._id, boostSurface);
+    void trackBoostMetricOnce(property._id, boostMetrics.cardOpen, `card-open:${boostSurface}`);
+  }, [property?._id, property?.featured, searchParams]);
 
   const handleFavorite = async () => {
     if (!token) {

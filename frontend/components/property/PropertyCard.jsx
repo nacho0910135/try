@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { addFavorite, removeFavorite } from "@/lib/api";
 import { analyticsEvents, trackEvent } from "@/lib/analytics";
+import { buildBoostPropertyHref } from "@/lib/boost-metrics";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import {
   formatArea,
@@ -62,7 +63,8 @@ export function PropertyCard({
   onSelected,
   onFavoriteChange,
   compact = false,
-  contextMatches = []
+  contextMatches = [],
+  boostSurface = ""
 }) {
   const { token } = useAuthStore();
   const { language, t } = useLanguage();
@@ -146,7 +148,7 @@ export function PropertyCard({
 
   return (
     <Link
-      href={`/properties/${property.slug}`}
+      href={buildBoostPropertyHref(property.slug, boostSurface, Boolean(property.featured))}
       onMouseEnter={() => onSelected?.(property._id)}
       className={`surface-elevated group block overflow-hidden transition duration-300 ${
         selected
