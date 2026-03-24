@@ -37,6 +37,10 @@ const savedSearchSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    emailNotifications: {
+      type: Boolean,
+      default: false
+    },
     lastViewedAt: {
       type: Date
     },

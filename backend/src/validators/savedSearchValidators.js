@@ -21,7 +21,8 @@ export const createSavedSearchSchema = z.object({
       })
       .optional(),
     bounds: boundsSchema,
-    alertsEnabled: z.boolean().optional()
+    alertsEnabled: z.boolean().optional(),
+    emailNotifications: z.boolean().optional()
   })
 });
 
@@ -35,6 +36,7 @@ export const updateSavedSearchSchema = z.object({
     mapArea: jsonField(),
     bounds: boundsSchema,
     alertsEnabled: z.boolean().optional(),
+    emailNotifications: z.boolean().optional(),
     lastViewedAt: z.coerce.date().nullable().optional()
   })
 });

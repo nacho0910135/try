@@ -371,7 +371,10 @@ export const savedSearchService = {
   },
 
   async dispatchDueAlerts(limit = 50) {
-    const savedSearches = await SavedSearch.find({ alertsEnabled: true })
+    const savedSearches = await SavedSearch.find({
+      alertsEnabled: true,
+      $or: [{ emailNotifications: true }, { emailNotifications: { $exists: false } }]
+    })
       .populate("user", "name email isActive")
       .sort({ updatedAt: -1 })
       .limit(limit);

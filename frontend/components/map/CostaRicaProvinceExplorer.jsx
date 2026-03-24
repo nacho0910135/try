@@ -136,7 +136,8 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
             ...feature.properties,
             fill: province.fill,
             activeFill: province.activeFill,
-            stroke: province.stroke
+            stroke: province.stroke,
+            glow: province.glow
           }
         };
       })
@@ -192,6 +193,12 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
       id: "province-fills",
       type: "fill",
       paint: {
+        "fill-outline-color": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          ["get", "stroke"],
+          "rgba(255,255,255,0.42)"
+        ],
         "fill-color": [
           "case",
           ["==", ["get", "name"], focusProvince.name],
@@ -201,12 +208,46 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
         "fill-opacity": [
           "case",
           ["==", ["get", "name"], focusProvince.name],
-          0.8,
-          0.56
+          0.92,
+          0.66
         ]
       }
     }),
     [focusProvince.name]
+  );
+
+  const provinceGlowLayer = useMemo(
+    () => ({
+      id: "province-glow",
+      type: "line",
+      paint: {
+        "line-color": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          ["get", "glow"],
+          "rgba(255,255,255,0)"
+        ],
+        "line-width": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          compact ? 10 : 14,
+          0
+        ],
+        "line-opacity": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          0.65,
+          0
+        ],
+        "line-blur": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          compact ? 2.4 : 3.6,
+          0
+        ]
+      }
+    }),
+    [compact, focusProvince.name]
   );
 
   const provinceLineLayer = useMemo(
@@ -214,17 +255,27 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
       id: "province-lines",
       type: "line",
       paint: {
-        "line-color": "#ffffff",
+        "line-color": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          "#ffffff",
+          "rgba(255,255,255,0.9)"
+        ],
         "line-width": [
           "case",
           ["==", ["get", "name"], focusProvince.name],
-          3.2,
+          compact ? 4.3 : 5.4,
           2.1
         ],
-        "line-opacity": 0.95
+        "line-opacity": [
+          "case",
+          ["==", ["get", "name"], focusProvince.name],
+          1,
+          0.88
+        ]
       }
     }),
-    [focusProvince.name]
+    [compact, focusProvince.name]
   );
 
   const provinceLabelLayer = useMemo(
@@ -275,6 +326,11 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
       (feature) => feature.layer.id === "province-fills"
     );
     const nextHoveredProvince = provinceFeature?.properties?.name || null;
+    const map = mapRef.current?.getMap?.();
+
+    if (map) {
+      map.getCanvas().style.cursor = nextHoveredProvince ? "pointer" : "";
+    }
 
     setHoveredProvince((current) =>
       current === nextHoveredProvince ? current : nextHoveredProvince
@@ -282,6 +338,12 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
   }, []);
 
   const handleMouseLeave = useCallback(() => {
+    const map = mapRef.current?.getMap?.();
+
+    if (map) {
+      map.getCanvas().style.cursor = "";
+    }
+
     setHoveredProvince((current) => (current === null ? current : null));
   }, []);
 
@@ -415,6 +477,7 @@ const CostaRicaProvinceExplorerComponent = function CostaRicaProvinceExplorer({
               <NavigationControl position="top-right" />
               {interactiveProvinceGeoJson ? (
                 <Source id="cr-provinces" type="geojson" data={interactiveProvinceGeoJson}>
+                  <Layer {...provinceGlowLayer} />
                   <Layer {...provinceFillLayer} />
                   <Layer {...provinceLineLayer} />
                   <Layer {...provinceLabelLayer} />
