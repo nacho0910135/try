@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, MapPinned, Search, Sparkles } from "lucide-react";
+import { BellRing, Check, ChevronDown, MapPinned, Search, Sparkles } from "lucide-react";
 import {
   businessTypes,
   currencies,
@@ -97,7 +97,8 @@ export function SearchFilters({
   onReset,
   onUseCurrentLocation,
   canAutoSave,
-  autosaveStatus
+  autosaveStatus,
+  priceAlert
 }) {
   const { language, t } = useLanguage();
   const update = (key, value) => onChange({ [key]: value });
@@ -409,6 +410,53 @@ export function SearchFilters({
                 </Select>
               </div>
             </div>
+
+            {priceAlert?.visible ? (
+              <div
+                className={`rounded-[22px] border p-4 transition ${
+                  priceAlert.checked
+                    ? "border-pine/20 bg-pine/8"
+                    : "border-ink/10 bg-mist/60"
+                }`}
+              >
+                <label className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={priceAlert.checked}
+                    disabled={priceAlert.disabled}
+                    onChange={priceAlert.onChange}
+                    className="mt-1 h-4 w-4 rounded border border-ink/20 text-pine focus:ring-pine/25"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-pine shadow-soft">
+                        <BellRing className="h-4 w-4" />
+                      </div>
+                      <div className="text-sm font-semibold text-ink">{priceAlert.label}</div>
+                      {priceAlert.checked ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-pine px-2.5 py-1 text-[11px] font-semibold text-white">
+                          <Check className="h-3.5 w-3.5" />
+                          {priceAlert.badge}
+                        </span>
+                      ) : null}
+                    </div>
+                    {priceAlert.description ? (
+                      <p className="mt-2 text-xs leading-6 text-ink/60">{priceAlert.description}</p>
+                    ) : null}
+                  </div>
+                </label>
+
+                {priceAlert.helper ? (
+                  <div
+                    className={`mt-3 text-xs leading-6 ${
+                      priceAlert.checked ? "text-pine" : "text-ink/58"
+                    }`}
+                  >
+                    {priceAlert.helper}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
               <div>

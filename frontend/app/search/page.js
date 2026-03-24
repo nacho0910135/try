@@ -4,6 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { BellRing } from "lucide-react";
 import {
   createSavedSearch,
   getFavorites,
@@ -87,40 +88,62 @@ const toPolygonGeometry = (polygon) => {
 
 const SEARCH_AUTOSAVE_STORAGE_KEY = "alquiventascr-search-autosave-id";
 
+const getSearchPropertyTypeLabel = (propertyType, language = "es") => {
+  if (propertyType === "house") {
+    return language === "en" ? "House" : "Casa";
+  }
+
+  if (propertyType === "lot") {
+    return language === "en" ? "Lot" : "Terreno";
+  }
+
+  if (propertyType === "apartment") {
+    return language === "en" ? "Apartment" : "Apartamento";
+  }
+
+  if (propertyType === "room") {
+    return language === "en" ? "Room" : "Habitacion";
+  }
+
+  if (propertyType === "commercial") {
+    return language === "en" ? "Commercial" : "Comercial";
+  }
+
+  if (propertyType === "condominium") {
+    return language === "en" ? "Condominium" : "Condominio";
+  }
+
+  return "";
+};
+
+const getSearchBusinessTypeLabel = (businessType, language = "es") => {
+  if (businessType === "rent") {
+    return language === "en" ? "Rent" : "Alquiler";
+  }
+
+  if (businessType === "sale") {
+    return language === "en" ? "Sale" : "Venta";
+  }
+
+  return "";
+};
+
+const getSearchBusinessTypePhrase = (businessType, language = "es") => {
+  if (businessType === "rent") {
+    return language === "en" ? "for rent" : "en alquiler";
+  }
+
+  if (businessType === "sale") {
+    return language === "en" ? "for sale" : "en venta";
+  }
+
+  return "";
+};
+
 const buildSearchAlertName = (filters = {}, language = "es") => {
   const location = filters.district || filters.canton || filters.province || "";
-  const typeLabel =
-    filters.propertyType === "house"
-      ? language === "en"
-        ? "House"
-        : "Casa"
-      : filters.propertyType === "lot"
-        ? language === "en"
-          ? "Lot"
-          : "Terreno"
-        : filters.propertyType === "apartment"
-          ? language === "en"
-            ? "Apartment"
-            : "Apartamento"
-          : filters.propertyType === "room"
-            ? language === "en"
-              ? "Room"
-              : "Habitacion"
-            : filters.propertyType === "commercial"
-              ? language === "en"
-                ? "Commercial"
-                : "Comercial"
-              : "";
-  const businessLabel =
-    filters.businessType === "rent"
-      ? language === "en"
-        ? "Rent"
-        : "Alquiler"
-      : filters.businessType === "sale"
-        ? language === "en"
-          ? "Sale"
-          : "Compra"
-        : "";
+  const typeLabel = getSearchPropertyTypeLabel(filters.propertyType, language);
+  const businessLabel = getSearchBusinessTypeLabel(filters.businessType, language);
   const budget =
     filters.maxPrice !== undefined && filters.maxPrice !== ""
       ? language === "en"
@@ -142,7 +165,7 @@ const buildSearchAlertSummary = (filters = {}, language = "es") => {
   }
 
   if (filters.propertyType) {
-    parts.push(filters.propertyType);
+    parts.push(getSearchPropertyTypeLabel(filters.propertyType, language));
   }
 
   if (filters.district) {
@@ -158,6 +181,24 @@ const buildSearchAlertSummary = (filters = {}, language = "es") => {
   }
 
   return parts.join(" · ");
+};
+
+const buildPriceAlertScope = (filters = {}, language = "es") => {
+  const location = filters.district || filters.canton || filters.province || "";
+  const typeLabel = getSearchPropertyTypeLabel(filters.propertyType, language);
+  const businessLabel = getSearchBusinessTypePhrase(filters.businessType, language);
+  const baseScope =
+    [typeLabel, businessLabel]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    (language === "en" ? "matching listings" : "publicaciones que coincidan");
+
+  if (!location) {
+    return baseScope;
+  }
+
+  return language === "en" ? `${baseScope} in ${location}` : `${baseScope} en ${location}`;
 };
 
 const hasMeaningfulSearchState = (filters = {}) =>
@@ -211,6 +252,7 @@ function SearchPageContent() {
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const publishHref = canAccessDashboard ? "/dashboard/properties/new" : token ? "/favorites" : "/login";
   const hasAutosaivableSearch = useMemo(() => hasMeaningfulSearchState(filters), [filters]);
+  const hasMaxPriceFilter = filters.maxPrice !== undefined && filters.maxPrice !== "";
   const generatedAlertName = useMemo(
     () => buildSearchAlertName(filters, language),
     [filters, language]
@@ -617,6 +659,41 @@ function SearchPageContent() {
     }
   };
 
+  const priceAlertPrompt = !hasMaxPriceFilter
+    ? null
+    : {
+        visible: true,
+        checked: Boolean(savedSearchMeta.alertsEnabled),
+        disabled:
+          !token || !hasAutosaivableSearch || alertActionBusy || autosaveStatus === "saving",
+        onChange: handleAlertToggle,
+        label:
+          language === "en"
+            ? "Notify me if a listing appears at this price or less"
+            : "Notificarme si aparece una propiedad por este precio o menos",
+        badge: language === "en" ? "On" : "Activa",
+        description:
+          language === "en"
+            ? `Applies to ${buildPriceAlertScope(filters, language)}.`
+            : `Aplica para ${buildPriceAlertScope(filters, language)}.`,
+        helper:
+          alertActionBusy || autosaveStatus === "saving"
+            ? language === "en"
+              ? "Updating your bell..."
+              : "Actualizando tu campanita..."
+            : !token
+              ? language === "en"
+                ? "Sign in to turn it on."
+                : "Inicia sesion para activarla."
+              : savedSearchMeta.alertsEnabled
+                ? language === "en"
+                  ? "Ready. This search is already saved in your bell."
+                  : "Listo. Esta busqueda ya quedo guardada en tu campanita."
+                : language === "en"
+                  ? "Turn it on and we will watch new matching listings for you."
+                  : "Activalo y vigilaremos nuevas publicaciones que coincidan."
+      };
+
   const handleConversationalSearch = (result) => {
     const hasFilters = Object.keys(result.filters || {}).length > 0;
     const hasContextLayers = Boolean(result.contextLayerIds?.length);
@@ -805,35 +882,64 @@ function SearchPageContent() {
         onUseCurrentLocation={handleUseCurrentLocation}
         canAutoSave={Boolean(token)}
         autosaveStatus={autosaveStatus}
+        priceAlert={priceAlertPrompt}
       />
 
       {token && hasAutosaivableSearch ? (
-        <section className="surface-elevated border border-pine/15 bg-pine/5 p-4 sm:p-5">
+        <section className="surface-soft border border-ink/10 bg-white/88 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="max-w-3xl">
-              <span className="eyebrow">{language === "en" ? "Alerts" : "Alertas"}</span>
-              <h2 className="mt-3 text-2xl font-semibold text-ink">
-                {language === "en"
-                  ? "Turn this search into a live alert"
-                  : "Convierte esta busqueda en una alerta viva"}
-              </h2>
-              <p className="mt-2 text-sm leading-7 text-ink/65">
-                {language === "en"
-                  ? "Useful for cases like rental houses below a budget in one district, or lots for sale under a price cap in a specific canton."
-                  : "Sirve para casos como casas en alquiler por debajo de un presupuesto en un distrito, o terrenos en venta bajo un tope de precio en un canton especifico."}
-              </p>
+            <div className="flex max-w-3xl items-start gap-3">
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                  savedSearchMeta.alertsEnabled
+                    ? "bg-pine/10 text-pine"
+                    : "bg-mist text-ink/55"
+                }`}
+              >
+                <BellRing className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-ink">
+                  {savedSearchMeta.alertsEnabled
+                    ? language === "en"
+                      ? "Saved in your bell"
+                      : "Guardada en tu campanita"
+                    : hasMaxPriceFilter
+                      ? language === "en"
+                        ? "Use the checkbox under max price"
+                        : "Usa la casilla debajo de precio maximo"
+                      : language === "en"
+                        ? "Keep this search ready"
+                        : "Deja esta busqueda lista"}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-ink/62">
+                  {savedSearchMeta.alertsEnabled
+                    ? language === "en"
+                      ? "We will notify you when matching listings appear."
+                      : "Te avisaremos cuando aparezcan publicaciones que coincidan."
+                    : hasMaxPriceFilter
+                      ? language === "en"
+                        ? "With a max price set, the clearest path is the checkbox inside the filter."
+                        : "Con un precio maximo definido, la forma mas clara es la casilla dentro del filtro."
+                      : language === "en"
+                        ? "Save this search and turn notifications on whenever you want."
+                        : "Guarda esta busqueda y activa avisos cuando quieras."}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
               {alertSummary ? (
-                <div className="mt-3 inline-flex rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink/68 shadow-soft">
+                <div className="inline-flex rounded-full bg-mist px-3 py-1.5 text-xs font-semibold text-ink/68">
                   {alertSummary}
                 </div>
               ) : null}
+              <Link href="/dashboard/saved-searches">
+                <Button variant="secondary" className="gap-2">
+                  <BellRing className="h-4 w-4" />
+                  {language === "en" ? "Open bell" : "Abrir campanita"}
+                </Button>
+              </Link>
             </div>
-
-            <Link href="/dashboard/saved-searches">
-              <Button variant="secondary">
-                {language === "en" ? "View alerts" : "Ver alertas"}
-              </Button>
-            </Link>
           </div>
 
           <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
@@ -852,31 +958,33 @@ function SearchPageContent() {
                 placeholder={generatedAlertName}
               />
             </div>
-            <div className="flex items-end gap-3">
-              <Button
-                variant={savedSearchMeta.alertsEnabled ? "secondary" : "success"}
-                disabled={alertActionBusy || autosaveStatus === "saving"}
-                onClick={handleAlertToggle}
-              >
-                {alertActionBusy
-                  ? language === "en"
-                    ? "Updating..."
-                    : "Actualizando..."
-                  : savedSearchMeta.alertsEnabled
+            {!hasMaxPriceFilter ? (
+              <div className="flex items-end gap-3">
+                <Button
+                  variant={savedSearchMeta.alertsEnabled ? "secondary" : "success"}
+                  disabled={alertActionBusy || autosaveStatus === "saving"}
+                  onClick={handleAlertToggle}
+                >
+                  {alertActionBusy
                     ? language === "en"
-                      ? "Mute alert"
-                      : "Silenciar alerta"
-                    : language === "en"
-                      ? "Activate alert"
-                      : "Activar alerta"}
-              </Button>
-            </div>
+                      ? "Updating..."
+                      : "Actualizando..."
+                    : savedSearchMeta.alertsEnabled
+                      ? language === "en"
+                        ? "Mute alert"
+                        : "Silenciar alerta"
+                      : language === "en"
+                        ? "Activate alert"
+                        : "Activar alerta"}
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-3 text-xs leading-6 text-ink/58">
             {language === "en"
-              ? "The search stays synced with your current filters. If a matching listing appears or a matching property drops in price, it will show up in your alert center."
-              : "La busqueda queda sincronizada con tus filtros actuales. Si aparece una propiedad que coincide o una coincidencia baja de precio, se reflejara en tu centro de alertas."}
+              ? "This search stays synced with your current filters and lives inside the bell."
+              : "Esta busqueda se mantiene sincronizada con tus filtros actuales y vive dentro de la campanita."}
           </div>
 
           {alertFeedback ? (

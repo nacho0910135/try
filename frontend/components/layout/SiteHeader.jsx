@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Heart, LayoutDashboard, LogOut, Shield } from "lucide-react";
-import { logoutUser } from "@/lib/api";
+import { Bell, LayoutDashboard, LogOut, Shield } from "lucide-react";
+import { getDashboardSummary, logoutUser } from "@/lib/api";
 import { hasCommercialDashboardAccess } from "@/lib/user-access";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
@@ -19,18 +20,49 @@ export function SiteHeader() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { t, language } = useLanguage();
+  const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false);
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const publishHref = canAccessDashboard ? "/dashboard/properties/new" : "/login";
   const publishLabel = language === "en" ? "Publish" : "Publicar";
-  const alertsLabel = language === "en" ? "Alerts" : "Alertas";
+  const isSavedSearchRoute = activePathname.startsWith("/dashboard/saved-searches");
+  const isDashboardRoute = activePathname.startsWith("/dashboard");
   const navItems = [
     { href: "/", label: t("nav.home") },
     { href: "/search", label: t("nav.explore") },
     { href: "/analysis", label: t("nav.analysis") },
     { href: "/battle", label: t("nav.battle") },
-    { href: "/favorites", label: t("nav.favorites") },
-    ...(user ? [{ href: "/dashboard/saved-searches", label: alertsLabel }] : [])
+    { href: "/favorites", label: t("nav.favorites") }
   ];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user) {
+      setHasUnreadAlerts(false);
+      return undefined;
+    }
+
+    const loadAlertState = async () => {
+      try {
+        const data = await getDashboardSummary();
+        const unreadCount = Number(data?.summary?.alertCenter?.newSearchMatches || 0);
+
+        if (!cancelled) {
+          setHasUnreadAlerts(unreadCount > 0);
+        }
+      } catch (_error) {
+        if (!cancelled) {
+          setHasUnreadAlerts(false);
+        }
+      }
+    };
+
+    void loadAlertState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activePathname, user]);
 
   const handleLogout = async () => {
     try {
@@ -45,124 +77,166 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/60 bg-sand/80 backdrop-blur">
-      <div className="app-shell py-3 sm:py-4">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/" className="hidden min-w-0 items-center gap-3 sm:flex">
-            <BrandLogo
-              compact
-              showTagline={false}
-              mobileTextOnly
-              mobileSingleLine
-              className="max-w-[52vw] sm:max-w-none"
-            />
-          </Link>
+    <header className="sticky top-0 z-40 pt-3 sm:pt-4">
+      <div className="app-shell">
+        <div className="relative overflow-hidden rounded-[28px] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(255,249,244,0.82)_42%,rgba(237,244,248,0.82)_100%)] shadow-[0_22px_54px_rgba(17,34,54,0.12)] backdrop-blur-xl">
+          <div className="pointer-events-none absolute -left-12 top-0 h-28 w-28 rounded-full bg-lagoon/12 blur-3xl" />
+          <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-terracotta/12 blur-3xl" />
+          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(17,34,54,0.16),transparent)]" />
 
-          <nav className="hidden items-center gap-2 md:flex">
-            {navItems.map((item) => (
+          <div className="relative px-3 py-3 sm:px-4 sm:py-4">
+            <div className="flex items-center justify-between gap-3">
               <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition hover:bg-white/80",
-                  activePathname === item.href ? "bg-white text-ink shadow-soft" : "text-ink/70"
-                )}
+                href="/"
+                className="min-w-0 rounded-[24px] border border-white/80 bg-white/78 px-2.5 py-2 shadow-[0_14px_32px_rgba(17,34,54,0.08)] transition duration-200 hover:-translate-y-0.5 hover:bg-white/88"
               >
-                {item.label}
+                <BrandLogo
+                  compact
+                  showTagline={false}
+                  mobileTextOnly
+                  mobileSingleLine
+                  className="max-w-[46vw] sm:max-w-none"
+                />
               </Link>
-            ))}
-          </nav>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <LanguageSwitcher className="mr-0.5 sm:mr-1" />
+              <nav className="hidden items-center rounded-full border border-white/75 bg-white/58 p-1 shadow-[0_14px_34px_rgba(17,34,54,0.08)] backdrop-blur lg:flex">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "rounded-full px-4 py-2.5 text-sm font-semibold transition duration-200",
+                      activePathname === item.href
+                        ? "bg-[linear-gradient(135deg,#112236,#25577f)] text-white shadow-[0_12px_24px_rgba(17,34,54,0.16)]"
+                        : "text-ink/62 hover:bg-white/90 hover:text-ink"
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
 
-            <Link href={publishHref}>
-              <Button variant="primary" className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
-                {publishLabel}
-              </Button>
-            </Link>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <LanguageSwitcher className="hidden border-white/75 bg-white/66 shadow-[0_12px_28px_rgba(17,34,54,0.08)] md:inline-flex" />
 
-            <DonateButton compact className="px-2.5 py-2 sm:px-3.5 sm:py-2.5" />
+                {user ? (
+                  <div className="flex items-center gap-1 rounded-full border border-white/75 bg-white/56 p-1 shadow-[0_14px_34px_rgba(17,34,54,0.08)] backdrop-blur">
+                    <Link
+                      href="/dashboard/saved-searches"
+                      aria-label={language === "en" ? "Open alert bell" : "Abrir campanita"}
+                      title={language === "en" ? "Open alert bell" : "Abrir campanita"}
+                      className={cn(
+                        "relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/80 text-ink shadow-[0_12px_26px_rgba(17,34,54,0.08)] transition duration-200 hover:-translate-y-0.5",
+                        isSavedSearchRoute
+                          ? "bg-[linear-gradient(135deg,#112236,#25577f)] text-white"
+                          : "bg-white/88 hover:bg-white"
+                      )}
+                    >
+                      <Bell className="h-4 w-4" />
+                      {hasUnreadAlerts ? (
+                        <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-sand" />
+                      ) : null}
+                    </Link>
 
-            {user ? (
-              <>
-                {canAccessDashboard ? (
-                  <Link href="/dashboard">
-                    <Button variant="secondary" className="hidden sm:inline-flex">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      {t("nav.dashboard")}
+                    {canAccessDashboard ? (
+                      <Link href="/dashboard" className="hidden sm:block">
+                        <Button
+                          variant="secondary"
+                          className={cn(
+                            "rounded-full border border-white/80 px-4 py-2.5 shadow-none",
+                            isDashboardRoute
+                              ? "bg-ink text-white hover:bg-[#18324b]"
+                              : "bg-white/88 hover:bg-white"
+                          )}
+                        >
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          {t("nav.dashboard")}
+                        </Button>
+                      </Link>
+                    ) : null}
+
+                    {user.role === "admin" ? (
+                      <Link href="/admin" className="hidden lg:block">
+                        <Button
+                          variant="ghost"
+                          className="rounded-full border border-white/80 bg-white/72 px-4 py-2.5 hover:bg-white"
+                        >
+                          <Shield className="mr-2 h-4 w-4" />
+                          {t("nav.admin")}
+                        </Button>
+                      </Link>
+                    ) : null}
+
+                    <Button
+                      variant="ghost"
+                      onClick={handleLogout}
+                      className="rounded-full border border-white/80 bg-white/72 px-3 py-2.5 hover:bg-white sm:px-4"
+                    >
+                      <LogOut className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">{t("nav.logout")}</span>
+                    </Button>
+                  </div>
+                ) : (
+                  <Link href="/login">
+                    <Button
+                      variant="secondary"
+                      className="rounded-full border border-white/80 bg-white/82 px-3 py-2.5 text-xs shadow-[0_12px_28px_rgba(17,34,54,0.08)] hover:bg-white sm:px-4 sm:text-sm"
+                    >
+                      {t("nav.login")}
                     </Button>
                   </Link>
-                ) : null}
-                {user.role === "admin" ? (
-                  <Link href="/admin">
-                    <Button variant="ghost" className="hidden sm:inline-flex">
-                      <Shield className="mr-2 h-4 w-4" />
-                      {t("nav.admin")}
-                    </Button>
-                  </Link>
-                ) : null}
-                <Button variant="ghost" onClick={handleLogout} className="px-3 py-2 sm:px-4 sm:py-3">
-                  <LogOut className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">{t("nav.logout")}</span>
-                </Button>
-              </>
-            ) : (
-              <Link href="/login">
-                <Button variant="secondary" className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
-                  {t("nav.login")}
-                </Button>
-              </Link>
-            )}
+                )}
 
-            <Link href="/favorites" className="rounded-full bg-white p-2.5 shadow-soft md:hidden">
-              <Heart className="h-4 w-4" />
-            </Link>
+                <DonateButton
+                  compact
+                  className="hidden rounded-full border border-white/80 bg-white/82 px-3 py-2.5 text-ink shadow-[0_12px_28px_rgba(17,34,54,0.08)] hover:bg-white sm:inline-flex"
+                />
+
+                <Link href={publishHref}>
+                  <Button className="rounded-full px-3.5 py-2.5 text-xs shadow-[0_18px_34px_rgba(17,34,54,0.2)] sm:px-4.5 sm:py-3 sm:text-sm">
+                    {publishLabel}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            <nav className="mt-3 flex gap-2 overflow-x-auto rounded-full border border-white/75 bg-white/56 p-1 shadow-[0_14px_34px_rgba(17,34,54,0.08)] backdrop-blur lg:hidden">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition duration-200",
+                    activePathname === item.href
+                      ? "bg-[linear-gradient(135deg,#112236,#25577f)] text-white shadow-[0_10px_22px_rgba(17,34,54,0.16)]"
+                      : "text-ink/62 hover:bg-white/85 hover:text-ink"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+
+              {user && canAccessDashboard ? (
+                <Link
+                  href="/dashboard"
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition duration-200",
+                    isDashboardRoute
+                      ? "bg-ink text-white shadow-[0_10px_22px_rgba(17,34,54,0.16)]"
+                      : "bg-pine/10 text-pine hover:bg-pine/15"
+                  )}
+                >
+                  {t("nav.dashboard")}
+                </Link>
+              ) : null}
+
+              <DonateButton
+                compact
+                className="shrink-0 rounded-full border border-white/80 bg-white/82 px-3 py-2 text-ink shadow-none hover:bg-white sm:hidden"
+              />
+            </nav>
           </div>
         </div>
-
-        <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 md:hidden">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
-                activePathname === item.href ? "bg-white text-ink shadow-soft" : "bg-white/70 text-ink/70"
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
-
-          {user ? (
-            canAccessDashboard ? (
-              <Link
-                href="/dashboard"
-                className={cn(
-                  "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
-                  activePathname.startsWith("/dashboard")
-                    ? "bg-ink text-white shadow-soft"
-                    : "bg-pine/10 text-pine"
-                )}
-              >
-                {t("nav.dashboard")}
-              </Link>
-            ) : null
-          ) : null}
-
-          <Link
-            href={publishHref}
-            className={cn(
-              "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition",
-              activePathname.startsWith("/dashboard/properties/new")
-                ? "bg-ink text-white shadow-soft"
-                : "bg-pine/10 text-pine"
-            )}
-          >
-            {publishLabel}
-          </Link>
-        </nav>
       </div>
     </header>
   );
