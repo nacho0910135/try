@@ -8,6 +8,7 @@ import { hasCommercialDashboardAccess } from "@/lib/user-access";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
 import { BrandLogo } from "./BrandLogo";
+import { DonateButton } from "./DonateButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useLanguage } from "./LanguageProvider";
 import { Button } from "../ui/Button";
@@ -78,6 +79,8 @@ export function SiteHeader() {
                 {publishLabel}
               </Button>
             </Link>
+
+            <DonateButton compact className="px-2.5 py-2 sm:px-3.5 sm:py-2.5" />
 
             {user ? (
               <>
