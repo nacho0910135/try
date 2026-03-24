@@ -9,7 +9,7 @@ import { CookiePreferencesButton } from "./CookiePreferencesButton";
 
 export function SiteFooter() {
   const { user } = useAuthStore();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const canAccessDashboard = hasCommercialDashboardAccess(user);
 
   return (
@@ -35,6 +35,12 @@ export function SiteFooter() {
               <div className="mt-4 flex flex-col gap-2.5 text-sm text-ink/70">
                 <Link href="/search" className="transition hover:translate-x-0.5 hover:text-pine">
                   {t("footer.searchProperties")}
+                </Link>
+                <Link
+                  href="/destacadas"
+                  className="transition hover:translate-x-0.5 hover:text-pine"
+                >
+                  {language === "en" ? "Boost showcase" : "Vitrina boost"}
                 </Link>
                 <Link href="/analysis" className="transition hover:translate-x-0.5 hover:text-pine">
                   {t("footer.analysis")}

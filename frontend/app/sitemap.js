@@ -33,6 +33,7 @@ export default async function sitemap() {
   const routes = [
     "",
     "/search",
+    "/destacadas",
     "/analysis",
     "/battle",
     "/contact",

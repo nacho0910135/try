@@ -95,9 +95,12 @@ export default function HomePage() {
               href: publishHref
             }
           ],
-          inventoryEyebrow: "Open inventory",
-          inventoryTitle: "Listings worth opening",
-          seeAll: "See everything",
+          featuredEyebrow: "Boost showcase",
+          featuredTitle: "Boosted listings with premium placement",
+          featuredDescription:
+            "This is where paid boost gets tangible. These listings stay ahead of the organic grid and feed the premium surfaces across the marketplace.",
+          featuredCta: "Open showcase",
+          featuredSearch: "Boosted search",
           featuredFailed: "Featured inventory could not be loaded right now.",
           noProvinceData: "No featured sample for this province yet. Open the map and explore wider."
         }
@@ -135,9 +138,12 @@ export default function HomePage() {
               href: publishHref
             }
           ],
-          inventoryEyebrow: "Inventario abierto",
-          inventoryTitle: "Propiedades que vale la pena abrir",
-          seeAll: "Ver todo",
+          featuredEyebrow: "Vitrina boost",
+          featuredTitle: "Publicaciones con ubicacion premium",
+          featuredDescription:
+            "Aqui el boost se vuelve visible de verdad. Estas publicaciones van antes del bloque organico y alimentan las superficies premium del marketplace.",
+          featuredCta: "Abrir vitrina",
+          featuredSearch: "Buscar con boost",
           featuredFailed: "No se pudo cargar el inventario destacado en este momento.",
           noProvinceData:
             "Todavia no hay muestra destacada para esta provincia. Abre el mapa y explora mas amplio."
@@ -528,14 +534,24 @@ export default function HomePage() {
       <section className="app-shell mt-10 space-y-5 sm:mt-14 sm:space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <span className="eyebrow">{copy.inventoryEyebrow}</span>
+            <span className="eyebrow text-[#8f540d]">{copy.featuredEyebrow}</span>
             <h2 className="mt-4 font-serif text-3xl font-semibold sm:text-4xl">
-              {copy.inventoryTitle}
+              {copy.featuredTitle}
             </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-ink/62">
+              {copy.featuredDescription}
+            </p>
           </div>
-          <Link href="/search" className="text-sm font-semibold text-lagoon">
-            {copy.seeAll}
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/destacadas">
+              <Button variant="accent">{copy.featuredCta}</Button>
+            </Link>
+            <Link href="/search?featured=true">
+              <Button variant="ghost" className="text-sm text-[#8f540d] hover:bg-white/75">
+                {copy.featuredSearch}
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {loading ? (

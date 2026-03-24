@@ -639,12 +639,18 @@ function DashboardPropertiesPageContent() {
                     <p className="mt-2 text-xs text-ink/50">
                       El boost se cobra con PayPal y se activa en cuanto el pago se confirme.
                       Aparece antes del bloque organico, entra al modulo destacado y resalta en el
-                      mapa con burbuja premium.
+                      mapa con burbuja premium.{" "}
+                      <Link href="/destacadas" className="font-semibold text-pine hover:text-lagoon">
+                        Ver vitrina boost
+                      </Link>
                     </p>
                   ) : null}
                   {item.featured ? (
                     <p className="mt-2 text-xs text-pine">
-                      Este anuncio ya tiene visibilidad extra en buscador, destacados y mapa.
+                      Este anuncio ya tiene visibilidad extra en buscador, destacados y mapa.{" "}
+                      <Link href="/destacadas" className="font-semibold hover:text-lagoon">
+                        Abrir vitrina boost
+                      </Link>
                     </p>
                   ) : null}
                 </td>
