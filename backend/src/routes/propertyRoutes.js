@@ -4,8 +4,10 @@ import {
   deleteProperty,
   getManageProperty,
   getPropertyBySlug,
+  getPropertySeoBySlug,
   getZoneSeoData,
   listFeaturedProperties,
+  listPropertySitemapEntries,
   listMyProperties,
   listProperties,
   updatePropertyFeatured,
@@ -30,8 +32,10 @@ export const propertyRoutes = Router();
 
 propertyRoutes.get("/", propertySearchLimiter, validate(listPropertiesSchema), listProperties);
 propertyRoutes.get("/seo/zone", validate(zoneSeoSchema), getZoneSeoData);
+propertyRoutes.get("/seo/sitemap", listPropertySitemapEntries);
 propertyRoutes.get("/featured", listFeaturedProperties);
 propertyRoutes.get("/my/listings", requireAuth, authorize("agent", "owner", "admin"), listMyProperties);
+propertyRoutes.get("/slug/:slug/seo", optionalAuth, validate(propertySlugSchema), getPropertySeoBySlug);
 propertyRoutes.get("/slug/:slug", optionalAuth, validate(propertySlugSchema), getPropertyBySlug);
 propertyRoutes.get(
   "/manage/:propertyId",

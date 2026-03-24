@@ -1,6 +1,33 @@
 import { getCantons, getDistricts, getProvinces, buildZonePath, getSiteUrl } from "@/lib/zone-seo";
 
-export default function sitemap() {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+const fetchPropertyRoutes = async () => {
+  try {
+    const response = await fetch(`${API_URL}/properties/seo/sitemap`, {
+      next: { revalidate: 1800 }
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+
+    return (data.items || [])
+      .filter((item) => item?.slug)
+      .map((item) => ({
+        url: `${getSiteUrl()}/properties/${item.slug}`,
+        lastModified: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+        changeFrequency: "daily",
+        priority: 0.7
+      }));
+  } catch (_error) {
+    return [];
+  }
+};
+
+export default async function sitemap() {
   const siteUrl = getSiteUrl();
   const now = new Date();
   const routes = [
@@ -48,5 +75,7 @@ export default function sitemap() {
     });
   });
 
-  return [...routes, ...zoneRoutes];
+  const propertyRoutes = await fetchPropertyRoutes();
+
+  return [...routes, ...zoneRoutes, ...propertyRoutes];
 }

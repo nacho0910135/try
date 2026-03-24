@@ -75,12 +75,10 @@ export function ZoneSeoPage({ zone, summary, items, childrenZones = [] }) {
       </nav>
 
       <section className="surface bg-hero-grid p-8">
-        <span className="eyebrow">SEO local</span>
+        <span className="eyebrow">Radar local</span>
         <h1 className="mt-4 font-serif text-4xl font-semibold text-ink">{zone.label}</h1>
         <p className="mt-4 max-w-3xl text-base leading-7 text-ink/65">
-          Explora propiedades activas en {zone.label} con enfoque visual, mapa interactivo y filtros
-          por tipo, precio y negocio. Esta pagina ayuda a descubrir la zona y tambien alimenta el
-          SEO local de BienesRaicesCR.
+          Inventario visible, precios medios y acceso directo al mapa para leer {zone.label} mas rapido.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
@@ -107,23 +105,23 @@ export function ZoneSeoPage({ zone, summary, items, childrenZones = [] }) {
         <div className="surface p-6">
           <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Venta vs renta</div>
           <div className="mt-3 text-lg font-semibold text-ink">
-            {summary.saleListings || 0} venta - {summary.rentListings || 0} renta
+              {summary.saleListings || 0} venta - {summary.rentListings || 0} renta
           </div>
-          <p className="mt-2 text-sm text-ink/60">Lectura rapida del inventario visible en la zona.</p>
+          <p className="mt-2 text-sm text-ink/60">Balance rapido del inventario abierto.</p>
         </div>
         <div className="surface p-6">
           <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Precio medio USD</div>
           <div className="mt-3 text-2xl font-semibold text-ink">
             {usd ? formatCurrency(usd.averagePrice, "USD") : "Sin data"}
           </div>
-          <p className="mt-2 text-sm text-ink/60">Promedio visible para comparar esta zona.</p>
+          <p className="mt-2 text-sm text-ink/60">Referencia corta para comparar la zona.</p>
         </div>
         <div className="surface p-6">
           <div className="text-xs uppercase tracking-[0.18em] text-ink/45">Precio medio CRC</div>
           <div className="mt-3 text-2xl font-semibold text-ink">
             {crc ? formatCurrency(crc.averagePrice, "CRC") : "Sin data"}
           </div>
-          <p className="mt-2 text-sm text-ink/60">Util si estas evaluando oferta local en colones.</p>
+          <p className="mt-2 text-sm text-ink/60">Lectura util si tu decision vive en colones.</p>
         </div>
       </section>
 
@@ -132,7 +130,7 @@ export function ZoneSeoPage({ zone, summary, items, childrenZones = [] }) {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <span className="eyebrow">Mix de inventario</span>
-              <h2 className="mt-3 text-2xl font-semibold text-ink">Que se mueve en esta zona</h2>
+              <h2 className="mt-3 text-2xl font-semibold text-ink">Que se esta moviendo aqui</h2>
             </div>
             <div className="rounded-full bg-pine/10 px-4 py-2 text-sm font-semibold text-pine">
               {summary.featuredListings || 0} destacadas
@@ -154,7 +152,7 @@ export function ZoneSeoPage({ zone, summary, items, childrenZones = [] }) {
       {childrenZones.length ? (
         <section className="surface p-6">
           <span className="eyebrow">Subzonas</span>
-          <h2 className="mt-3 text-2xl font-semibold text-ink">Explora mas fino dentro de {zone.label}</h2>
+          <h2 className="mt-3 text-2xl font-semibold text-ink">Baja un nivel dentro de {zone.label}</h2>
           <div className="mt-5 flex flex-wrap gap-3">
             {childrenZones.slice(0, 36).map((item) => (
               <Link
@@ -212,8 +210,7 @@ export function ZoneSeoPage({ zone, summary, items, childrenZones = [] }) {
           </div>
         ) : (
           <div className="surface p-6 text-sm text-ink/60">
-            Todavia no hay suficientes publicaciones activas para esta zona, pero puedes abrir el mapa y
-            seguir explorando Costa Rica.
+            Aun no hay suficiente muestra abierta aqui. Puedes saltar al mapa y ampliar el radio.
           </div>
         )}
       </section>

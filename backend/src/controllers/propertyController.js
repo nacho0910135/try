@@ -11,6 +11,11 @@ export const listFeaturedProperties = asyncHandler(async (_req, res) => {
   res.json({ success: true, items });
 });
 
+export const listPropertySitemapEntries = asyncHandler(async (_req, res) => {
+  const items = await propertyService.listSitemapEntries();
+  res.json({ success: true, items });
+});
+
 export const getZoneSeoData = asyncHandler(async (req, res) => {
   const data = await propertyService.getZoneSeoData(req.query);
   res.json({ success: true, ...data });
@@ -18,6 +23,13 @@ export const getZoneSeoData = asyncHandler(async (req, res) => {
 
 export const getPropertyBySlug = asyncHandler(async (req, res) => {
   const property = await propertyService.getBySlug(req.params.slug, req.user);
+  res.json({ success: true, property });
+});
+
+export const getPropertySeoBySlug = asyncHandler(async (req, res) => {
+  const property = await propertyService.getBySlug(req.params.slug, req.user, {
+    trackView: false
+  });
   res.json({ success: true, property });
 });
 

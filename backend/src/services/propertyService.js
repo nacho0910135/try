@@ -469,6 +469,13 @@ export const propertyService = {
     return enrichPropertyCollection(items);
   },
 
+  async listSitemapEntries() {
+    return Property.find(buildPublicFilter())
+      .select("slug updatedAt")
+      .sort({ updatedAt: -1, publishedAt: -1, createdAt: -1 })
+      .lean();
+  },
+
   async getZoneSeoData(query) {
     const limit = Math.min(Math.max(Number(query.limit || 9), 3), 18);
     const zone = {
@@ -534,7 +541,8 @@ export const propertyService = {
     };
   },
 
-  async getBySlug(slug, user) {
+  async getBySlug(slug, user, options = {}) {
+    const { trackView = true } = options;
     const property = await Property.findOne({ slug }).populate(
       "owner",
       "name phone avatar role verification"
@@ -550,7 +558,7 @@ export const propertyService = {
       throw new ApiError(404, "Property not found");
     }
 
-    if (canView) {
+    if (canView && trackView) {
       await Property.updateOne(
         { _id: property._id },
         { $inc: { views: 1, "engagement.views": 1 } }
