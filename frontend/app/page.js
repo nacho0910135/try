@@ -5,7 +5,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { ArrowRight, BrainCircuit, MapPinned, Radar, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getFeaturedProperties } from "@/lib/api";
+import { getFeaturedProperties, getZoneSeoData } from "@/lib/api";
 import { buildBoostPropertyHref, boostMetrics, trackBoostMetricOnce } from "@/lib/boost-metrics";
 import { slugifyLocation } from "@/lib/zone-seo";
 import { useLanguage } from "@/components/layout/LanguageProvider";
@@ -28,12 +28,26 @@ const CostaRicaProvinceExplorer = dynamic(
   }
 );
 
+const normalizeProvinceName = (value = "") =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
 export default function HomePage() {
   const { language } = useLanguage();
   const { user } = useAuthStore();
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
   const [featuredLoadFailed, setFeaturedLoadFailed] = useState(false);
+  const [marketSummary, setMarketSummary] = useState(null);
+  const [marketSummaryLoading, setMarketSummaryLoading] = useState(true);
+  const [marketSummaryFailed, setMarketSummaryFailed] = useState(false);
+  const [provinceSummary, setProvinceSummary] = useState(null);
+  const [provinceSummaryLoading, setProvinceSummaryLoading] = useState(true);
+  const [provinceSummaryFailed, setProvinceSummaryFailed] = useState(false);
+  const [hasSuggestedProvince, setHasSuggestedProvince] = useState(false);
   const [province, setProvince] = useState("San Jose");
   const fallbackSrc = "/property-placeholder.svg";
   const canAccessDashboard = hasCommercialDashboardAccess(user);
@@ -51,8 +65,8 @@ export default function HomePage() {
           publish: "Publish a listing",
           selectedProvince: "Active province",
           radarTitle: "Live read",
-          radarDescription: "A sharp sample of what is already moving in this province.",
-          featuredNow: "featured now",
+          radarDescription: "A quick view of the active inventory and featured sample in this province.",
+          activeNow: "active now",
           forSale: "for sale",
           forRent: "for rent",
           utilityEyebrow: "Useful by design",
@@ -89,8 +103,8 @@ export default function HomePage() {
           publish: "Publicar propiedad",
           selectedProvince: "Provincia activa",
           radarTitle: "Lectura en vivo",
-          radarDescription: "Una muestra corta y util de lo que ya se mueve en esta provincia.",
-          featuredNow: "destacadas ahora",
+          radarDescription: "Una vista rapida del inventario activo y la muestra destacada de esta provincia.",
+          activeNow: "activas ahora",
           forSale: "en venta",
           forRent: "en renta",
           utilityEyebrow: "Util por diseno",
@@ -148,6 +162,64 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const loadMarketSummary = async () => {
+      setMarketSummaryLoading(true);
+
+      try {
+        const data = await getZoneSeoData();
+        if (cancelled) return;
+        setMarketSummary(data.summary || null);
+        setMarketSummaryFailed(false);
+      } catch (_error) {
+        if (cancelled) return;
+        setMarketSummary(null);
+        setMarketSummaryFailed(true);
+      } finally {
+        if (!cancelled) {
+          setMarketSummaryLoading(false);
+        }
+      }
+    };
+
+    void loadMarketSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProvinceSummary = async () => {
+      setProvinceSummaryLoading(true);
+
+      try {
+        const data = await getZoneSeoData({ province });
+        if (cancelled) return;
+        setProvinceSummary(data.summary || null);
+        setProvinceSummaryFailed(false);
+      } catch (_error) {
+        if (cancelled) return;
+        setProvinceSummary(null);
+        setProvinceSummaryFailed(true);
+      } finally {
+        if (!cancelled) {
+          setProvinceSummaryLoading(false);
+        }
+      }
+    };
+
+    void loadProvinceSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [province]);
+
+  useEffect(() => {
     featured.forEach((property) => {
       if (!property?.featured || !property?._id) {
         return;
@@ -157,21 +229,90 @@ export default function HomePage() {
     });
   }, [featured]);
 
+  useEffect(() => {
+    if (
+      hasSuggestedProvince ||
+      loading ||
+      featuredLoadFailed ||
+      provinceSummaryLoading ||
+      Number(provinceSummary?.totalListings || 0) > 0
+    ) {
+      return;
+    }
+
+    const suggestedProvince = featured
+      .map((property) => property?.address?.province)
+      .find((value) => Boolean(value));
+
+    if (
+      suggestedProvince &&
+      normalizeProvinceName(suggestedProvince) !== normalizeProvinceName(province)
+    ) {
+      setProvince(suggestedProvince);
+    }
+
+    setHasSuggestedProvince(true);
+  }, [
+    featured,
+    featuredLoadFailed,
+    hasSuggestedProvince,
+    loading,
+    province,
+    provinceSummary,
+    provinceSummaryLoading
+  ]);
+
   const featuredForProvince = useMemo(
-    () => featured.filter((property) => property.address?.province === province),
+    () =>
+      featured.filter(
+        (property) =>
+          normalizeProvinceName(property.address?.province) === normalizeProvinceName(province)
+      ),
     [featured, province]
   );
 
+  const featuredMarketCounts = useMemo(() => {
+    const saleCount = featured.filter((item) => item.businessType === "sale").length;
+    const rentCount = featured.filter((item) => item.businessType === "rent").length;
+
+    return {
+      totalListings: featured.length,
+      saleListings: saleCount,
+      rentListings: rentCount
+    };
+  }, [featured]);
+
   const provinceSignals = useMemo(() => {
-    const saleCount = featuredForProvince.filter((item) => item.businessType === "sale").length;
-    const rentCount = featuredForProvince.filter((item) => item.businessType === "rent").length;
+    const resolvedCounts =
+      marketSummary && !marketSummaryFailed
+        ? {
+            totalListings: Number(marketSummary.totalListings || 0),
+            saleListings: Number(marketSummary.saleListings || 0),
+            rentListings: Number(marketSummary.rentListings || 0)
+          }
+        : featuredMarketCounts;
+
+    const totalValue =
+      marketSummaryLoading && !marketSummary ? "..." : resolvedCounts.totalListings;
+    const saleValue =
+      marketSummaryLoading && !marketSummary ? "..." : resolvedCounts.saleListings;
+    const rentValue =
+      marketSummaryLoading && !marketSummary ? "..." : resolvedCounts.rentListings;
 
     return [
-      { label: copy.featuredNow, value: featuredForProvince.length },
-      { label: copy.forSale, value: saleCount },
-      { label: copy.forRent, value: rentCount }
+      { label: copy.activeNow, value: totalValue },
+      { label: copy.forSale, value: saleValue },
+      { label: copy.forRent, value: rentValue }
     ];
-  }, [copy.featuredNow, copy.forRent, copy.forSale, featuredForProvince]);
+  }, [
+    copy.activeNow,
+    copy.forRent,
+    copy.forSale,
+    featuredMarketCounts,
+    marketSummary,
+    marketSummaryFailed,
+    marketSummaryLoading
+  ]);
 
   const heroSignals = useMemo(
     () => [

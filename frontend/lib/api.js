@@ -94,6 +94,8 @@ export const requestPasswordReset = (payload) => unwrap(api.post("/auth/forgot-p
 export const resetPasswordUser = (payload) => unwrap(api.post("/auth/reset-password", payload));
 
 export const getFeaturedProperties = () => unwrap(api.get("/properties/featured"));
+export const getZoneSeoData = (filters = {}) =>
+  unwrap(api.get(`/properties/seo/zone?${serializePropertyQuery(filters)}`));
 export const getProperties = (filters = {}) =>
   unwrap(api.get(`/properties?${serializePropertyQuery(filters)}`));
 export const getPropertyBySlug = (slug) => unwrap(api.get(`/properties/slug/${slug}`));
