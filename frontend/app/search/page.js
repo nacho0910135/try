@@ -902,28 +902,28 @@ function SearchPageContent() {
                 <h2 className="text-xl font-semibold text-ink">
                   {savedSearchMeta.alertsEnabled
                     ? language === "en"
-                      ? "Saved in your bell"
-                      : "Guardada en tu campanita"
+                      ? "Search scheduled in your bell"
+                      : "Busqueda programada en tu campanita"
                     : hasMaxPriceFilter
                       ? language === "en"
-                        ? "Use the checkbox under max price"
-                        : "Usa la casilla debajo de precio maximo"
+                        ? "Schedule it from max price"
+                        : "Programa tu busqueda desde precio maximo"
                       : language === "en"
-                        ? "Keep this search ready"
-                        : "Deja esta busqueda lista"}
+                        ? "Schedule this search"
+                        : "Programa tu busqueda"}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-ink/62">
                   {savedSearchMeta.alertsEnabled
                     ? language === "en"
-                      ? "We will notify you when matching listings appear."
-                      : "Te avisaremos cuando aparezcan publicaciones que coincidan."
+                      ? "If someone publishes a listing that matches these criteria, we will notify you so you can see it first."
+                      : "Si alguien publica una propiedad que coincida con estos criterios, te avisaremos para que seas de los primeros en verla."
                     : hasMaxPriceFilter
                       ? language === "en"
-                        ? "With a max price set, the clearest path is the checkbox inside the filter."
-                        : "Con un precio maximo definido, la forma mas clara es la casilla dentro del filtro."
+                        ? "With a max price set, use the checkbox inside that filter and we will notify you when something appears within that budget."
+                        : "Con un precio maximo definido, usa la casilla dentro de ese filtro y te avisaremos cuando aparezca algo dentro de ese presupuesto."
                       : language === "en"
-                        ? "Save this search and turn notifications on whenever you want."
-                        : "Guarda esta busqueda y activa avisos cuando quieras."}
+                        ? "If someone publishes a property with these criteria in the future, we will send you an alert so you are among the first to know."
+                        : "Si alguien publica una propiedad con estos criterios en el futuro, te notificaremos con una alerta para que seas el primero en saberlo."}
                 </p>
               </div>
             </div>
@@ -936,7 +936,7 @@ function SearchPageContent() {
               <Link href="/dashboard/saved-searches">
                 <Button variant="secondary" className="gap-2">
                   <BellRing className="h-4 w-4" />
-                  {language === "en" ? "Open bell" : "Abrir campanita"}
+                  {language === "en" ? "Open bell" : "Ver campanita"}
                 </Button>
               </Link>
             </div>
@@ -945,7 +945,7 @@ function SearchPageContent() {
           <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
             <div>
               <label className="field-label">
-                {language === "en" ? "Alert name" : "Nombre de la alerta"}
+                {language === "en" ? "Alert name" : "Nombre de esta alerta"}
               </label>
               <Input
                 value={savedSearchMeta.name || generatedAlertName}
@@ -967,15 +967,15 @@ function SearchPageContent() {
                 >
                   {alertActionBusy
                     ? language === "en"
-                      ? "Updating..."
-                      : "Actualizando..."
+                      ? "Saving..."
+                      : "Guardando..."
                     : savedSearchMeta.alertsEnabled
                       ? language === "en"
                         ? "Mute alert"
                         : "Silenciar alerta"
                       : language === "en"
-                        ? "Activate alert"
-                        : "Activar alerta"}
+                        ? "Schedule notification"
+                        : "Programar notificacion"}
                 </Button>
               </div>
             ) : null}
@@ -983,8 +983,8 @@ function SearchPageContent() {
 
           <div className="mt-3 text-xs leading-6 text-ink/58">
             {language === "en"
-              ? "This search stays synced with your current filters and lives inside the bell."
-              : "Esta busqueda se mantiene sincronizada con tus filtros actuales y vive dentro de la campanita."}
+              ? "This search stays synced with your current filters and will keep living inside your bell."
+              : "Esta busqueda seguira sincronizada con tus filtros actuales y quedara guardada dentro de tu campanita."}
           </div>
 
           {alertFeedback ? (
