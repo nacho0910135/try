@@ -35,6 +35,8 @@ const normalizeProvinceName = (value = "") =>
     .trim()
     .toLowerCase();
 
+const EMPTY_ITEMS = [];
+
 export default function HomePage() {
   const { language } = useLanguage();
   const { user } = useAuthStore();
@@ -46,6 +48,7 @@ export default function HomePage() {
   const [marketSummaryFailed, setMarketSummaryFailed] = useState(false);
   const [hoveredProvince, setHoveredProvince] = useState(null);
   const [provinceSummaryCache, setProvinceSummaryCache] = useState({});
+  const [provinceShowcaseCache, setProvinceShowcaseCache] = useState({});
   const [hasSuggestedProvince, setHasSuggestedProvince] = useState(false);
   const [province, setProvince] = useState("San Jose");
   const fallbackSrc = "/property-placeholder.svg";
@@ -58,6 +61,8 @@ export default function HomePage() {
   const provinceSummary = provinceSummaryEntry?.summary || null;
   const provinceSummaryLoading = provinceSummaryEntry?.status === "loading";
   const provinceSummaryFailed = provinceSummaryEntry?.status === "error";
+  const provinceShowcaseEntry = provinceShowcaseCache[provinceSummaryKey];
+  const provinceShowcaseItems = provinceShowcaseEntry?.items ?? EMPTY_ITEMS;
 
   const copy =
     language === "en"
@@ -253,6 +258,63 @@ export default function HomePage() {
   }, [previewProvince, provinceSummaryEntry?.status, provinceSummaryKey]);
 
   useEffect(() => {
+    if (
+      !previewProvince ||
+      provinceShowcaseEntry?.status === "ready" ||
+      provinceShowcaseEntry?.status === "loading"
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    setProvinceShowcaseCache((current) => ({
+      ...current,
+      [provinceSummaryKey]: {
+        status: "loading",
+        items: current[provinceSummaryKey]?.items || []
+      }
+    }));
+
+    const loadProvinceShowcase = async () => {
+      try {
+        const data = await getProperties({
+          province: previewProvince,
+          limit: 2,
+          page: 1,
+          sort: "recent"
+        });
+
+        if (cancelled) return;
+
+        setProvinceShowcaseCache((current) => ({
+          ...current,
+          [provinceSummaryKey]: {
+            status: "ready",
+            items: data.items || []
+          }
+        }));
+      } catch (_error) {
+        if (cancelled) return;
+
+        setProvinceShowcaseCache((current) => ({
+          ...current,
+          [provinceSummaryKey]: {
+            status: "error",
+            items: current[provinceSummaryKey]?.items || []
+          }
+        }));
+      }
+    };
+
+    void loadProvinceShowcase();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [previewProvince, provinceShowcaseEntry?.status, provinceSummaryKey]);
+
+  useEffect(() => {
     featured.forEach((property) => {
       if (!property?.featured || !property?._id) {
         return;
@@ -302,6 +364,11 @@ export default function HomePage() {
           normalizeProvinceName(property.address?.province) === normalizeProvinceName(previewProvince)
       ),
     [featured, previewProvince]
+  );
+
+  const visibleProvinceShowcase = useMemo(
+    () => (provinceShowcaseItems.length ? provinceShowcaseItems : featuredForProvince),
+    [featuredForProvince, provinceShowcaseItems]
   );
 
   const featuredMarketCounts = useMemo(() => {
@@ -452,9 +519,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {featuredForProvince.length ? (
+            {visibleProvinceShowcase.length ? (
               <div className="grid gap-4 lg:grid-cols-2">
-                {featuredForProvince.slice(0, 2).map((property) => {
+                {visibleProvinceShowcase.slice(0, 2).map((property) => {
                   const mainPhoto = getMainPhoto(property);
 
                   return (

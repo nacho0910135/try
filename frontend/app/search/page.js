@@ -151,7 +151,7 @@ const buildSearchAlertName = (filters = {}, language = "es") => {
         : `menos de ${filters.maxPrice}`
       : "";
 
-  return [businessLabel, typeLabel, location, budget].filter(Boolean).join(" · ") ||
+  return [businessLabel, typeLabel, location, budget].filter(Boolean).join(" - ") ||
     (language === "en" ? "Current search alert" : "Alerta de busqueda actual");
 };
 
@@ -180,7 +180,7 @@ const buildSearchAlertSummary = (filters = {}, language = "es") => {
     parts.push(language === "en" ? `max price ${filters.maxPrice}` : `precio tope ${filters.maxPrice}`);
   }
 
-  return parts.join(" · ");
+  return parts.join(" - ");
 };
 
 const buildPriceAlertScope = (filters = {}, language = "es") => {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getProperties, getZoneSeoData } from "@/lib/api";
 import { useLanguage } from "@/components/layout/LanguageProvider";
 import { PropertyCard } from "@/components/property/PropertyCard";
@@ -13,6 +13,8 @@ import { hasCommercialDashboardAccess } from "@/lib/user-access";
 import { costaRicaProvinces } from "@/lib/costa-rica-provinces";
 import { useAuthStore } from "@/store/auth-store";
 
+const DEFAULT_PAGINATION = { page: 1, totalPages: 1, total: 0 };
+
 export default function FeaturedListingsPage() {
   const { language } = useLanguage();
   const { user } = useAuthStore();
@@ -20,11 +22,13 @@ export default function FeaturedListingsPage() {
   const publishHref = canAccessDashboard ? "/dashboard/properties/new" : "/login";
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [loadMoreFailed, setLoadMoreFailed] = useState(false);
   const [summary, setSummary] = useState(null);
   const [provinceFilter, setProvinceFilter] = useState("all");
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [pagination, setPagination] = useState(DEFAULT_PAGINATION);
+  const requestSequenceRef = useRef(0);
 
   const copy =
     language === "en"
@@ -47,7 +51,10 @@ export default function FeaturedListingsPage() {
             "Try another province or come back in a moment for a fresher view.",
           retry: "Retry",
           loadError: "Featured listings could not be loaded right now.",
-          loadMore: "Load more"
+          loadMoreError: "More listings could not be loaded. Your current results are still available.",
+          loadMore: "Load more",
+          loadingMore: "Loading...",
+          retryLoadMore: "Try again"
         }
       : {
           eyebrow: "Destacadas",
@@ -68,46 +75,62 @@ export default function FeaturedListingsPage() {
             "Prueba otra provincia o vuelve en un momento para ver una lectura mas fresca.",
           retry: "Intentar de nuevo",
           loadError: "No se pudieron cargar las propiedades destacadas en este momento.",
-          loadMore: "Cargar mas"
+          loadMoreError:
+            "No se pudieron cargar mas propiedades. Tus resultados actuales siguen visibles.",
+          loadMore: "Cargar mas",
+          loadingMore: "Cargando...",
+          retryLoadMore: "Intentar otra vez"
         };
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadItems = useCallback(async (nextPage = 1, { append = false } = {}) => {
+    const requestSequence = requestSequenceRef.current + 1;
+    requestSequenceRef.current = requestSequence;
 
-    const loadItems = async () => {
+    if (append) {
+      setLoadingMore(true);
+      setLoadMoreFailed(false);
+    } else {
       setLoading(true);
+      setLoadFailed(false);
+      setLoadMoreFailed(false);
+      setItems([]);
+      setPagination(DEFAULT_PAGINATION);
+    }
 
-      try {
-        const data = await getProperties({
-          limit: 24,
-          page,
-          sort: "recent",
-          province: provinceFilter === "all" ? undefined : provinceFilter
-        });
-        if (cancelled) return;
-        setItems((current) => (page === 1 ? data.items || [] : [...current, ...(data.items || [])]));
-        setPagination(data.pagination || { page: 1, totalPages: 1, total: 0 });
-        setLoadFailed(false);
-      } catch (_error) {
-        if (cancelled) return;
-        if (page === 1) {
-          setItems([]);
-          setPagination({ page: 1, totalPages: 1, total: 0 });
-        }
+    try {
+      const data = await getProperties({
+        limit: 24,
+        page: nextPage,
+        sort: "recent",
+        province: provinceFilter === "all" ? undefined : provinceFilter
+      });
+      if (requestSequenceRef.current !== requestSequence) return;
+      setItems((current) => (append ? [...current, ...(data.items || [])] : data.items || []));
+      setPagination(data.pagination || DEFAULT_PAGINATION);
+      setLoadFailed(false);
+      setLoadMoreFailed(false);
+    } catch (_error) {
+      if (requestSequenceRef.current !== requestSequence) return;
+      if (append) {
+        setLoadMoreFailed(true);
+      } else {
+        setItems([]);
+        setPagination(DEFAULT_PAGINATION);
         setLoadFailed(true);
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
       }
-    };
+    } finally {
+      if (requestSequenceRef.current !== requestSequence) return;
+      if (append) {
+        setLoadingMore(false);
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [provinceFilter]);
 
-    void loadItems();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [page, provinceFilter]);
+  useEffect(() => {
+    void loadItems(1);
+  }, [loadItems]);
 
   useEffect(() => {
     let cancelled = false;
@@ -213,7 +236,6 @@ export default function FeaturedListingsPage() {
                 type="button"
                 onClick={() => {
                   setProvinceFilter(value);
-                  setPage(1);
                 }}
                 className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
                   active
@@ -243,19 +265,41 @@ export default function FeaturedListingsPage() {
             onAction={() => window.location.reload()}
           />
         ) : items.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
-            {items.map((property) => (
-              <PropertyCard key={property._id} property={property} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
+              {items.map((property) => (
+                <PropertyCard key={property._id} property={property} />
+              ))}
+            </div>
+            {loadMoreFailed ? (
+              <div className="surface-soft flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm text-ink/70">
+                <span>{copy.loadMoreError}</span>
+                <Button
+                  variant="ghost"
+                  className="text-sm text-[#8f540d] hover:bg-white/75"
+                  onClick={() => void loadItems(pagination.page + 1, { append: true })}
+                >
+                  {copy.retryLoadMore}
+                </Button>
+              </div>
+            ) : null}
+          </>
         ) : (
           <EmptyState title={copy.emptyTitle} description={copy.emptyDescription} />
         )}
 
         {!loading && !loadFailed && hasMore ? (
           <div className="flex justify-center">
-            <Button variant="secondary" onClick={() => setPage((current) => current + 1)}>
-              {copy.loadMore}
+            <Button
+              variant="secondary"
+              disabled={loadingMore}
+              onClick={() => void loadItems(pagination.page + 1, { append: true })}
+            >
+              {loadingMore
+                ? copy.loadingMore
+                : loadMoreFailed
+                  ? copy.retryLoadMore
+                  : copy.loadMore}
             </Button>
           </div>
         ) : null}
