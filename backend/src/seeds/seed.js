@@ -6,8 +6,10 @@ import { Property } from "../models/Property.js";
 import { SavedSearch } from "../models/SavedSearch.js";
 import { User } from "../models/User.js";
 import { seedProperties, seedUsers } from "./seedData.js";
+import { assertSafeToSeed } from "./seedSafety.js";
 
 const runSeed = async () => {
+  assertSafeToSeed("seed");
   await connectDatabase();
 
   await Promise.all([

@@ -1,4 +1,5 @@
 import { env } from "../config/env.js";
+import { logger } from "../utils/logger.js";
 
 let transporterPromise;
 
@@ -51,13 +52,28 @@ export const mailService = {
       };
     }
 
-    await transporter.sendMail({
-      from: env.EMAIL_FROM,
-      to,
-      subject,
-      text,
-      html
-    });
+    try {
+      await transporter.sendMail({
+        from: env.EMAIL_FROM,
+        to,
+        subject,
+        text,
+        html
+      });
+    } catch (error) {
+      transporterPromise = undefined;
+      logger.error("mail_send_failed", {
+        to,
+        subject,
+        smtpHost: env.SMTP_HOST,
+        mode: "smtp",
+        error
+      });
+      return {
+        delivered: false,
+        mode: "smtp-error"
+      };
+    }
 
     return {
       delivered: true,

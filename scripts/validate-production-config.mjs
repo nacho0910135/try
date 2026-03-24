@@ -91,6 +91,32 @@ if (configuredSmtpFields.length > 0 && configuredSmtpFields.length < smtpFields.
   errors.push("SMTP esta parcialmente configurado; completa host, port, user y pass");
 }
 
+const smtpConfigured = configuredSmtpFields.length === smtpFields.length;
+const smtpPort = Number(backendEnv.SMTP_PORT || 0);
+const smtpSecure = /^(true|1)$/i.test(String(backendEnv.SMTP_SECURE || "").trim());
+
+if (smtpConfigured && (!backendEnv.EMAIL_FROM || !/\S+@\S+\.\S+/.test(backendEnv.EMAIL_FROM))) {
+  errors.push("EMAIL_FROM debe ser un correo valido cuando SMTP esta configurado");
+}
+
+if (smtpConfigured && smtpPort === 465 && !smtpSecure) {
+  warnings.push("SMTP_PORT=465 normalmente requiere SMTP_SECURE=true");
+}
+
+if (smtpConfigured && smtpPort === 587 && smtpSecure) {
+  warnings.push("SMTP_PORT=587 normalmente usa SMTP_SECURE=false con STARTTLS");
+}
+
+if (
+  smtpConfigured &&
+  /brevo\.com/i.test(String(backendEnv.SMTP_HOST || "")) &&
+  /@gmail\.com$/i.test(String(backendEnv.SMTP_USER || "").trim())
+) {
+  warnings.push(
+    "SMTP_HOST parece ser Brevo pero SMTP_USER es una cuenta Gmail; valida que uses el login SMTP provisto por Brevo"
+  );
+}
+
 const cloudinaryFields = ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"];
 const configuredCloudinaryFields = cloudinaryFields.filter((key) => backendEnv[key]);
 if (configuredCloudinaryFields.length > 0 && configuredCloudinaryFields.length < cloudinaryFields.length) {

@@ -113,6 +113,9 @@ export const authService = {
     });
 
     if (!emailResult.delivered) {
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save({ validateBeforeSave: false });
       throw new ApiError(503, "Password recovery is temporarily unavailable");
     }
 

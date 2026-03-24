@@ -4,6 +4,7 @@ import { Property } from "../models/Property.js";
 import { User } from "../models/User.js";
 import { createSlug } from "../utils/slug.js";
 import { seedProperties } from "./seedData.js";
+import { assertSafeToSeed } from "./seedSafety.js";
 
 const ensureUser = async (criteria, defaults) => {
   const existing = await User.findOne(criteria);
@@ -16,6 +17,7 @@ const ensureUser = async (criteria, defaults) => {
 };
 
 const runSeedSamples = async () => {
+  assertSafeToSeed("seed:samples");
   await connectDatabase();
 
   const admin = await ensureUser(
