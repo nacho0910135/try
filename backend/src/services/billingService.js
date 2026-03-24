@@ -297,6 +297,7 @@ export const billingService = {
 
       if (property) {
         property.featured = true;
+        property.featuredAt = new Date();
         await property.save();
       }
     }

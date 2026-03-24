@@ -108,6 +108,7 @@ function SearchPageContent() {
   const { filters, replaceFilters, setFilters, selectedPropertyId, setSelectedPropertyId } =
     useSearchStore();
   const [properties, setProperties] = useState([]);
+  const [promotedProperties, setPromotedProperties] = useState([]);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
@@ -181,6 +182,26 @@ function SearchPageContent() {
     [properties, activeContextLayers, contextRadiusKm]
   );
 
+  const boostedResults = useMemo(
+    () => contextualProperties.filter((property) => property.featured),
+    [contextualProperties]
+  );
+
+  const promotedShowcase = useMemo(() => {
+    const seen = new Set();
+
+    return [...promotedProperties, ...boostedResults].filter((property) => {
+      if (!property?._id || seen.has(property._id)) {
+        return false;
+      }
+
+      seen.add(property._id);
+      return true;
+    });
+  }, [boostedResults, promotedProperties]);
+
+  const boostedResultsCount = promotedShowcase.length;
+
   const contextSummary = useMemo(
     () => buildContextResultsSummary(properties, activeContextLayers, contextRadiusKm),
     [properties, activeContextLayers, contextRadiusKm]
@@ -213,6 +234,9 @@ function SearchPageContent() {
         }
 
         setProperties((current) => (page === 1 ? data.items : [...current, ...data.items]));
+        if (page === 1) {
+          setPromotedProperties(data.promotedItems || []);
+        }
         setPagination(data.pagination);
         router.replace(`/search?${serializePropertyQuery(filters)}`, { scroll: false });
       } catch (error) {
@@ -222,6 +246,7 @@ function SearchPageContent() {
 
         if (page === 1) {
           setProperties([]);
+          setPromotedProperties([]);
           setPagination({ page: 1, totalPages: 1, total: 0 });
         }
         setMessage(error.response?.data?.message || t("searchPage.searchFailed"));
@@ -544,6 +569,52 @@ function SearchPageContent() {
         <p className="rounded-2xl bg-mist px-4 py-3 text-sm leading-6 text-ink/70">{message}</p>
       ) : null}
 
+      {promotedShowcase.length && !filters.featured ? (
+        <section className="surface-elevated overflow-hidden border border-[#f0dab4] bg-[linear-gradient(135deg,rgba(255,248,234,0.94),rgba(255,240,214,0.98)_42%,rgba(255,248,234,0.94))] p-4 sm:p-5">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <span className="eyebrow text-[#8f540d]">
+                {language === "en" ? "Boost active" : "Boost activo"}
+              </span>
+              <h2 className="mt-3 text-2xl font-semibold text-ink">
+                {language === "en"
+                  ? "Listings with extra visibility"
+                  : "Listings con visibilidad extra"}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/62">
+                {language === "en"
+                  ? "They stay visible before the organic grid and stand out on the map with a premium price bubble."
+                  : "Se muestran antes del bloque organico y resaltan en el mapa con una burbuja premium."}
+              </p>
+            </div>
+            <span className="rounded-full border border-[#eccb8e] bg-white/82 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f540d] shadow-soft">
+              {boostedResultsCount} {language === "en" ? "boosted now" : "con boost ahora"}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            {promotedShowcase.slice(0, 3).map((property) => (
+              <PropertyCard
+                key={`promoted-${property._id}`}
+                property={property}
+                selected={selectedPropertyId === property._id}
+                isFavorite={favoriteIds.includes(property._id)}
+                contextMatches={property.contextMatches || []}
+                compact
+                onSelected={setSelectedPropertyId}
+                onFavoriteChange={(propertyId, nextState) => {
+                  setFavoriteIds((current) =>
+                    nextState
+                      ? [...new Set([...current, propertyId])]
+                      : current.filter((item) => item !== propertyId)
+                  );
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)] xl:gap-5">
         <div className="order-2 xl:order-1 xl:sticky xl:top-24 xl:h-fit xl:self-start">
           <SectionErrorBoundary
@@ -571,6 +642,11 @@ function SearchPageContent() {
             <span className="rounded-full border border-ink/10 bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-ink/68 shadow-soft">
               {pagination.total} {language === "en" ? "results" : "resultados"}
             </span>
+            {boostedResultsCount && !filters.featured ? (
+              <span className="rounded-full border border-[#f0dab4] bg-[#fff8ea] px-3 py-1.5 text-[11px] font-semibold text-[#8f540d] shadow-soft">
+                {boostedResultsCount} {language === "en" ? "boosted" : "con boost"}
+              </span>
+            ) : null}
             <span className="rounded-full border border-ink/10 bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-ink/68 shadow-soft">
               {filters.province || (language === "en" ? "All Costa Rica" : "Todo Costa Rica")}
             </span>

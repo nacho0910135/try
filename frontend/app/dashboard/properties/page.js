@@ -638,6 +638,13 @@ function DashboardPropertiesPageContent() {
                   {!item.featured && commercialOverview?.billing?.configured ? (
                     <p className="mt-2 text-xs text-ink/50">
                       El boost se cobra con PayPal y se activa en cuanto el pago se confirme.
+                      Aparece antes del bloque organico, entra al modulo destacado y resalta en el
+                      mapa con burbuja premium.
+                    </p>
+                  ) : null}
+                  {item.featured ? (
+                    <p className="mt-2 text-xs text-pine">
+                      Este anuncio ya tiene visibilidad extra en buscador, destacados y mapa.
                     </p>
                   ) : null}
                 </td>

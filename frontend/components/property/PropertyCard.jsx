@@ -122,6 +122,7 @@ export function PropertyCard({
     MARKET_LABELS[property.marketStatus]?.[language] || property.marketStatus;
   const rentalLabel =
     RENTAL_LABELS[property.rentalArrangement]?.[language] || property.rentalArrangement;
+  const featuredBadgeLabel = language === "en" ? "Boost" : "Boost";
   const trustLabel =
     property.trustProfile?.level === "high"
       ? language === "en"
@@ -150,6 +151,8 @@ export function PropertyCard({
       className={`surface-elevated group block overflow-hidden transition duration-300 ${
         selected
           ? "ring-2 ring-terracotta/40 shadow-[0_30px_80px_rgba(228,93,53,0.16)]"
+          : property.featured
+            ? "ring-1 ring-[#f0dab4] shadow-[0_28px_76px_rgba(214,146,48,0.16)] hover:-translate-y-1.5 hover:shadow-[0_34px_82px_rgba(214,146,48,0.22)]"
           : "hover:-translate-y-1.5 hover:shadow-[0_32px_80px_rgba(17,34,54,0.14)]"
       }`}
     >
@@ -179,7 +182,11 @@ export function PropertyCard({
           {property.marketStatus && property.marketStatus !== "available" ? (
             <Badge variant="info">{marketLabel}</Badge>
           ) : null}
-          {property.featured ? <Badge variant="info">{t("propertyCard.featured")}</Badge> : null}
+          {property.featured ? (
+            <Badge variant="accent" className="border-[#eccb8e] bg-[#fff4dc] text-[#8f540d]">
+              {featuredBadgeLabel}
+            </Badge>
+          ) : null}
           {trustLabel ? <Badge variant="success">{trustLabel}</Badge> : null}
           {priceSignalLabel ? <Badge variant="accent">{priceSignalLabel}</Badge> : null}
         </div>

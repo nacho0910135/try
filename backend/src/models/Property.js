@@ -352,6 +352,7 @@ const propertySchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    featuredAt: Date,
     amenities: {
       type: [String],
       default: []
@@ -511,6 +512,14 @@ propertySchema.pre("save", function syncDerivedFields(next) {
     this.addressText = this.address.exactAddress;
   }
 
+  if (this.isModified("featured")) {
+    if (this.featured) {
+      this.featuredAt = this.featuredAt || new Date();
+    } else {
+      this.featuredAt = undefined;
+    }
+  }
+
   if (
     !this.serviceDistances?.hospitalKm &&
     !this.serviceDistances?.schoolKm &&
@@ -588,6 +597,7 @@ propertySchema.index({
   operationType: 1,
   isApproved: 1,
   featured: -1,
+  featuredAt: -1,
   publishedAt: -1
 });
 propertySchema.index({ soldAt: -1, rentedAt: -1 });

@@ -38,6 +38,12 @@ const isPubliclyVisibleProperty = (property) =>
   property?.status === "published" &&
   (property?.marketStatus || "available") !== "inactive";
 
+const buildFeaturedPrioritySort = (fallback = {}) => ({
+  featured: -1,
+  featuredAt: -1,
+  ...fallback
+});
+
 const buildSort = (sort, query = {}) => {
   if (!sort && query.lat !== undefined && query.lng !== undefined) {
     return {};
@@ -45,19 +51,24 @@ const buildSort = (sort, query = {}) => {
 
   switch (sort) {
     case "price-asc":
-      return { price: 1, featured: -1 };
+      return buildFeaturedPrioritySort({ price: 1, publishedAt: -1, createdAt: -1 });
     case "price-desc":
-      return { price: -1, featured: -1 };
+      return buildFeaturedPrioritySort({ price: -1, publishedAt: -1, createdAt: -1 });
     case "recent":
-      return { featured: -1, publishedAt: -1, createdAt: -1 };
+      return buildFeaturedPrioritySort({ publishedAt: -1, createdAt: -1 });
     case "distance":
       return query.lat !== undefined && query.lng !== undefined
         ? {}
-        : { featured: -1, publishedAt: -1, createdAt: -1 };
+        : buildFeaturedPrioritySort({ publishedAt: -1, createdAt: -1 });
     default:
-      return { featured: -1, publishedAt: -1, createdAt: -1 };
+      return buildFeaturedPrioritySort({ publishedAt: -1, createdAt: -1 });
   }
 };
+
+const buildPromotedSort = (query = {}) =>
+  query.lat !== undefined && query.lng !== undefined
+    ? {}
+    : { featuredAt: -1, publishedAt: -1, createdAt: -1 };
 
 const buildZoneFilter = ({ province, canton, district }) => {
   const filter = buildPublicFilter();
@@ -436,18 +447,29 @@ export const propertyService = {
     const pagination = buildPagination(query.page, query.limit);
     const filter = buildFilterQuery(query);
     const sort = buildSort(query.sort, query);
+    const promotedLimit = Math.min(Math.max(Number(query.promotedLimit || 3), 0), 4);
 
-    const [items, total] = await Promise.all([
+    const promotedPromise =
+      query.featured === false || promotedLimit === 0
+        ? Promise.resolve([])
+        : Property.find({ ...filter, featured: true })
+            .populate("owner", "name phone avatar role verification")
+            .sort(buildPromotedSort(query))
+            .limit(promotedLimit);
+
+    const [items, total, promotedItems] = await Promise.all([
       Property.find(filter)
         .populate("owner", "name phone avatar role verification")
         .sort(sort)
         .skip(pagination.skip)
         .limit(pagination.limit),
-      Property.countDocuments(filter)
+      Property.countDocuments(filter),
+      promotedPromise
     ]);
 
     return {
       items: enrichPropertyCollection(items),
+      promotedItems: enrichPropertyCollection(promotedItems),
       pagination: {
         page: pagination.page,
         limit: pagination.limit,
@@ -463,7 +485,7 @@ export const propertyService = {
       featured: true
     })
       .populate("owner", "name phone avatar role verification")
-      .sort({ publishedAt: -1, createdAt: -1 })
+      .sort({ featuredAt: -1, publishedAt: -1, createdAt: -1 })
       .limit(limit);
 
     return enrichPropertyCollection(items);
@@ -593,7 +615,7 @@ export const propertyService = {
   async listMine(user) {
     const items = await Property.find({ owner: user._id })
       .populate("owner", "name phone avatar role verification")
-      .sort({ updatedAt: -1, createdAt: -1 });
+      .sort({ featured: -1, featuredAt: -1, updatedAt: -1, createdAt: -1 });
     return enrichPropertyCollection(items);
   },
 
@@ -747,6 +769,7 @@ export const propertyService = {
 
     if (!featured) {
       property.featured = false;
+      property.featuredAt = undefined;
       await property.save();
       return enrichPropertyForClient(property);
     }
@@ -763,6 +786,7 @@ export const propertyService = {
 
     if (user.role === "admin") {
       property.featured = true;
+      property.featuredAt = new Date();
       await property.save();
       return enrichPropertyForClient(property);
     }

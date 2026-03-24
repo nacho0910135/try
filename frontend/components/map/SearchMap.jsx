@@ -96,10 +96,14 @@ export function SearchMap({
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
   const provinceCode = getProvinceCode(selectedProvince);
   const visibleProperties = safeMapProperties(properties);
+  const organicProperties = visibleProperties.filter((property) => !property.featured);
+  const boostedProperties = visibleProperties.filter((property) => property.featured);
+  const markerProperties = [...organicProperties, ...boostedProperties];
   const visibleContextPoints = safeContextPoints(activeContextLayers);
   const activeContextLayerMeta = mapContextLayers.filter((layer) =>
     activeContextLayers.includes(layer.id)
   );
+  const boostLabel = language === "en" ? "Boost" : "Boost";
 
   useEffect(() => {
     const loadDistricts = async () => {
@@ -421,9 +425,10 @@ export function SearchMap({
           </Source>
         ) : null}
 
-        {visibleProperties.map((property) => {
+        {markerProperties.map((property) => {
           const marketStatus = property.marketStatus || "available";
           const markerStyle = markerStylesByStatus[marketStatus] || markerStylesByStatus.available;
+          const isBoosted = Boolean(property.featured);
 
           return (
             <Marker
@@ -443,13 +448,32 @@ export function SearchMap({
                 className="group relative -m-2 rounded-full p-2 focus:outline-none"
                 aria-label={property.title || "Propiedad"}
               >
+                {isBoosted ? (
+                  <span className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
+                    <span className="rounded-full border border-[#f8e2b8] bg-[#fff8ea]/96 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#8f540d] shadow-[0_10px_24px_rgba(214,146,48,0.22)] backdrop-blur">
+                      {boostLabel}
+                    </span>
+                  </span>
+                ) : null}
+                {isBoosted ? (
+                  <span className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(241,194,94,0.32)_0%,rgba(241,194,94,0.16)_42%,rgba(241,194,94,0)_74%)] blur-xl" />
+                ) : null}
                 <span
-                  className={`inline-flex rounded-full border-2 px-2 py-1.5 text-[10px] font-semibold shadow-[0_14px_28px_rgba(17,34,54,0.16)] backdrop-blur transition duration-150 ease-out sm:px-3 sm:py-1.5 sm:text-[11px] ${
+                  className={cn(
+                    "relative inline-flex rounded-full border-2 px-2 py-1.5 text-[10px] font-semibold backdrop-blur transition duration-150 ease-out sm:px-3 sm:py-1.5 sm:text-[11px]",
+                    isBoosted
+                      ? "gap-1 border-[#ad7420] bg-[linear-gradient(135deg,rgba(255,248,234,0.98),rgba(255,225,169,0.97)_48%,rgba(255,244,222,0.98))] text-[#6e3e00] shadow-[0_18px_42px_rgba(214,146,48,0.28)]"
+                      : "shadow-[0_14px_28px_rgba(17,34,54,0.16)]",
                     selectedPropertyId === property._id
-                      ? `${markerStyle.selected} scale-[1.08]`
-                      : `${markerStyle.base} group-hover:scale-[1.13] group-focus-visible:scale-[1.13]`
-                  }`}
+                      ? isBoosted
+                        ? "scale-[1.12] ring-4 ring-[#f3d291]/70"
+                        : `${markerStyle.selected} scale-[1.08]`
+                      : isBoosted
+                        ? "group-hover:scale-[1.16] group-focus-visible:scale-[1.16]"
+                        : `${markerStyle.base} group-hover:scale-[1.13] group-focus-visible:scale-[1.13]`
+                  )}
                 >
+                  {isBoosted ? <Sparkles className="h-3.5 w-3.5 text-[#a55d00]" /> : null}
                   {formatCompactCurrency(property.price, property.currency)}
                 </span>
               </button>
@@ -483,12 +507,24 @@ export function SearchMap({
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0f24301c] via-transparent to-transparent" />
 
-      {selectedProvince || activeContextLayers.length ? (
+      {selectedProvince || activeContextLayers.length || boostedProperties.length ? (
         <div className="space-y-2 border-t border-ink/10 bg-white/90 px-3 py-3 text-xs font-medium text-ink/65 sm:px-4">
           {selectedProvince ? (
             <div className="flex items-start gap-2">
               <Sparkles className="mt-0.5 h-3.5 w-3.5 text-terracotta" />
               <span>{t("map.districtsHint", { province: selectedProvince })}</span>
+            </div>
+          ) : null}
+          {boostedProperties.length ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-[#f1d9ae] bg-[#fff8ea] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8f540d]">
+                {boostedProperties.length} {language === "en" ? "boosted" : "con boost"}
+              </span>
+              <span>
+                {language === "en"
+                  ? "Paid listings keep a premium bubble and top map presence."
+                  : "Los anuncios pagados mantienen una burbuja premium y presencia alta en el mapa."}
+              </span>
             </div>
           ) : null}
           {activeContextLayers.length ? (
