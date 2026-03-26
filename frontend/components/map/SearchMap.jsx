@@ -112,24 +112,36 @@ const buildModeConfigs = (language) => ({
   "house-rent-price": {
     label: language === "en" ? "House rent" : "Alquiler casa",
     summary: language === "en" ? "House rentals" : "Casas en alquiler",
+    accentClass:
+      "border-sky-200/90 bg-sky-500 text-white shadow-[0_12px_28px_rgba(14,116,214,0.22)]",
+    idleClass: "text-sky-700 hover:bg-sky-50",
     matches: isHouseRentProperty,
     getLabel: (property) => formatCompactCurrency(property.price, property.currency)
   },
   "house-sale-price": {
     label: language === "en" ? "House sale" : "Compra casa",
     summary: language === "en" ? "Houses for sale" : "Casas en venta",
+    accentClass:
+      "border-emerald-200/90 bg-emerald-600 text-white shadow-[0_12px_28px_rgba(5,150,105,0.22)]",
+    idleClass: "text-emerald-700 hover:bg-emerald-50",
     matches: isHouseSaleProperty,
     getLabel: (property) => formatCompactCurrency(property.price, property.currency)
   },
   "land-total-price": {
     label: language === "en" ? "Land total" : "Terreno total",
     summary: language === "en" ? "Land for sale" : "Terrenos en venta",
+    accentClass:
+      "border-amber-200/90 bg-amber-400 text-[#5b3700] shadow-[0_12px_28px_rgba(217,119,6,0.2)]",
+    idleClass: "text-amber-800 hover:bg-amber-50",
     matches: isLandSaleProperty,
     getLabel: (property) => formatCompactCurrency(property.price, property.currency)
   },
   "land-price-per-square-meter": {
     label: language === "en" ? "Land / m2" : "Terreno / m2",
     summary: language === "en" ? "Land price per m2" : "Terreno por m2",
+    accentClass:
+      "border-[#e9c1ae] bg-[#c86f46] text-white shadow-[0_12px_28px_rgba(200,111,70,0.24)]",
+    idleClass: "text-[#9e4a26] hover:bg-[#fff1ea]",
     matches: isLandPriceComparableProperty,
     getLabel: (property) => `${formatCompactCurrency(getPricePerSquareMeter(property), property.currency)}/m2`
   }
@@ -353,10 +365,10 @@ export function SearchMap({
               type="button"
               onClick={() => onMarketModeChange?.(option.value)}
               className={cn(
-                "rounded-full px-3 py-1.5 text-[11px] font-semibold transition",
+                "rounded-full border px-3 py-1.5 text-[11px] font-semibold transition",
                 marketMode === option.value
-                  ? "bg-pine text-white shadow-soft"
-                  : "text-ink/58 hover:bg-white/78"
+                  ? modeConfigs[option.value].accentClass
+                  : modeConfigs[option.value].idleClass
               )}
             >
               {option.label}

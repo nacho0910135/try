@@ -142,10 +142,27 @@ const buildZoneSearchPath = ({ province, canton, district }) => {
 };
 
 const RENT_MARKET_LIMIT = 6;
+const LAND_PRICE_PER_SQUARE_METER_LIMIT = 6;
+
+const comparableLandAreaExpression = {
+  $cond: [
+    { $gt: [{ $ifNull: ["$lotArea", 0] }, 0] },
+    { $ifNull: ["$lotArea", 0] },
+    { $ifNull: ["$landArea", 0] }
+  ]
+};
 
 const buildRentMarketFilter = (filter, currency) => ({
   ...filter,
   operationType: "rent",
+  price: { $gt: 0 },
+  ...(currency ? { currency } : {})
+});
+
+const buildLandMarketFilter = (filter, currency) => ({
+  ...filter,
+  operationType: "sale",
+  propertyType: "lot",
   price: { $gt: 0 },
   ...(currency ? { currency } : {})
 });
@@ -562,9 +579,9 @@ export const propertyService = {
       district: query.district || ""
     };
     const filter = buildZoneFilter(zone);
-    const shouldBuildRentalMarket = Boolean(zone.province || zone.canton || zone.district);
+    const shouldBuildZoneMarketIntelligence = Boolean(zone.province || zone.canton || zone.district);
 
-    const rentCurrencyBreakdownPromise = shouldBuildRentalMarket
+    const rentCurrencyBreakdownPromise = shouldBuildZoneMarketIntelligence
       ? Property.aggregate([
           { $match: buildRentMarketFilter(filter) },
           { $group: { _id: "$currency", count: { $sum: 1 } } },
@@ -572,7 +589,27 @@ export const propertyService = {
         ])
       : Promise.resolve([]);
 
-    const [items, total, saleCount, rentCount, featuredCount, propertyTypeBreakdown, currencyBreakdown, rentCurrencyBreakdown] =
+    const landCurrencyBreakdownPromise = shouldBuildZoneMarketIntelligence
+      ? Property.aggregate([
+          { $match: buildLandMarketFilter(filter) },
+          { $addFields: { comparableArea: comparableLandAreaExpression } },
+          { $match: { comparableArea: { $gt: 0 } } },
+          { $group: { _id: "$currency", count: { $sum: 1 } } },
+          { $sort: { count: -1, _id: 1 } }
+        ])
+      : Promise.resolve([]);
+
+    const [
+      items,
+      total,
+      saleCount,
+      rentCount,
+      featuredCount,
+      propertyTypeBreakdown,
+      currencyBreakdown,
+      rentCurrencyBreakdown,
+      landCurrencyBreakdown
+    ] =
       await Promise.all([
         Property.find(filter)
           .populate("owner", "name phone avatar role verification")
@@ -599,74 +636,130 @@ export const propertyService = {
             }
           }
         ]),
-        rentCurrencyBreakdownPromise
+        rentCurrencyBreakdownPromise,
+        landCurrencyBreakdownPromise
       ]);
 
-    const primaryRentCurrency = shouldBuildRentalMarket ? rentCurrencyBreakdown[0]?._id || null : null;
+    const primaryRentCurrency = shouldBuildZoneMarketIntelligence
+      ? rentCurrencyBreakdown[0]?._id || null
+      : null;
+    const primaryLandCurrency = shouldBuildZoneMarketIntelligence
+      ? landCurrencyBreakdown[0]?._id || null
+      : null;
     const rentMarketFilter = buildRentMarketFilter(filter, primaryRentCurrency);
+    const landMarketFilter = buildLandMarketFilter(filter, primaryLandCurrency);
 
-    const [rentByCanton, rentByDistrict] = primaryRentCurrency
+    const [rentByCanton, rentByDistrict, landPricePerSquareMeterByDistrict] =
+      primaryRentCurrency || primaryLandCurrency
       ? await Promise.all([
-          Property.aggregate([
-            {
-              $match: {
-                ...rentMarketFilter,
-                "address.canton": { $nin: ["", null] }
-              }
-            },
-            {
-              $group: {
-                _id: {
-                  province: "$address.province",
-                  canton: "$address.canton"
+          primaryRentCurrency
+            ? Property.aggregate([
+                {
+                  $match: {
+                    ...rentMarketFilter,
+                    "address.canton": { $nin: ["", null] }
+                  }
                 },
-                averagePrice: { $avg: "$price" },
-                listings: { $sum: 1 }
-              }
-            },
-            { $sort: { averagePrice: -1, listings: -1, "_id.canton": 1 } },
-            { $limit: RENT_MARKET_LIMIT },
-            {
-              $project: {
-                _id: 0,
-                label: buildCantonRentLabel(zone),
-                averagePrice: { $round: ["$averagePrice", 0] },
-                listings: 1
-              }
-            }
-          ]),
-          Property.aggregate([
-            {
-              $match: {
-                ...rentMarketFilter,
-                "address.district": { $nin: ["", null] },
-                "address.canton": { $nin: ["", null] }
-              }
-            },
-            {
-              $group: {
-                _id: {
-                  province: "$address.province",
-                  canton: "$address.canton",
-                  district: "$address.district"
+                {
+                  $group: {
+                    _id: {
+                      province: "$address.province",
+                      canton: "$address.canton"
+                    },
+                    averagePrice: { $avg: "$price" },
+                    listings: { $sum: 1 }
+                  }
                 },
-                averagePrice: { $avg: "$price" },
-                listings: { $sum: 1 }
-              }
-            },
-            { $sort: { averagePrice: -1, listings: -1, "_id.district": 1 } },
-            { $limit: RENT_MARKET_LIMIT },
-            {
-              $project: {
-                _id: 0,
-                label: buildDistrictRentLabel(zone),
-                averagePrice: { $round: ["$averagePrice", 0] },
-                listings: 1
-              }
-            }
-          ])
+                { $sort: { averagePrice: -1, listings: -1, "_id.canton": 1 } },
+                { $limit: RENT_MARKET_LIMIT },
+                {
+                  $project: {
+                    _id: 0,
+                    label: buildCantonRentLabel(zone),
+                    averagePrice: { $round: ["$averagePrice", 0] },
+                    listings: 1
+                  }
+                }
+              ])
+            : Promise.resolve([]),
+          primaryRentCurrency
+            ? Property.aggregate([
+                {
+                  $match: {
+                    ...rentMarketFilter,
+                    "address.district": { $nin: ["", null] },
+                    "address.canton": { $nin: ["", null] }
+                  }
+                },
+                {
+                  $group: {
+                    _id: {
+                      province: "$address.province",
+                      canton: "$address.canton",
+                      district: "$address.district"
+                    },
+                    averagePrice: { $avg: "$price" },
+                    listings: { $sum: 1 }
+                  }
+                },
+                { $sort: { averagePrice: -1, listings: -1, "_id.district": 1 } },
+                { $limit: RENT_MARKET_LIMIT },
+                {
+                  $project: {
+                    _id: 0,
+                    label: buildDistrictRentLabel(zone),
+                    averagePrice: { $round: ["$averagePrice", 0] },
+                    listings: 1
+                  }
+                }
+              ])
+            : Promise.resolve([]),
+          primaryLandCurrency
+            ? Property.aggregate([
+                {
+                  $match: {
+                    ...landMarketFilter,
+                    "address.district": { $nin: ["", null] },
+                    "address.canton": { $nin: ["", null] }
+                  }
+                },
+                { $addFields: { comparableArea: comparableLandAreaExpression } },
+                { $match: { comparableArea: { $gt: 0 } } },
+                {
+                  $group: {
+                    _id: {
+                      province: "$address.province",
+                      canton: "$address.canton",
+                      district: "$address.district"
+                    },
+                    averagePricePerSquareMeter: {
+                      $avg: { $divide: ["$price", "$comparableArea"] }
+                    },
+                    listings: { $sum: 1 }
+                  }
+                },
+                {
+                  $sort: {
+                    averagePricePerSquareMeter: -1,
+                    listings: -1,
+                    "_id.district": 1
+                  }
+                },
+                { $limit: LAND_PRICE_PER_SQUARE_METER_LIMIT },
+                {
+                  $project: {
+                    _id: 0,
+                    label: buildDistrictRentLabel(zone),
+                    averagePricePerSquareMeter: {
+                      $round: ["$averagePricePerSquareMeter", 0]
+                    },
+                    listings: 1
+                  }
+                }
+              ])
+            : Promise.resolve([])
         ])
-      : [[], []];
+      : [[], [], []];
 
     return {
       zone: {
@@ -704,6 +797,18 @@ export const propertyService = {
           byDistrict: rentByDistrict.map((item) => ({
             label: item.label,
             averagePrice: Math.round(item.averagePrice || 0),
+            listings: item.listings
+          }))
+        },
+        pricePerSquareMeterMarket: {
+          currency: primaryLandCurrency,
+          currencies: landCurrencyBreakdown.map((item) => ({
+            currency: item._id,
+            count: item.count
+          })),
+          byDistrict: landPricePerSquareMeterByDistrict.map((item) => ({
+            label: item.label,
+            averagePricePerSquareMeter: Math.round(item.averagePricePerSquareMeter || 0),
             listings: item.listings
           }))
         }

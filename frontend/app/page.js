@@ -76,9 +76,12 @@ export default function HomePage() {
           forRent: "for rent",
           rentByCanton: "Cantons",
           rentByDistrict: "Districts",
+          pricePerSquareMeterByDistrict: "Land / m2 by district",
           dominantCurrency: "Main currency",
           avgRent: "avg rent",
+          avgPricePerSquareMeter: "avg / m2",
           rentalListings: "rentals",
+          landListings: "land comps",
           rentalLoading: "Calculating rent averages...",
           utilityEyebrow: "Useful intelligence",
           utilityTitle: "Start by reading the market, then move into listings with more context.",
@@ -107,7 +110,7 @@ export default function HomePage() {
           featuredSearch: "Open search",
           featuredFailed: "Featured listings could not be loaded right now.",
           noProvinceData:
-            "There is not enough rental inventory in this province yet to calculate a reliable average."
+            "There is not enough rental or land-sale inventory in this province yet to calculate useful signals."
         }
       : {
           eyebrow: "Inteligencia inmobiliaria",
@@ -128,9 +131,12 @@ export default function HomePage() {
           forRent: "en renta",
           rentByCanton: "Cantones",
           rentByDistrict: "Distritos",
+          pricePerSquareMeterByDistrict: "Precio / m2 por distrito",
           dominantCurrency: "Moneda dominante",
           avgRent: "renta promedio",
+          avgPricePerSquareMeter: "promedio / m2",
           rentalListings: "alquileres",
+          landListings: "comparables",
           rentalLoading: "Calculando promedios de renta...",
           utilityEyebrow: "Inteligencia util",
           utilityTitle: "Empieza leyendo el mercado y luego entra a los listings con mas contexto.",
@@ -159,7 +165,7 @@ export default function HomePage() {
           featuredSearch: "Abrir busqueda",
           featuredFailed: "No se pudieron cargar las propiedades destacadas en este momento.",
           noProvinceData:
-            "Todavia no hay suficiente inventario de alquiler en esta provincia para calcular un promedio util."
+            "Todavia no hay suficiente inventario de alquiler o de terrenos en venta para calcular senales utiles."
         };
 
   useEffect(() => {
@@ -365,13 +371,39 @@ export default function HomePage() {
   );
 
   const rentalMarket = provinceSummary?.rentalMarket || null;
+  const pricePerSquareMeterMarket = provinceSummary?.pricePerSquareMeterMarket || null;
   const cantonRentRows = rentalMarket?.byCanton || EMPTY_ITEMS;
   const districtRentRows = rentalMarket?.byDistrict || EMPTY_ITEMS;
-  const hasRentalMarket = cantonRentRows.length > 0 || districtRentRows.length > 0;
-  const rentalColumns = [
-    { title: copy.rentByCanton, items: cantonRentRows },
-    { title: copy.rentByDistrict, items: districtRentRows }
+  const districtPricePerSquareMeterRows = pricePerSquareMeterMarket?.byDistrict || EMPTY_ITEMS;
+  const marketColumns = [
+    {
+      title: copy.rentByCanton,
+      items: cantonRentRows,
+      metricLabel: copy.avgRent,
+      listingLabel: copy.rentalListings,
+      renderValue: (item) => formatCurrency(item.averagePrice, rentalMarket?.currency || "USD")
+    },
+    {
+      title: copy.rentByDistrict,
+      items: districtRentRows,
+      metricLabel: copy.avgRent,
+      listingLabel: copy.rentalListings,
+      renderValue: (item) => formatCurrency(item.averagePrice, rentalMarket?.currency || "USD")
+    },
+    {
+      title: copy.pricePerSquareMeterByDistrict,
+      items: districtPricePerSquareMeterRows,
+      metricLabel: copy.avgPricePerSquareMeter,
+      listingLabel: copy.landListings,
+      renderValue: (item) =>
+        `${formatCurrency(
+          item.averagePricePerSquareMeter,
+          pricePerSquareMeterMarket?.currency || "USD"
+        )}/m2`
+    }
   ].filter((column) => column.items.length > 0);
+  const hasMarketColumns = marketColumns.length > 0;
+  const primaryMarketCurrency = rentalMarket?.currency || pricePerSquareMeterMarket?.currency || null;
 
   return (
     <div className="section-pad">
@@ -446,9 +478,9 @@ export default function HomePage() {
               <p className="mt-3 max-w-sm text-xs font-medium uppercase tracking-[0.18em] text-ink/38">
                 {copy.hoverHint}
               </p>
-              {rentalMarket?.currency ? (
+              {primaryMarketCurrency ? (
                 <div className="mt-4 inline-flex rounded-full border border-[#eccb8e] bg-[#fff4dc] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8f540d]">
-                  {copy.dominantCurrency}: {rentalMarket.currency}
+                  {copy.dominantCurrency}: {primaryMarketCurrency}
                 </div>
               ) : null}
               <div className="mt-4 flex flex-wrap gap-3">
@@ -461,20 +493,28 @@ export default function HomePage() {
               </div>
             </div>
 
-            {provinceSummaryLoading && !hasRentalMarket && !provinceSummaryFailed ? (
+            {provinceSummaryLoading && !hasMarketColumns && !provinceSummaryFailed ? (
               <div className="surface-soft flex items-center justify-center p-5 text-sm leading-6 text-ink/62">
                 {copy.rentalLoading}
               </div>
-            ) : hasRentalMarket ? (
-              <div className={`grid gap-4 ${rentalColumns.length > 1 ? "xl:grid-cols-2" : ""}`}>
-                {rentalColumns.map((column) => (
+            ) : hasMarketColumns ? (
+              <div
+                className={`grid gap-4 ${
+                  marketColumns.length === 1
+                    ? ""
+                    : marketColumns.length === 2
+                      ? "xl:grid-cols-2"
+                      : "xl:grid-cols-3"
+                }`}
+              >
+                {marketColumns.map((column) => (
                   <div key={column.title} className="surface-soft p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
                         {column.title}
                       </div>
                       <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/34">
-                        {copy.avgRent}
+                        {column.metricLabel}
                       </div>
                     </div>
 
@@ -492,13 +532,13 @@ export default function HomePage() {
                               <div className="min-w-0">
                                 <div className="truncate text-sm font-semibold text-ink">{item.label}</div>
                                 <div className="text-xs text-ink/52">
-                                  {item.listings} {copy.rentalListings}
+                                  {item.listings} {column.listingLabel}
                                 </div>
                               </div>
                             </div>
                           </div>
                           <div className="shrink-0 text-right text-sm font-semibold text-ink">
-                            {formatCurrency(item.averagePrice, rentalMarket?.currency || "USD")}
+                            {column.renderValue(item)}
                           </div>
                         </div>
                       ))}
