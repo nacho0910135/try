@@ -33,7 +33,7 @@ const translations = {
     },
     footer: {
       description:
-        "Plataforma inmobiliaria para explorar, publicar y conectar propiedades en Costa Rica.",
+        "Plataforma de inteligencia inmobiliaria para leer precios, explorar zonas y entender el mercado de Costa Rica.",
       explore: "Explorar",
       analysis: "Analisis",
       battle: "Batalla",
@@ -150,15 +150,15 @@ const translations = {
       saveSearchSuccess: "Busqueda guardada correctamente.",
       saveSearchFailed: "No se pudo guardar la busqueda",
       loginToSaveSearch: "Inicia sesion para guardar esta busqueda",
-      eyebrow: "Exploracion",
-      title: "Busca propiedades en Costa Rica",
+      eyebrow: "Inteligencia inmobiliaria",
+      title: "Analiza el mercado inmobiliario de Costa Rica",
       description:
-        "Usa filtros avanzados, mapa visible, dibujo de zona y busqueda por GPS para encontrar oportunidades reales.",
+        "Cruza zona, presupuesto, contexto y precio por m2 para detectar oportunidades reales antes de tomar una decision.",
       publishPromptLoggedIn:
-        "Tienes una propiedad? Publicala para vender o alquilar desde el mapa.",
+        "Tienes una propiedad? Publicarla te ayuda a medir su precio frente al mercado.",
       publishPromptLoggedOut:
-        "Quieres vender o alquilar una propiedad? Inicia sesion para publicarla.",
-      publishButtonLoggedIn: "Vender o alquilar mi propiedad",
+        "Quieres medir tu precio contra el mercado? Inicia sesion y publicala con contexto.",
+      publishButtonLoggedIn: "Publicar y comparar con el mercado",
       publishButtonLoggedOut: "Iniciar sesion para publicar",
       searching: "Buscando...",
       resultsFound: "{{count}} propiedades encontradas",
@@ -310,7 +310,7 @@ const translations = {
     },
     footer: {
       description:
-        "Real estate platform to explore, publish, and connect properties across Costa Rica.",
+        "Real estate intelligence platform to read prices, explore zones, and understand Costa Rica's market.",
       explore: "Explore",
       analysis: "Analysis",
       battle: "Battle",
@@ -427,15 +427,15 @@ const translations = {
       saveSearchSuccess: "Search saved successfully.",
       saveSearchFailed: "Could not save the search",
       loginToSaveSearch: "Sign in to save this search",
-      eyebrow: "Explore",
-      title: "Find properties in Costa Rica",
+      eyebrow: "Market intelligence",
+      title: "Analyze Costa Rica real estate",
       description:
-        "Use advanced filters, a live map, drawn areas, and GPS search to find real opportunities.",
+        "Cross-check area, budget, context, and price per square meter to spot real opportunities faster.",
       publishPromptLoggedIn:
-        "Do you have a property? Publish it to sell or rent directly from the map.",
+        "Do you have a property? Publishing it helps you compare its pricing against the market.",
       publishPromptLoggedOut:
-        "Want to sell or rent a property? Sign in to publish it.",
-      publishButtonLoggedIn: "Sell or rent my property",
+        "Want to benchmark your pricing against the market? Sign in and publish it with context.",
+      publishButtonLoggedIn: "Publish and compare with the market",
       publishButtonLoggedOut: "Sign in to publish",
       searching: "Searching...",
       resultsFound: "{{count}} properties found",

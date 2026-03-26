@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
-import { Expand, MapPinned, Sparkles } from "lucide-react";
+import { MapPinned, Sparkles } from "lucide-react";
 import Map, { GeolocateControl, Layer, Marker, NavigationControl, Source } from "react-map-gl";
 import mapboxgl from "mapbox-gl";
 import { useLanguage } from "@/components/layout/LanguageProvider";
@@ -74,6 +74,33 @@ const safeContextPoints = (layerIds = []) =>
     (point) => point && Number.isFinite(point.lng) && Number.isFinite(point.lat)
   );
 
+const getComparableArea = (property = {}) => {
+  const propertyType = property.propertyType;
+
+  if (propertyType === "lot") {
+    return Number(property.lotArea || property.landArea || 0);
+  }
+
+  return Number(property.constructionArea || property.landArea || property.lotArea || 0);
+};
+
+const getPricePerSquareMeter = (property = {}) => {
+  const snapshotValue = Number(property.analyticsSnapshot?.pricePerSquareMeter || 0);
+
+  if (Number.isFinite(snapshotValue) && snapshotValue > 0) {
+    return snapshotValue;
+  }
+
+  const area = getComparableArea(property);
+  const price = Number(property.price || 0);
+
+  if (!Number.isFinite(area) || area <= 0 || !Number.isFinite(price) || price <= 0) {
+    return 0;
+  }
+
+  return price / area;
+};
+
 export function SearchMap({
   properties = [],
   selectedPropertyId,
@@ -86,6 +113,8 @@ export function SearchMap({
   onSelectContextPoint,
   onBoundsChange,
   onPolygonChange,
+  pricingMode = "price",
+  onPricingModeChange,
   autoFitKey,
   minHeight = 740,
   className
@@ -109,6 +138,19 @@ export function SearchMap({
     activeContextLayers.includes(layer.id)
   );
   const boostLabel = language === "en" ? "Featured" : "Destacada";
+  const pricingModeOptions = useMemo(
+    () => [
+      {
+        value: "price",
+        label: language === "en" ? "Price" : "Precio"
+      },
+      {
+        value: "ppsm",
+        label: language === "en" ? "Price / m2" : "Precio / m2"
+      }
+    ],
+    [language]
+  );
 
   useEffect(() => {
     const loadDistricts = async () => {
@@ -318,6 +360,18 @@ export function SearchMap({
     );
   }
 
+  const getMarkerLabel = (property) => {
+    if (pricingMode === "ppsm") {
+      const pricePerSquareMeter = getPricePerSquareMeter(property);
+
+      if (pricePerSquareMeter > 0) {
+        return `${formatCompactCurrency(pricePerSquareMeter, property.currency)}/m2`;
+      }
+    }
+
+    return formatCompactCurrency(property.price, property.currency);
+  };
+
   const districtFillLayer = {
     id: "district-fills",
     type: "fill",
@@ -360,26 +414,30 @@ export function SearchMap({
   return (
     <div className={cn("map-stage", className)}>
       <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-wrap items-start justify-between gap-3 sm:inset-x-4 sm:top-4">
-        <div className="surface-soft px-3 py-2.5 sm:px-4 sm:py-3">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-pine/75">
-            {language === "en" ? "Live price field" : "Campo de precios"}
-          </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-ink sm:text-sm">
+        <div className="surface-soft px-3 py-2 sm:px-4 sm:py-2.5">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-ink sm:text-sm">
             <MapPinned className="h-4 w-4 shrink-0 text-terracotta" />
             {selectedProvince || "Costa Rica"}
             <span className="text-ink/35">{"\u00b7"}</span>
             {visibleProperties.length} {language === "en" ? "results" : "resultados"}
           </div>
         </div>
-        <div className="surface-soft hidden items-center gap-2 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/60 md:inline-flex">
-          <Expand className="h-3.5 w-3.5 text-lagoon" />
-          {drawControlsEnabled
-            ? language === "en"
-              ? "Drag, zoom, draw"
-              : "Arrastra, acerca, dibuja"
-            : language === "en"
-              ? "Drag and zoom"
-              : "Arrastra y acerca"}
+        <div className="pointer-events-auto surface-soft inline-flex items-center gap-1 rounded-full p-1 shadow-soft">
+          {pricingModeOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onPricingModeChange?.(option.value)}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-[11px] font-semibold transition",
+                pricingMode === option.value
+                  ? "bg-pine text-white shadow-soft"
+                  : "text-ink/58 hover:bg-white/78"
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -495,7 +553,7 @@ export function SearchMap({
                   )}
                 >
                   {isBoosted ? <Sparkles className="h-3.5 w-3.5 text-[#a55d00]" /> : null}
-                  {formatCompactCurrency(property.price, property.currency)}
+                  {getMarkerLabel(property)}
                 </span>
               </button>
             </Marker>

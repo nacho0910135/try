@@ -12,9 +12,7 @@ import { MapLoadingShell } from "@/components/map/MapLoadingShell";
 import { PropertyCard } from "@/components/property/PropertyCard";
 import { Button } from "@/components/ui/Button";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { hasCommercialDashboardAccess } from "@/lib/user-access";
 import { formatCurrency } from "@/lib/utils";
-import { useAuthStore } from "@/store/auth-store";
 
 const CostaRicaProvinceExplorer = dynamic(
   () =>
@@ -38,7 +36,6 @@ const EMPTY_ITEMS = [];
 
 export default function HomePage() {
   const { language } = useLanguage();
-  const { user } = useAuthStore();
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
   const [featuredLoadFailed, setFeaturedLoadFailed] = useState(false);
@@ -49,8 +46,7 @@ export default function HomePage() {
   const [provinceSummaryCache, setProvinceSummaryCache] = useState({});
   const [hasSuggestedProvince, setHasSuggestedProvince] = useState(false);
   const [province, setProvince] = useState("San Jose");
-  const canAccessDashboard = hasCommercialDashboardAccess(user);
-  const publishHref = canAccessDashboard ? "/dashboard/properties/new" : "/login";
+  const analysisHref = "/analysis";
   const previewProvince = hoveredProvince || province;
   const provincePath = `/zona/${slugifyLocation(previewProvince)}`;
   const provinceSummaryKey = normalizeProvinceName(previewProvince);
@@ -62,12 +58,12 @@ export default function HomePage() {
   const copy =
     language === "en"
       ? {
-          eyebrow: "Costa Rica, less noise",
-          title: "Map, radar, and listings that actually help you decide.",
+          eyebrow: "Market intelligence",
+          title: "Understand Costa Rica real estate before chasing listings.",
           description:
-            "Search by province, compare faster, and publish with cleaner data from day one.",
-          explore: "Open the map",
-          publish: "Publish a listing",
+            "Read prices by zone, follow rent signals, compare areas, and spot where buying or investing makes more sense.",
+          explore: "Analyze the map",
+          publish: "Compare zones",
           selectedProvince: "Active province",
           focusProvince: "Province in focus",
           radarTitle: "Rent radar",
@@ -84,23 +80,23 @@ export default function HomePage() {
           avgRent: "avg rent",
           rentalListings: "rentals",
           rentalLoading: "Calculating rent averages...",
-          utilityEyebrow: "Useful by design",
-          utilityTitle: "A marketplace built around signals, not clutter.",
+          utilityEyebrow: "Useful intelligence",
+          utilityTitle: "Start by reading the market, then move into listings with more context.",
           utilityCards: [
             {
-              title: "Map-first search",
-              description: "Province, canton, district, GPS, polygon, and live filters.",
+              title: "Price map",
+              description: "Read sale, rent, and price-per-square-meter signals from one map.",
               href: "/search"
             },
             {
-              title: "Decision layer",
-              description: "Compare favorites, inspect momentum, and ask sharper questions.",
-              href: "/analysis"
+              title: "Rent radar",
+              description: "See where average rents are pushing higher before you commit to a zone.",
+              href: provincePath
             },
             {
-              title: "Trusted publishing",
-              description: "Clean inventory, boosts, lead flow, and commercial control.",
-              href: publishHref
+              title: "Decision layer",
+              description: "Compare signals, inspect momentum, and size up an area faster.",
+              href: "/analysis"
             }
           ],
           featuredEyebrow: "Featured",
@@ -114,12 +110,12 @@ export default function HomePage() {
             "There is not enough rental inventory in this province yet to calculate a reliable average."
         }
       : {
-          eyebrow: "Costa Rica, sin ruido",
-          title: "Mapa, radar y listings que si ayudan a decidir.",
+          eyebrow: "Inteligencia inmobiliaria",
+          title: "Entiende el mercado inmobiliario de Costa Rica antes de perseguir listings.",
           description:
-            "Explora por provincia, compara mas rapido y publica con datos mas limpios desde el primer minuto.",
-          explore: "Abrir mapa",
-          publish: "Publicar propiedad",
+            "Lee precios por zona, sigue señales de renta, compara provincias y detecta donde comprar o invertir tiene mas sentido.",
+          explore: "Analizar el mapa",
+          publish: "Comparar zonas",
           selectedProvince: "Provincia activa",
           focusProvince: "Provincia en foco",
           radarTitle: "Radar de renta",
@@ -136,23 +132,23 @@ export default function HomePage() {
           avgRent: "renta promedio",
           rentalListings: "alquileres",
           rentalLoading: "Calculando promedios de renta...",
-          utilityEyebrow: "Util por diseno",
-          utilityTitle: "Un marketplace pensado en senales, no en ruido.",
+          utilityEyebrow: "Inteligencia util",
+          utilityTitle: "Empieza leyendo el mercado y luego entra a los listings con mas contexto.",
           utilityCards: [
             {
-              title: "Busqueda map-first",
-              description: "Provincia, canton, distrito, GPS, poligono y filtros vivos.",
+              title: "Mapa de precios",
+              description: "Lee venta, alquiler y precio por m2 desde una sola vista.",
               href: "/search"
             },
             {
-              title: "Capa de decision",
-              description: "Compara favoritas, mira momentum y pregunta con mas contexto.",
-              href: "/analysis"
+              title: "Radar de renta",
+              description: "Detecta donde la renta promedio se esta moviendo antes de decidir.",
+              href: provincePath
             },
             {
-              title: "Publicacion confiable",
-              description: "Inventario limpio, boosts, leads y control comercial.",
-              href: publishHref
+              title: "Capa de decision",
+              description: "Compara senales, mira momentum y entiende mejor cada zona.",
+              href: "/analysis"
             }
           ],
           featuredEyebrow: "Destacadas",
@@ -350,19 +346,19 @@ export default function HomePage() {
     () => [
       {
         icon: MapPinned,
-        label: language === "en" ? "Map-first" : "Map-first"
+        label: language === "en" ? "Price map" : "Mapa de precios"
       },
       {
         icon: Radar,
-        label: language === "en" ? "Saved alerts" : "Alertas"
+        label: language === "en" ? "Rent radar" : "Radar de renta"
       },
       {
         icon: BrainCircuit,
-        label: language === "en" ? "AI compare" : "Comparativa AI"
+        label: language === "en" ? "Compare zones" : "Comparar zonas"
       },
       {
         icon: ShieldCheck,
-        label: language === "en" ? "Clean listings" : "Inventario limpio"
+        label: language === "en" ? "Cleaner reads" : "Lectura mas clara"
       }
     ],
     [language]
@@ -400,7 +396,7 @@ export default function HomePage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href={publishHref}>
+                <Link href={analysisHref}>
                   <Button variant="secondary">{copy.publish}</Button>
                 </Link>
               </div>
@@ -529,7 +525,7 @@ export default function HomePage() {
 
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
           {copy.utilityCards.map((item, index) => {
-            const icons = [MapPinned, BrainCircuit, ShieldCheck];
+            const icons = [MapPinned, Radar, BrainCircuit];
             const Icon = icons[index] || Radar;
 
             return (
