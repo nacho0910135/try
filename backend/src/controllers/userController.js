@@ -22,6 +22,15 @@ export const getManagementOverview = asyncHandler(async (req, res) => {
   res.json({ success: true, overview });
 });
 
+export const getManagementEmails = asyncHandler(async (req, res) => {
+  if (!hasManagementAccess(req.user)) {
+    throw new ApiError(403, "You do not have access to this resource");
+  }
+
+  const emails = await userService.getManagementEmails();
+  res.json({ success: true, emails });
+});
+
 export const updateSubscription = asyncHandler(async (req, res) => {
   const subscription = await userService.updateSubscription(req.user, req.body);
   res.json({ success: true, subscription });

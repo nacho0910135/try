@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getCommercialOverview,
   getDashboardSummary,
+  getManagementEmails,
   getManagementOverview,
   updateSubscription,
   requestVerification
@@ -19,5 +20,6 @@ userRoutes.use(requireAuth);
 userRoutes.get("/dashboard-summary", getDashboardSummary);
 userRoutes.get("/commercial-overview", getCommercialOverview);
 userRoutes.get("/management-overview", getManagementOverview);
+userRoutes.get("/management-emails", getManagementEmails);
 userRoutes.patch("/subscription", validate(subscriptionUpdateSchema), updateSubscription);
 userRoutes.post("/verification-request", validate(verificationRequestSchema), requestVerification);

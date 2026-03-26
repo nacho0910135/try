@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, Eye, Globe2, LayoutDashboard, LineChart, Radar, Settings2, Sparkles, Users } from "lucide-react";
+import { Building2, Eye, Globe2, LayoutDashboard, LineChart, Mail, Radar, Settings2, Sparkles, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getManagementOverview } from "@/lib/api";
+import { getManagementEmails, getManagementOverview } from "@/lib/api";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 
@@ -16,6 +17,10 @@ export default function ManagementPage() {
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [emailPanelOpen, setEmailPanelOpen] = useState(false);
+  const [emailsLoading, setEmailsLoading] = useState(false);
+  const [emailsError, setEmailsError] = useState("");
+  const [emailsData, setEmailsData] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,6 +145,30 @@ export default function ManagementPage() {
     { href: "/search", label: "Explorar", description: "Validar mapa y lectura de mercado." },
     { href: "/analysis", label: "Analisis", description: "Revisar inteligencia del mercado." }
   ];
+
+  const handleToggleEmails = async () => {
+    if (emailPanelOpen) {
+      setEmailPanelOpen(false);
+      return;
+    }
+
+    if (emailsData) {
+      setEmailPanelOpen(true);
+      return;
+    }
+
+    try {
+      setEmailsLoading(true);
+      setEmailsError("");
+      const data = await getManagementEmails();
+      setEmailsData(data.emails || { total: 0, users: [] });
+      setEmailPanelOpen(true);
+    } catch (nextError) {
+      setEmailsError(nextError?.response?.data?.message || "No se pudo cargar la lista de correos.");
+    } finally {
+      setEmailsLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -291,6 +320,77 @@ export default function ManagementPage() {
                 </div>
                 <h2 className="mt-1 text-2xl font-semibold text-ink">Accesos rapidos</h2>
               </div>
+            </div>
+
+            <div className="mt-5 rounded-[22px] border border-white/70 bg-white/84 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/42">
+                    Base de usuarios
+                  </div>
+                  <div className="mt-1 text-base font-semibold text-ink">
+                    Correos registrados
+                  </div>
+                  <div className="mt-1 text-sm text-ink/58">
+                    Carga una lista privada de correos, nombre, rol y fecha de alta.
+                  </div>
+                </div>
+                <Button
+                  variant={emailPanelOpen ? "secondary" : "primary"}
+                  className="min-w-[220px]"
+                  onClick={handleToggleEmails}
+                  disabled={emailsLoading}
+                >
+                  {emailsLoading
+                    ? "Cargando correos..."
+                    : emailPanelOpen
+                      ? "Ocultar correos registrados"
+                      : "Ver correos registrados"}
+                </Button>
+              </div>
+
+              {emailsError ? (
+                <div className="mt-3 rounded-[18px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {emailsError}
+                </div>
+              ) : null}
+
+              {emailPanelOpen && emailsData ? (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+                    <Mail className="h-4 w-4 text-lagoon" />
+                    {formatValue(emailsData.total)} correos registrados
+                  </div>
+                  <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                    {(emailsData.users || []).map((item) => (
+                      <div
+                        key={item._id || item.email}
+                        className="rounded-[20px] border border-white/70 bg-white/92 px-4 py-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold text-ink">
+                              {item.name || "Sin nombre"}
+                            </div>
+                            <div className="truncate text-sm text-ink/62">{item.email}</div>
+                          </div>
+                          <div className="text-right text-xs text-ink/55">
+                            <div className="font-semibold uppercase tracking-[0.16em] text-ink/45">
+                              {item.role}
+                            </div>
+                            <div>{item.isActive ? "Activo" : "Inactivo"}</div>
+                            <div>
+                              {item.createdAt
+                                ? new Date(item.createdAt).toLocaleDateString("es-CR")
+                                : "Sin fecha"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">

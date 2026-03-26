@@ -485,6 +485,30 @@ export const userService = {
     };
   },
 
+  async getManagementEmails() {
+    const users = await User.find({
+      email: {
+        $exists: true,
+        $ne: ""
+      }
+    })
+      .select("name email role isActive createdAt")
+      .sort({ createdAt: -1, email: 1 })
+      .lean();
+
+    return {
+      total: users.length,
+      users: users.map((item) => ({
+        _id: item._id,
+        name: item.name || "",
+        email: item.email || "",
+        role: item.role || "owner",
+        isActive: Boolean(item.isActive),
+        createdAt: item.createdAt || null
+      }))
+    };
+  },
+
   async getCommercialOverview(user) {
     const subscription = resolveEffectiveSubscription(user);
     const months = getLastMonths(6);
