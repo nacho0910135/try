@@ -158,8 +158,8 @@ const translations = {
         "Tienes una propiedad? Publicarla te ayuda a medir su precio frente al mercado.",
       publishPromptLoggedOut:
         "Quieres medir tu precio contra el mercado? Inicia sesion y publicala con contexto.",
-      publishButtonLoggedIn: "Publicar y comparar con el mercado",
-      publishButtonLoggedOut: "Iniciar sesion para publicar",
+      publishButtonLoggedIn: "Publicar propiedad",
+      publishButtonLoggedOut: "Iniciar sesion para publicar propiedad",
       searching: "Buscando...",
       resultsFound: "{{count}} propiedades encontradas",
       publishLinkLoggedIn: "Publicar propiedad",
@@ -435,8 +435,8 @@ const translations = {
         "Do you have a property? Publishing it helps you compare its pricing against the market.",
       publishPromptLoggedOut:
         "Want to benchmark your pricing against the market? Sign in and publish it with context.",
-      publishButtonLoggedIn: "Publish and compare with the market",
-      publishButtonLoggedOut: "Sign in to publish",
+      publishButtonLoggedIn: "Publish property",
+      publishButtonLoggedOut: "Sign in to publish property",
       searching: "Searching...",
       resultsFound: "{{count}} properties found",
       publishLinkLoggedIn: "Publish property",

@@ -340,9 +340,10 @@ export function SearchMap({
             <MapPinned className="h-4 w-4 shrink-0 text-terracotta" />
             {selectedProvince || "Costa Rica"}
             <span className="text-ink/35">{"\u00b7"}</span>
-            {activeModeConfig.summary}
-            <span className="text-ink/35">{"\u00b7"}</span>
             {visibleProperties.length} {language === "en" ? "results" : "resultados"}
+          </div>
+          <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-ink/48 sm:text-[11px]">
+            {language === "en" ? "Showing" : "Mostrando"}: {activeModeConfig.summary}
           </div>
         </div>
         <div className="pointer-events-auto surface-soft inline-flex flex-wrap items-center gap-1 rounded-[24px] p-1 shadow-soft">
