@@ -298,47 +298,6 @@ function SearchPageContent() {
     }),
     [filters, generatedAlertName, savedSearchMeta.alertsEnabled, savedSearchMeta.name]
   );
-  const autoFitKey = useMemo(
-    () =>
-      JSON.stringify({
-        q: filters.q,
-        businessType: filters.businessType,
-        propertyType: filters.propertyType,
-        province: filters.province,
-        canton: filters.canton,
-        district: filters.district,
-        lat: filters.lat,
-        lng: filters.lng,
-        radiusKm: filters.radiusKm,
-        minPrice: filters.minPrice,
-        maxPrice: filters.maxPrice,
-        currency: filters.currency,
-        marketStatus: filters.marketStatus,
-        sort: filters.sort,
-        bedrooms: filters.bedrooms,
-        bathrooms: filters.bathrooms,
-        parkingSpaces: filters.parkingSpaces,
-        minConstructionArea: filters.minConstructionArea,
-        maxConstructionArea: filters.maxConstructionArea,
-        minLotArea: filters.minLotArea,
-        maxLotArea: filters.maxLotArea,
-        rentalArrangement: filters.rentalArrangement,
-        furnished: filters.furnished,
-        petsAllowed: filters.petsAllowed,
-        depositRequired: filters.depositRequired,
-        featured: filters.featured,
-        recent: filters.recent,
-        privateRoom: filters.privateRoom,
-        privateBathroom: filters.privateBathroom,
-        utilitiesIncluded: filters.utilitiesIncluded,
-        studentFriendly: filters.studentFriendly,
-        polygonPoints: filters.polygon?.length || 0,
-        activeContextLayers,
-        focusedContextPoint: focusedContextPoint?.id || null
-      }),
-    [activeContextLayers, filters, focusedContextPoint]
-  );
-
   const contextualProperties = useMemo(
     () =>
       properties.map((property) => ({
@@ -1232,7 +1191,6 @@ function SearchPageContent() {
               onPolygonChange={handleMapPolygonChange}
               pricingMode={mapPricingMode}
               onPricingModeChange={setMapPricingMode}
-              autoFitKey={autoFitKey}
               minHeight={760}
             />
           </SectionErrorBoundary>

@@ -18,25 +18,6 @@ import { mapDefaultCenter } from "@/lib/constants";
 import { getProvinceCode } from "@/lib/costa-rica-geo";
 import { resolveMapStyle } from "@/lib/map-style";
 
-const collectBounds = (coordinates, state) => {
-  if (!Array.isArray(coordinates)) {
-    return;
-  }
-
-  if (typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
-    const [lng, lat] = coordinates;
-
-    state.minLng = Math.min(state.minLng, lng);
-    state.maxLng = Math.max(state.maxLng, lng);
-    state.minLat = Math.min(state.minLat, lat);
-    state.maxLat = Math.max(state.maxLat, lat);
-    state.hasPoints = true;
-    return;
-  }
-
-  coordinates.forEach((item) => collectBounds(item, state));
-};
-
 const markerStylesByStatus = {
   available: {
     base: "border-emerald-700/90 bg-emerald-600/95 text-white hover:-translate-y-0.5 hover:bg-emerald-500",
@@ -115,7 +96,6 @@ export function SearchMap({
   onPolygonChange,
   pricingMode = "price",
   onPricingModeChange,
-  autoFitKey,
   minHeight = 740,
   className
 }) {
@@ -126,8 +106,6 @@ export function SearchMap({
   const mapStyle = resolveMapStyle(process.env.NEXT_PUBLIC_MAPBOX_STYLE);
   const mapRef = useRef(null);
   const drawRef = useRef(null);
-  const lastAutoFitSignatureRef = useRef("");
-  const skipNextMoveEndRef = useRef(false);
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
   const provinceCode = getProvinceCode(selectedProvince);
   const visibleProperties = safeMapProperties(properties);
@@ -173,113 +151,6 @@ export function SearchMap({
       setDistrictGeoJson(null);
     });
   }, [provinceCode]);
-
-  useEffect(() => {
-    if (!districtGeoJson || !mapRef.current) {
-      return;
-    }
-
-    const state = {
-      minLng: Infinity,
-      maxLng: -Infinity,
-      minLat: Infinity,
-      maxLat: -Infinity,
-      hasPoints: false
-    };
-
-    districtGeoJson.features?.forEach((feature) =>
-      collectBounds(feature.geometry?.coordinates, state)
-    );
-
-    if (!state.hasPoints) {
-      return;
-    }
-
-    try {
-      skipNextMoveEndRef.current = true;
-      mapRef.current.getMap().fitBounds(
-        [
-          [state.minLng, state.minLat],
-          [state.maxLng, state.maxLat]
-        ],
-        {
-          padding: 36,
-          duration: 700
-        }
-      );
-    } catch (_error) {
-      // Keep the map usable even if the district fit fails.
-    }
-  }, [districtGeoJson]);
-
-  useEffect(() => {
-    if (!focusedContextPoint || !mapRef.current) {
-      return;
-    }
-
-    if (!Number.isFinite(focusedContextPoint.lng) || !Number.isFinite(focusedContextPoint.lat)) {
-      return;
-    }
-
-    try {
-      skipNextMoveEndRef.current = true;
-      mapRef.current.getMap().flyTo({
-        center: [focusedContextPoint.lng, focusedContextPoint.lat],
-        zoom: 11.6,
-        duration: 1000
-      });
-    } catch (_error) {
-      // Ignore flyTo issues and keep the map mounted.
-    }
-  }, [focusedContextPoint]);
-
-  useEffect(() => {
-    if (!mapRef.current || districtGeoJson || focusedContextPoint || !visibleProperties.length) {
-      return;
-    }
-
-    const propertiesSignature = `${autoFitKey || ""}::${visibleProperties
-      .map((property) => `${property._id}:${property.location.coordinates.join(",")}`)
-      .join("|")}`;
-
-    if (!propertiesSignature || propertiesSignature === lastAutoFitSignatureRef.current) {
-      return;
-    }
-
-    const map = mapRef.current.getMap?.();
-
-    if (!map) {
-      return;
-    }
-
-    try {
-      if (visibleProperties.length === 1) {
-        skipNextMoveEndRef.current = true;
-        map.flyTo({
-          center: visibleProperties[0].location.coordinates,
-          zoom: 12.6,
-          duration: 700
-        });
-      } else {
-        const bounds = new mapboxgl.LngLatBounds();
-
-        visibleProperties.forEach((property) => {
-          bounds.extend(property.location.coordinates);
-        });
-
-        skipNextMoveEndRef.current = true;
-        map.fitBounds(bounds, {
-          padding: 56,
-          duration: 700,
-          maxZoom: 12.4
-        });
-      }
-
-      lastAutoFitSignatureRef.current = propertiesSignature;
-    } catch (_error) {
-      // Keep the map available even if auto-fit fails for a particular result set.
-    }
-  }, [autoFitKey, districtGeoJson, focusedContextPoint, visibleProperties]);
 
   useEffect(() => {
     boostedProperties.forEach((property) => {
@@ -471,11 +342,6 @@ export function SearchMap({
           });
         }}
         onMoveEnd={(event) => {
-          if (skipNextMoveEndRef.current) {
-            skipNextMoveEndRef.current = false;
-            return;
-          }
-
           if (!event.originalEvent) {
             return;
           }
