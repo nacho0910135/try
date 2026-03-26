@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -30,13 +30,15 @@ export function SiteHeader() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { t, language } = useLanguage();
+  const alertPanelRef = useRef(null);
   const [alertCenter, setAlertCenter] = useState({
     newSearchMatches: 0,
     dueLeadActionsCount: 0,
     highlightedSearches: [],
     dueLeadActions: []
   });
-  const [isAlertPanelOpen, setIsAlertPanelOpen] = useState(false);
+  const [isAlertPanelPinned, setIsAlertPanelPinned] = useState(false);
+  const [isAlertPanelHovered, setIsAlertPanelHovered] = useState(false);
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const canAccessManagement = hasManagementAccess(user);
   const isSavedSearchRoute = activePathname.startsWith("/dashboard/saved-searches");
@@ -60,7 +62,8 @@ export function SiteHeader() {
         highlightedSearches: [],
         dueLeadActions: []
       });
-      setIsAlertPanelOpen(false);
+      setIsAlertPanelPinned(false);
+      setIsAlertPanelHovered(false);
       return undefined;
     }
 
@@ -100,38 +103,98 @@ export function SiteHeader() {
     Number(alertCenter.newSearchMatches || 0) > 0 ||
     Number(alertCenter.dueLeadActionsCount || 0) > 0;
 
-  const primaryAlertReason = useMemo(() => {
+  const primaryAlert = useMemo(() => {
     const firstSearch = alertCenter.highlightedSearches?.[0];
     const firstLead = alertCenter.dueLeadActions?.[0];
 
     if (firstSearch?.newMatches) {
-      return language === "en"
-        ? `${firstSearch.name} has ${firstSearch.newMatches} new matching listings.`
-        : `${firstSearch.name} tiene ${firstSearch.newMatches} coincidencias nuevas.`;
+      return {
+        title:
+          language === "en"
+            ? "New saved-search match"
+            : "Nueva coincidencia en busqueda guardada",
+        detail:
+          language === "en"
+            ? `${firstSearch.name} has ${firstSearch.newMatches} new matching listings.`
+            : `${firstSearch.name} tiene ${firstSearch.newMatches} coincidencias nuevas.`,
+        href: "/dashboard/saved-searches"
+      };
     }
 
     if (firstLead?.name || firstLead?.propertyTitle) {
-      return language === "en"
-        ? `${firstLead.name || "A lead"} needs follow-up on ${firstLead.propertyTitle || "a property"}.`
-        : `${firstLead.name || "Un lead"} requiere seguimiento en ${firstLead.propertyTitle || "una propiedad"}.`;
+      return {
+        title:
+          language === "en"
+            ? "Lead pending follow-up"
+            : "Lead pendiente de seguimiento",
+        detail:
+          language === "en"
+            ? `${firstLead.name || "A lead"} needs follow-up on ${firstLead.propertyTitle || "a property"}.`
+            : `${firstLead.name || "Un lead"} requiere seguimiento en ${firstLead.propertyTitle || "una propiedad"}.`,
+        href: "/dashboard/leads"
+      };
     }
 
     if (alertCenter.newSearchMatches) {
-      return language === "en"
-        ? `You have ${alertCenter.newSearchMatches} new search matches waiting.`
-        : `Tienes ${alertCenter.newSearchMatches} coincidencias nuevas esperando.`;
+      return {
+        title:
+          language === "en"
+            ? "New saved-search activity"
+            : "Nueva actividad en busquedas guardadas",
+        detail:
+          language === "en"
+            ? `You have ${alertCenter.newSearchMatches} new search matches waiting.`
+            : `Tienes ${alertCenter.newSearchMatches} coincidencias nuevas esperando.`,
+        href: "/dashboard/saved-searches"
+      };
     }
 
     if (alertCenter.dueLeadActionsCount) {
-      return language === "en"
-        ? `You have ${alertCenter.dueLeadActionsCount} leads that should move today.`
-        : `Tienes ${alertCenter.dueLeadActionsCount} leads que conviene mover hoy.`;
+      return {
+        title:
+          language === "en"
+            ? "Lead action needed"
+            : "Accion pendiente en leads",
+        detail:
+          language === "en"
+            ? `You have ${alertCenter.dueLeadActionsCount} leads that should move today.`
+            : `Tienes ${alertCenter.dueLeadActionsCount} leads que conviene mover hoy.`,
+        href: "/dashboard/leads"
+      };
     }
 
-    return language === "en"
-      ? "No active alerts right now."
-      : "No hay alertas activas en este momento.";
+    return {
+      title: language === "en" ? "No active alerts" : "Sin alertas activas",
+      detail:
+        language === "en"
+          ? "No active alerts right now."
+          : "No hay alertas activas en este momento.",
+      href: "/dashboard/saved-searches"
+    };
   }, [alertCenter, language]);
+
+  const isAlertPanelOpen = isAlertPanelPinned || isAlertPanelHovered;
+
+  useEffect(() => {
+    if (!isAlertPanelPinned) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (alertPanelRef.current?.contains(event.target)) {
+        return;
+      }
+
+      setIsAlertPanelPinned(false);
+      setIsAlertPanelHovered(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isAlertPanelPinned]);
 
   const handleLogout = async () => {
     try {
@@ -191,16 +254,17 @@ export function SiteHeader() {
                 {user ? (
                   <div className="flex items-center gap-1 rounded-full border border-white/75 bg-white/56 p-1 shadow-[0_14px_34px_rgba(17,34,54,0.08)] backdrop-blur">
                     <div
+                      ref={alertPanelRef}
                       className="relative"
-                      onMouseEnter={() => setIsAlertPanelOpen(true)}
-                      onMouseLeave={() => setIsAlertPanelOpen(false)}
+                      onMouseEnter={() => setIsAlertPanelHovered(true)}
+                      onMouseLeave={() => setIsAlertPanelHovered(false)}
                     >
                       <button
                         type="button"
                         aria-label={language === "en" ? "Open alert bell" : "Abrir campanita"}
                         title={language === "en" ? "Open alert bell" : "Abrir campanita"}
                         aria-expanded={isAlertPanelOpen}
-                        onClick={() => setIsAlertPanelOpen((current) => !current)}
+                        onClick={() => setIsAlertPanelPinned((current) => !current)}
                         className={cn(
                           "relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/80 text-ink shadow-[0_12px_26px_rgba(17,34,54,0.08)] transition duration-200 hover:-translate-y-0.5",
                           isSavedSearchRoute || isAlertPanelOpen
@@ -221,11 +285,11 @@ export function SiteHeader() {
                               <BellRing className="h-4 w-4" />
                             </div>
                             <div className="min-w-0">
-                              <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
-                                {language === "en" ? "Alert reason" : "Motivo de la alerta"}
+                              <div className="text-sm font-semibold leading-6 text-ink">
+                                {primaryAlert.title}
                               </div>
-                              <div className="mt-1 text-sm font-semibold leading-6 text-ink">
-                                {primaryAlertReason}
+                              <div className="mt-1 text-sm leading-6 text-ink/62">
+                                {primaryAlert.detail}
                               </div>
                             </div>
                           </div>
@@ -254,12 +318,14 @@ export function SiteHeader() {
                           <div className="mt-4 flex flex-wrap gap-2">
                             <Link
                               href="/dashboard/saved-searches"
+                              onClick={() => setIsAlertPanelPinned(false)}
                               className="inline-flex items-center rounded-full bg-lagoon px-3 py-2 text-xs font-semibold text-white"
                             >
                               {language === "en" ? "Open bell" : "Abrir campanita"}
                             </Link>
                             <Link
                               href="/dashboard/leads"
+                              onClick={() => setIsAlertPanelPinned(false)}
                               className="inline-flex items-center rounded-full border border-white/80 bg-white/88 px-3 py-2 text-xs font-semibold text-ink"
                             >
                               {language === "en" ? "Open leads" : "Abrir leads"}
