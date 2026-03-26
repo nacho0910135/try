@@ -65,7 +65,7 @@ export default function ManagementPage() {
   const publicPulseCards = useMemo(
     () => [
       {
-        label: "Publicaciones activas",
+        label: "Publicaciones reales",
         value: platform.published,
         helper: `${formatValue(platform.saleListings)} venta - ${formatValue(platform.rentListings)} renta`,
         icon: Building2
@@ -77,15 +77,15 @@ export default function ManagementPage() {
         icon: Users
       },
       {
-        label: "Vistas a fichas",
+        label: "Aperturas reales de fichas",
         value: platform.totalViews,
-        helper: "trafico medido sobre propiedades",
+        helper: "solo inventario orgánico, sin showcase",
         icon: Eye
       },
       {
-        label: "Leads globales",
+        label: "Leads reales",
         value: platform.leads,
-        helper: `${formatValue(platform.totalListingLeads)} atribuidos a publicaciones`,
+        helper: `${formatValue(platform.totalListingLeads)} atribuidos a publicaciones reales`,
         icon: Radar
       }
     ],
@@ -96,11 +96,11 @@ export default function ManagementPage() {
     () => [
       { label: "Favoritos", value: platform.favorites },
       { label: "Busquedas guardadas", value: platform.savedSearches },
-      { label: "Destacadas", value: platform.featured },
+      { label: "Destacadas reales", value: platform.featured },
       { label: "Ofertas", value: platform.offers },
-      { label: "Impresiones home", value: platform.homeImpressions },
-      { label: "Impresiones rail", value: platform.searchRailImpressions },
-      { label: "Impresiones mapa", value: platform.mapImpressions },
+      { label: "Impresiones home reales", value: platform.homeImpressions },
+      { label: "Impresiones rail reales", value: platform.searchRailImpressions },
+      { label: "Impresiones mapa reales", value: platform.mapImpressions },
       { label: "Aperturas de ficha", value: platform.cardOpens }
     ],
     [platform]
@@ -177,18 +177,20 @@ export default function ManagementPage() {
                 Centro de control de BienesRaicesCR
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-ink/64">
-                Aqui concentramos el contador que antes estaba en inicio, el pulso del inventario,
-                la actividad de publicaciones y las herramientas rapidas para operar la plataforma.
+                Aqui concentramos solo actividad real: inventario organico, aperturas de fichas,
+                leads, usuarios y herramientas rapidas para operar la plataforma. Las propiedades
+                showcase no entran en estos totales.
               </p>
             </div>
 
             <div className="surface-soft flex min-w-[240px] flex-col gap-2 p-4">
               <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
-                Trafico medido
+                Actividad real en fichas
               </div>
               <div className="text-3xl font-semibold text-ink">{formatValue(platform.totalViews)}</div>
               <div className="text-sm text-ink/58">
-                vistas a fichas y {formatValue(platform.boostSurfaceExposure)} impresiones boost acumuladas
+                aperturas registradas y {formatValue(platform.boostSurfaceExposure)} impresiones boost
+                sobre publicaciones reales
               </div>
             </div>
           </div>
@@ -220,7 +222,7 @@ export default function ManagementPage() {
                 <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
                   Plataforma
                 </div>
-                <h2 className="mt-1 text-2xl font-semibold text-ink">Metricas globales</h2>
+                <h2 className="mt-1 text-2xl font-semibold text-ink">Metricas reales</h2>
               </div>
             </div>
 

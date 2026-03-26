@@ -12,6 +12,7 @@ import { buildAlertPreview } from "./savedSearchService.js";
 import { billingService } from "./billingService.js";
 import { enrichPropertyCollection } from "../utils/propertyInsights.js";
 import { ApiError } from "../utils/apiError.js";
+import { SHOWCASE_LISTING_SOURCE } from "../utils/publicPropertyVisibility.js";
 
 const leadStatusLabels = {
   new: "Nuevo",
@@ -365,6 +366,29 @@ export const userService = {
   async getManagementOverview(user) {
     const last30Days = new Date();
     last30Days.setDate(last30Days.getDate() - 30);
+    const realListingFilter = {
+      listingSource: { $ne: SHOWCASE_LISTING_SOURCE }
+    };
+    const realPublishedFilter = {
+      ...realListingFilter,
+      status: "published"
+    };
+    const realPublishedSaleFilter = {
+      ...realPublishedFilter,
+      operationType: "sale"
+    };
+    const realPublishedRentFilter = {
+      ...realPublishedFilter,
+      operationType: "rent"
+    };
+    const realFeaturedFilter = {
+      ...realPublishedFilter,
+      featured: true
+    };
+    const realNewListingsFilter = {
+      ...realListingFilter,
+      createdAt: { $gte: last30Days }
+    };
 
     const [
       users,
@@ -384,18 +408,21 @@ export const userService = {
       commercialOverview
     ] = await Promise.all([
       User.countDocuments(),
-      Property.countDocuments(),
-      Property.countDocuments({ status: "published" }),
-      Property.countDocuments({ status: "published", operationType: "sale" }),
-      Property.countDocuments({ status: "published", operationType: "rent" }),
-      Property.countDocuments({ status: "published", featured: true }),
+      Property.countDocuments(realListingFilter),
+      Property.countDocuments(realPublishedFilter),
+      Property.countDocuments(realPublishedSaleFilter),
+      Property.countDocuments(realPublishedRentFilter),
+      Property.countDocuments(realFeaturedFilter),
       Lead.countDocuments(),
       Offer.countDocuments(),
       Favorite.countDocuments(),
       SavedSearch.countDocuments(),
       User.countDocuments({ createdAt: { $gte: last30Days } }),
-      Property.countDocuments({ createdAt: { $gte: last30Days } }),
+      Property.countDocuments(realNewListingsFilter),
       Property.aggregate([
+        {
+          $match: realListingFilter
+        },
         {
           $group: {
             _id: null,
