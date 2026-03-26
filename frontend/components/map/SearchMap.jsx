@@ -476,6 +476,10 @@ export function SearchMap({
             return;
           }
 
+          if (!event.originalEvent) {
+            return;
+          }
+
           const map = event.target;
           const bounds = map?.getBounds?.();
 
