@@ -2,7 +2,6 @@
 
 import { BellRing, Check, ChevronDown, MapPinned, Search, Sparkles } from "lucide-react";
 import {
-  businessTypes,
   currencies,
   marketStatuses,
   propertyTypes,
@@ -189,17 +188,29 @@ export function SearchFilters({
           </div>
           <div>
             <label className="field-label">{t("filters.business")}</label>
-            <Select
-              value={values.businessType || ""}
-              onChange={(event) => update("businessType", event.target.value)}
-            >
-              <option value="">{t("common.all")}</option>
-              {businessTypes.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {t(BUSINESS_LABELS[item.value])}
-                </option>
-              ))}
-            </Select>
+            <div className="grid grid-cols-2 gap-2">
+              {["sale", "rent"].map((type) => {
+                const selected = values.businessType === type;
+
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() =>
+                      update("businessType", selected ? undefined : type)
+                    }
+                    className={`rounded-[20px] border px-3 py-3 text-sm font-semibold transition ${
+                      selected
+                        ? "border-lagoon/25 bg-lagoon text-white shadow-[0_14px_34px_rgba(29,102,123,0.2)]"
+                        : "border-white/80 bg-white/88 text-ink/78 hover:border-lagoon/18 hover:bg-[#f2fbff]"
+                    }`}
+                    aria-pressed={selected}
+                  >
+                    {t(BUSINESS_LABELS[type])}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div>
             <label className="field-label">{t("filters.propertyType")}</label>

@@ -128,7 +128,7 @@ const buildModeConfigs = (language) => ({
     getLabel: (property) => formatCompactCurrency(property.price, property.currency)
   },
   "land-total-price": {
-    label: language === "en" ? "Land total" : "Terreno total",
+    label: language === "en" ? "Land total price" : "Precio terreno total",
     summary: language === "en" ? "Land for sale" : "Terrenos en venta",
     accentClass:
       "border-amber-200/90 bg-amber-400 text-[#5b3700] shadow-[0_12px_28px_rgba(217,119,6,0.2)]",
@@ -137,7 +137,7 @@ const buildModeConfigs = (language) => ({
     getLabel: (property) => formatCompactCurrency(property.price, property.currency)
   },
   "land-price-per-square-meter": {
-    label: language === "en" ? "Land / m2" : "Terreno / m2",
+    label: language === "en" ? "Land price m2" : "Precio terreno m2",
     summary: language === "en" ? "Land price per m2" : "Terreno por m2",
     accentClass:
       "border-[#e9c1ae] bg-[#c86f46] text-white shadow-[0_12px_28px_rgba(200,111,70,0.24)]",
