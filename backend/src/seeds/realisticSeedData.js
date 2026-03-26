@@ -1,9 +1,11 @@
 import { createPlaceholderImageDataUri } from "../utils/placeholderImage.js";
+import { SHOWCASE_LISTING_SOURCE } from "../utils/publicPropertyVisibility.js";
 import { createSlug } from "../utils/slug.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const REFERENCE_DATE = new Date("2026-03-20T14:00:00.000Z");
 const PROPERTIES_PER_ZONE = 25;
+const SHOWCASE_GROUP = "realistic-crc-launch-500";
 
 export const REALISTIC_SEED_TOTAL = 500;
 
@@ -1316,6 +1318,8 @@ const buildPropertyRecord = ({ zone, zoneIndex, slot, groupIndex, adminId, selle
       rentedAt: lifecycle.rentedAt,
       inactivatedAt: lifecycle.inactivatedAt,
       owner: seller._id,
+      listingSource: SHOWCASE_LISTING_SOURCE,
+      showcaseGroup: SHOWCASE_GROUP,
       sellerInfo: buildSellerInfo(seller),
       serviceDistances: buildServiceDistances(zone, rng),
       moderationSignals: buildModerationSignals(rng),
@@ -1414,6 +1418,8 @@ const buildPropertyRecord = ({ zone, zoneIndex, slot, groupIndex, adminId, selle
     rentedAt: lifecycle.rentedAt,
     inactivatedAt: lifecycle.inactivatedAt,
     owner: seller._id,
+    listingSource: SHOWCASE_LISTING_SOURCE,
+    showcaseGroup: SHOWCASE_GROUP,
     sellerInfo: buildSellerInfo(seller),
     serviceDistances: buildServiceDistances(zone, rng),
     moderationSignals: buildModerationSignals(rng),

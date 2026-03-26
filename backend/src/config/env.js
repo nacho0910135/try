@@ -68,6 +68,7 @@ const envSchema = z.object({
   PAYPAL_BOOST_PRICE: z.coerce.number().positive().default(7),
   PAYPAL_DONATION_MIN: z.coerce.number().positive().default(5),
   PAYPAL_DONATION_SUGGESTIONS: z.string().default("5,10,25"),
+  SHOW_SHOWCASE_SEED_PROPERTIES: z.preprocess(parseBoolean, z.boolean().default(true)),
   ALERTS_AUTORUN: z.preprocess(parseBoolean, z.boolean().default(true)),
   ALERTS_INTERVAL_MINUTES: z.coerce.number().int().positive().default(60),
   BACKUP_DIR: z.string().default("backups/mongo"),

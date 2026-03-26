@@ -3,6 +3,7 @@ import { Property } from "../models/Property.js";
 import { primaryFrontendUrl } from "../config/env.js";
 import { ApiError } from "../utils/apiError.js";
 import { buildBoundsPolygon, normalizePolygonCoordinates } from "../utils/geo.js";
+import { withShowcaseVisibility } from "../utils/publicPropertyVisibility.js";
 import { notificationService } from "./notificationService.js";
 
 const businessTypeLabels = {
@@ -121,10 +122,10 @@ export const buildSavedSearchFilter = (savedSearch) => {
   const filters = savedSearch.filters || {};
   const polygonSource = savedSearch.mapArea?.coordinates?.[0] || filters.polygon;
   const boundsSource = savedSearch.bounds || filters.bounds;
-  const filter = {
+  const filter = withShowcaseVisibility({
     status: "published",
     marketStatus: { $in: ["available", "reserved"] }
-  };
+  });
 
   if (filters.q) {
     const regex = new RegExp(escapeRegex(filters.q), "i");

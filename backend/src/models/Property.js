@@ -472,6 +472,16 @@ const propertySchema = new mongoose.Schema(
       ref: "User",
       required: true
     },
+    listingSource: {
+      type: String,
+      enum: ["organic", "showcase-seed"],
+      default: "organic"
+    },
+    showcaseGroup: {
+      type: String,
+      trim: true,
+      default: ""
+    },
     sellerInfo: sellerInfoSchema,
     serviceDistances: serviceDistancesSchema,
     moderationSignals: {
@@ -625,6 +635,7 @@ propertySchema.index({
 propertySchema.index({
   status: 1,
   marketStatus: 1,
+  listingSource: 1,
   operationType: 1,
   isApproved: 1,
   featured: -1,

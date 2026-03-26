@@ -1,5 +1,6 @@
 import { Property } from "../models/Property.js";
 import { ApiError } from "../utils/apiError.js";
+import { buildPublicAnalyticsPropertyFilter } from "../utils/publicPropertyVisibility.js";
 import { deepseekService } from "./deepseekService.js";
 import { marketAnalyticsService } from "./marketAnalyticsService.js";
 
@@ -967,7 +968,7 @@ export const interactiveAnalysisService = {
   async getOverview() {
     const [overview, properties] = await Promise.all([
       marketAnalyticsService.getOverview(),
-      Property.find({ status: "published", marketStatus: { $ne: "inactive" } }).lean()
+      Property.find(buildPublicAnalyticsPropertyFilter()).lean()
     ]);
 
     return {
@@ -1014,9 +1015,8 @@ export const interactiveAnalysisService = {
     }
 
     const properties = await Property.find({
+      ...buildPublicAnalyticsPropertyFilter(),
       _id: { $in: uniqueIds },
-      status: "published",
-      marketStatus: { $ne: "inactive" }
     }).lean();
 
     if (properties.length !== 2) {

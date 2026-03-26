@@ -4,6 +4,10 @@ import { buildBoundsPolygon, normalizePolygonCoordinates } from "../utils/geo.js
 import { analyzeListingModeration } from "../utils/listingModeration.js";
 import { buildPagination } from "../utils/pagination.js";
 import { enrichPropertyCollection, enrichPropertyForClient } from "../utils/propertyInsights.js";
+import {
+  buildPublicPropertyFilter,
+  isPubliclyVisibleProperty
+} from "../utils/publicPropertyVisibility.js";
 import { createSlug } from "../utils/slug.js";
 
 const ownerIdFromProperty = (property) =>
@@ -27,16 +31,7 @@ const makePrimaryPhotoSet = (photos = []) => {
   }));
 };
 
-const buildPublicFilter = () => ({
-  status: "published",
-  marketStatus: { $in: ["available", "reserved"] }
-});
-
 const getPublicMarketStatuses = () => ["available", "reserved"];
-
-const isPubliclyVisibleProperty = (property) =>
-  property?.status === "published" &&
-  (property?.marketStatus || "available") !== "inactive";
 
 const buildFeaturedPrioritySort = (fallback = {}) => ({
   featured: -1,
@@ -99,7 +94,7 @@ const buildPromotedSort = (query = {}) =>
     : { featuredAt: -1, publishedAt: -1, createdAt: -1 };
 
 const buildZoneFilter = ({ province, canton, district }) => {
-  const filter = buildPublicFilter();
+  const filter = buildPublicPropertyFilter();
 
   if (province) {
     filter["address.province"] = new RegExp(`^${escapeRegex(province)}$`, "i");
@@ -177,7 +172,7 @@ const buildDistrictRentLabel = (zone) => {
 };
 
 const buildFilterQuery = (query) => {
-  const filter = buildPublicFilter();
+  const filter = buildPublicPropertyFilter();
 
   if (query.q) {
     const regex = new RegExp(escapeRegex(query.q), "i");
@@ -542,7 +537,7 @@ export const propertyService = {
 
   async listFeatured(limit = 6) {
     const items = await Property.find({
-      ...buildPublicFilter(),
+      ...buildPublicPropertyFilter(),
       featured: true
     })
       .populate("owner", "name phone avatar role verification")
@@ -553,7 +548,7 @@ export const propertyService = {
   },
 
   async listSitemapEntries() {
-    return Property.find(buildPublicFilter())
+    return Property.find(buildPublicPropertyFilter())
       .select("slug updatedAt")
       .sort({ updatedAt: -1, publishedAt: -1, createdAt: -1 })
       .lean();

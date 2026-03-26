@@ -1,5 +1,6 @@
 import { Property } from "../models/Property.js";
 import { ApiError } from "../utils/apiError.js";
+import { buildPublicAnalyticsPropertyFilter } from "../utils/publicPropertyVisibility.js";
 
 const safeArea = (property) =>
   property.constructionArea || property.landArea || property.lotArea || 1;
@@ -90,10 +91,7 @@ const scoreProperty = (currentPpsm, comparableAveragePpsm) => {
 
 export const marketAnalyticsService = {
   async getOverview() {
-    const properties = await Property.find({
-      status: "published",
-      marketStatus: { $ne: "inactive" }
-    }).lean();
+    const properties = await Property.find(buildPublicAnalyticsPropertyFilter()).lean();
     const activeListings = properties.filter(
       (property) =>
         property.status === "published" &&
@@ -233,6 +231,7 @@ export const marketAnalyticsService = {
 
     const targetArea = safeArea(property);
     const comparableCandidates = await Property.find({
+      ...buildPublicAnalyticsPropertyFilter(),
       _id: { $ne: property._id },
       propertyType: property.propertyType,
       operationType: property.operationType,
