@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { getCurrentUser } from "@/lib/api";
 import { getRoleRestrictedFallbackPath } from "@/lib/user-access";
+import { hasManagementAccess } from "@/lib/management-access";
 import { LoadingState } from "../ui/LoadingState";
 
-export function ProtectedRoute({ children, roles }) {
+export function ProtectedRoute({ children, roles, requireManagementAccess = false }) {
   const router = useRouter();
   const { hydrated, token, user, setUser, logout } = useAuthStore();
   const [resolvingUser, setResolvingUser] = useState(false);
@@ -57,14 +58,23 @@ export function ProtectedRoute({ children, roles }) {
 
     if (roles?.length && user && !needsRoleResolution && !roles.includes(user?.role)) {
       router.replace(getRoleRestrictedFallbackPath(user));
+      return;
     }
-  }, [hydrated, token, user, roles, router, needsRoleResolution]);
+
+    if (requireManagementAccess && user && !needsRoleResolution && !hasManagementAccess(user)) {
+      router.replace(getRoleRestrictedFallbackPath(user));
+    }
+  }, [hydrated, token, user, roles, router, needsRoleResolution, requireManagementAccess]);
 
   if (!hydrated || (token && (!user || resolvingUser || needsRoleResolution))) {
     return <LoadingState label="Validando sesion..." />;
   }
 
-  if (!token || (roles?.length && user && !roles.includes(user?.role))) {
+  if (
+    !token ||
+    (roles?.length && user && !roles.includes(user?.role)) ||
+    (requireManagementAccess && user && !hasManagementAccess(user))
+  ) {
     return <LoadingState label="Redirigiendo..." />;
   }
 

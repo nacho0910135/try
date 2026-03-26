@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getCommercialOverview,
   getDashboardSummary,
+  getManagementOverview,
   updateSubscription,
   requestVerification
 } from "../controllers/userController.js";
@@ -17,5 +18,6 @@ export const userRoutes = Router();
 userRoutes.use(requireAuth);
 userRoutes.get("/dashboard-summary", getDashboardSummary);
 userRoutes.get("/commercial-overview", getCommercialOverview);
+userRoutes.get("/management-overview", getManagementOverview);
 userRoutes.patch("/subscription", validate(subscriptionUpdateSchema), updateSubscription);
 userRoutes.post("/verification-request", validate(verificationRequestSchema), requestVerification);

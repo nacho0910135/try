@@ -1,5 +1,7 @@
 import { userService } from "../services/userService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/apiError.js";
+import { hasManagementAccess } from "../utils/managementAccess.js";
 
 export const getDashboardSummary = asyncHandler(async (req, res) => {
   const summary = await userService.getDashboardSummary(req.user);
@@ -8,6 +10,15 @@ export const getDashboardSummary = asyncHandler(async (req, res) => {
 
 export const getCommercialOverview = asyncHandler(async (req, res) => {
   const overview = await userService.getCommercialOverview(req.user);
+  res.json({ success: true, overview });
+});
+
+export const getManagementOverview = asyncHandler(async (req, res) => {
+  if (!hasManagementAccess(req.user)) {
+    throw new ApiError(403, "You do not have access to this resource");
+  }
+
+  const overview = await userService.getManagementOverview(req.user);
   res.json({ success: true, overview });
 });
 

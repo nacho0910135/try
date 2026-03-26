@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, LayoutDashboard, LogOut, Shield } from "lucide-react";
+import { Bell, LayoutDashboard, LogOut, Shield, SlidersHorizontal } from "lucide-react";
 import { getDashboardSummary, logoutUser } from "@/lib/api";
+import { hasManagementAccess } from "@/lib/management-access";
 import { hasCommercialDashboardAccess } from "@/lib/user-access";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
@@ -22,8 +23,10 @@ export function SiteHeader() {
   const { t, language } = useLanguage();
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false);
   const canAccessDashboard = hasCommercialDashboardAccess(user);
+  const canAccessManagement = hasManagementAccess(user);
   const isSavedSearchRoute = activePathname.startsWith("/dashboard/saved-searches");
   const isDashboardRoute = activePathname.startsWith("/dashboard");
+  const isManagementRoute = activePathname.startsWith("/gestion");
   const navItems = [
     { href: "/", label: t("nav.home") },
     { href: "/search", label: t("nav.explore") },
@@ -153,6 +156,23 @@ export function SiteHeader() {
                       </Link>
                     ) : null}
 
+                    {canAccessManagement ? (
+                      <Link href="/gestion" className="hidden sm:block">
+                        <Button
+                          variant="secondary"
+                          className={cn(
+                            "rounded-full border border-white/80 px-4 py-2.5 shadow-none",
+                            isManagementRoute
+                              ? "bg-[linear-gradient(135deg,#24537a,#3f8cbc)] text-white hover:bg-[linear-gradient(135deg,#1d486a,#377da9)]"
+                              : "bg-white/88 hover:bg-white"
+                          )}
+                        >
+                          <SlidersHorizontal className="mr-2 h-4 w-4" />
+                          Gestion
+                        </Button>
+                      </Link>
+                    ) : null}
+
                     {user.role === "admin" ? (
                       <Link href="/admin" className="hidden lg:block">
                         <Button
@@ -219,6 +239,20 @@ export function SiteHeader() {
                   )}
                 >
                   {t("nav.dashboard")}
+                </Link>
+              ) : null}
+
+              {user && canAccessManagement ? (
+                <Link
+                  href="/gestion"
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition duration-200",
+                    isManagementRoute
+                      ? "bg-[linear-gradient(135deg,#24537a,#3f8cbc)] text-white shadow-[0_10px_22px_rgba(17,34,54,0.16)]"
+                      : "bg-sky-50 text-sky-700 hover:bg-sky-100"
+                  )}
+                >
+                  Gestion
                 </Link>
               ) : null}
 

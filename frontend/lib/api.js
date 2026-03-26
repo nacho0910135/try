@@ -168,6 +168,7 @@ export const updateOfferStatus = (offerId, status) =>
 
 export const getDashboardSummary = () => unwrap(api.get("/users/dashboard-summary"));
 export const getCommercialOverview = () => unwrap(api.get("/users/commercial-overview"));
+export const getManagementOverview = () => unwrap(api.get("/users/management-overview"));
 export const updateMySubscription = (payload) =>
   unwrap(api.patch("/users/subscription", payload));
 export const requestUserVerification = (payload) =>

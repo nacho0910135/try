@@ -362,6 +362,102 @@ export const userService = {
     };
   },
 
+  async getManagementOverview(user) {
+    const last30Days = new Date();
+    last30Days.setDate(last30Days.getDate() - 30);
+
+    const [
+      users,
+      properties,
+      published,
+      saleListings,
+      rentListings,
+      featured,
+      leads,
+      offers,
+      favorites,
+      savedSearches,
+      newUsersLast30Days,
+      newListingsLast30Days,
+      aggregateMetrics,
+      dashboardSummary,
+      commercialOverview
+    ] = await Promise.all([
+      User.countDocuments(),
+      Property.countDocuments(),
+      Property.countDocuments({ status: "published" }),
+      Property.countDocuments({ status: "published", operationType: "sale" }),
+      Property.countDocuments({ status: "published", operationType: "rent" }),
+      Property.countDocuments({ status: "published", featured: true }),
+      Lead.countDocuments(),
+      Offer.countDocuments(),
+      Favorite.countDocuments(),
+      SavedSearch.countDocuments(),
+      User.countDocuments({ createdAt: { $gte: last30Days } }),
+      Property.countDocuments({ createdAt: { $gte: last30Days } }),
+      Property.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalViews: { $sum: { $ifNull: ["$views", 0] } },
+            totalListingLeads: { $sum: { $ifNull: ["$engagement.leads", 0] } },
+            totalListingOffers: { $sum: { $ifNull: ["$engagement.offers", 0] } },
+            homeImpressions: { $sum: { $ifNull: ["$boostMetrics.homeImpressions", 0] } },
+            searchRailImpressions: {
+              $sum: { $ifNull: ["$boostMetrics.searchRailImpressions", 0] }
+            },
+            mapImpressions: { $sum: { $ifNull: ["$boostMetrics.mapImpressions", 0] } },
+            cardOpens: { $sum: { $ifNull: ["$boostMetrics.cardOpens", 0] } },
+            attributedBoostLeads: { $sum: { $ifNull: ["$boostMetrics.leads", 0] } }
+          }
+        }
+      ]),
+      this.getDashboardSummary(user),
+      this.getCommercialOverview(user)
+    ]);
+
+    const siteMetrics = aggregateMetrics[0] || {};
+    const boostSurfaceExposure =
+      Number(siteMetrics.homeImpressions || 0) +
+      Number(siteMetrics.searchRailImpressions || 0) +
+      Number(siteMetrics.mapImpressions || 0);
+
+    return {
+      platform: {
+        users,
+        properties,
+        published,
+        saleListings,
+        rentListings,
+        featured,
+        leads,
+        offers,
+        favorites,
+        savedSearches,
+        newUsersLast30Days,
+        newListingsLast30Days,
+        totalViews: Number(siteMetrics.totalViews || 0),
+        totalListingLeads: Number(siteMetrics.totalListingLeads || 0),
+        totalListingOffers: Number(siteMetrics.totalListingOffers || 0),
+        boostSurfaceExposure,
+        homeImpressions: Number(siteMetrics.homeImpressions || 0),
+        searchRailImpressions: Number(siteMetrics.searchRailImpressions || 0),
+        mapImpressions: Number(siteMetrics.mapImpressions || 0),
+        cardOpens: Number(siteMetrics.cardOpens || 0),
+        attributedBoostLeads: Number(siteMetrics.attributedBoostLeads || 0)
+      },
+      dashboardSummary,
+      commercialOverview: {
+        summary: commercialOverview.summary,
+        adPerformance: commercialOverview.adPerformance,
+        topPerformers: commercialOverview.topPerformers?.slice(0, 5) || [],
+        timeline: commercialOverview.timeline || [],
+        optimizationBoard: commercialOverview.optimizationBoard || [],
+        actionableInsights: commercialOverview.actionableInsights || []
+      }
+    };
+  },
+
   async getCommercialOverview(user) {
     const subscription = resolveEffectiveSubscription(user);
     const months = getLastMonths(6);

@@ -41,9 +41,6 @@ export default function HomePage() {
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
   const [featuredLoadFailed, setFeaturedLoadFailed] = useState(false);
-  const [marketSummary, setMarketSummary] = useState(null);
-  const [marketSummaryLoading, setMarketSummaryLoading] = useState(true);
-  const [marketSummaryFailed, setMarketSummaryFailed] = useState(false);
   const [hoveredProvince, setHoveredProvince] = useState(null);
   const [provinceSummaryCache, setProvinceSummaryCache] = useState({});
   const [hasSuggestedProvince, setHasSuggestedProvince] = useState(false);
@@ -198,35 +195,6 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const loadMarketSummary = async () => {
-      setMarketSummaryLoading(true);
-
-      try {
-        const data = await getZoneSeoData();
-        if (cancelled) return;
-        setMarketSummary(data.summary || null);
-        setMarketSummaryFailed(false);
-      } catch (_error) {
-        if (cancelled) return;
-        setMarketSummary(null);
-        setMarketSummaryFailed(true);
-      } finally {
-        if (!cancelled) {
-          setMarketSummaryLoading(false);
-        }
-      }
-    };
-
-    void loadMarketSummary();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
     if (!previewProvince || provinceSummaryEntry?.status === "ready" || provinceSummaryEntry?.status === "loading") {
       return;
     }
@@ -305,49 +273,6 @@ export default function HomePage() {
     province,
     provinceSummary,
     provinceSummaryLoading
-  ]);
-
-  const featuredMarketCounts = useMemo(() => {
-    const saleCount = featured.filter((item) => item.businessType === "sale").length;
-    const rentCount = featured.filter((item) => item.businessType === "rent").length;
-
-    return {
-      totalListings: featured.length,
-      saleListings: saleCount,
-      rentListings: rentCount
-    };
-  }, [featured]);
-
-  const provinceSignals = useMemo(() => {
-    const resolvedCounts =
-      marketSummary && !marketSummaryFailed
-        ? {
-            totalListings: Number(marketSummary.totalListings || 0),
-            saleListings: Number(marketSummary.saleListings || 0),
-            rentListings: Number(marketSummary.rentListings || 0)
-          }
-        : featuredMarketCounts;
-
-    const totalValue =
-      marketSummaryLoading && !marketSummary ? "..." : resolvedCounts.totalListings;
-    const saleValue =
-      marketSummaryLoading && !marketSummary ? "..." : resolvedCounts.saleListings;
-    const rentValue =
-      marketSummaryLoading && !marketSummary ? "..." : resolvedCounts.rentListings;
-
-    return [
-      { label: copy.activeNow, value: totalValue },
-      { label: copy.forSale, value: saleValue },
-      { label: copy.forRent, value: rentValue }
-    ];
-  }, [
-    copy.activeNow,
-    copy.forRent,
-    copy.forSale,
-    featuredMarketCounts,
-    marketSummary,
-    marketSummaryFailed,
-    marketSummaryLoading
   ]);
 
   const heroSignals = useMemo(
@@ -443,17 +368,6 @@ export default function HomePage() {
                     </span>
                   );
                 })}
-              </div>
-
-              <div className="surface-soft grid gap-3 p-4 sm:grid-cols-3">
-                {provinceSignals.map((item) => (
-                  <div key={item.label}>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
-                      {item.label}
-                    </div>
-                    <div className="mt-2 text-2xl font-semibold text-ink">{item.value}</div>
-                  </div>
-                ))}
               </div>
 
               <div className="surface-soft flex min-h-[124px] flex-col justify-between p-4">
