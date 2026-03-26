@@ -266,7 +266,7 @@ const translations = {
     },
     options: {
       sale: "Venta",
-      rent: "Renta",
+      rent: "Alquiler",
       house: "Casa",
       apartment: "Apartamento",
       condominium: "Condominio",

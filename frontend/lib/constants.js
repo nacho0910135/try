@@ -1,6 +1,6 @@
 export const businessTypes = [
   { value: "sale", label: "Venta" },
-  { value: "rent", label: "Renta" }
+  { value: "rent", label: "Alquiler" }
 ];
 
 export const propertyTypes = [
