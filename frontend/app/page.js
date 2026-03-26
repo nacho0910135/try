@@ -13,6 +13,7 @@ import { PropertyCard } from "@/components/property/PropertyCard";
 import { Button } from "@/components/ui/Button";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { formatCurrency } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth-store";
 
 const CostaRicaProvinceExplorer = dynamic(
   () =>
@@ -36,6 +37,7 @@ const EMPTY_ITEMS = [];
 
 export default function HomePage() {
   const { language } = useLanguage();
+  const { token } = useAuthStore();
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
   const [featuredLoadFailed, setFeaturedLoadFailed] = useState(false);
@@ -46,8 +48,8 @@ export default function HomePage() {
   const [provinceSummaryCache, setProvinceSummaryCache] = useState({});
   const [hasSuggestedProvince, setHasSuggestedProvince] = useState(false);
   const [province, setProvince] = useState("San Jose");
-  const analysisHref = "/analysis";
   const previewProvince = hoveredProvince || province;
+  const publishHref = token ? "/dashboard/properties/new" : "/login";
   const provincePath = `/zona/${slugifyLocation(previewProvince)}`;
   const provinceSummaryKey = normalizeProvinceName(previewProvince);
   const provinceSummaryEntry = provinceSummaryCache[provinceSummaryKey];
@@ -63,7 +65,7 @@ export default function HomePage() {
           description:
             "Read prices by zone, follow rent signals, compare areas, and spot where buying or investing makes more sense.",
           explore: "Analyze the map",
-          publish: "Compare zones",
+          publish: "Publish property",
           selectedProvince: "Active province",
           focusProvince: "Province in focus",
           radarTitle: "Rent radar",
@@ -118,7 +120,7 @@ export default function HomePage() {
           description:
             "Lee precios por zona, sigue señales de renta, compara provincias y detecta donde comprar o invertir tiene mas sentido.",
           explore: "Analizar el mapa",
-          publish: "Comparar zonas",
+          publish: "Publicar propiedad",
           selectedProvince: "Provincia activa",
           focusProvince: "Provincia en foco",
           radarTitle: "Radar de renta",
@@ -428,7 +430,7 @@ export default function HomePage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href={analysisHref}>
+                <Link href={publishHref}>
                   <Button variant="secondary">{copy.publish}</Button>
                 </Link>
               </div>
@@ -468,26 +470,28 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.66fr)_minmax(0,1.34fr)]">
-            <div className="surface-soft h-fit p-4">
+          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.56fr)_minmax(0,1.44fr)]">
+            <div className="surface-soft h-fit p-3.5">
               <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
                 {hoveredProvince ? copy.focusProvince : copy.selectedProvince}
               </div>
-              <div className="mt-2 text-2xl font-semibold text-ink">{previewProvince}</div>
-              <p className="mt-2.5 max-w-[24rem] text-[13px] leading-6 text-ink/62">
+              <div className="mt-1.5 text-[26px] font-semibold leading-none text-ink">
+                {previewProvince}
+              </div>
+              <p className="mt-2 max-w-[20rem] text-[12px] leading-5 text-ink/62">
                 {copy.radarDescription}
               </p>
-              <p className="mt-2.5 max-w-[24rem] text-[11px] font-medium uppercase tracking-[0.18em] text-ink/38">
+              <p className="mt-2 max-w-[20rem] text-[10px] font-medium uppercase tracking-[0.16em] text-ink/38">
                 {copy.hoverHint}
               </p>
               {primaryMarketCurrency ? (
-                <div className="mt-3 inline-flex rounded-full border border-[#eccb8e] bg-[#fff4dc] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8f540d]">
+                <div className="mt-2.5 inline-flex rounded-full border border-[#eccb8e] bg-[#fff4dc] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f540d]">
                   {copy.dominantCurrency}: {primaryMarketCurrency}
                 </div>
               ) : null}
-              <div className="mt-3 flex flex-wrap gap-3">
+              <div className="mt-2.5 flex flex-wrap gap-3">
                 <Link href={provincePath}>
-                  <Button variant="ghost" className="px-0 py-0 text-sm text-pine hover:bg-transparent">
+                  <Button variant="ghost" className="px-0 py-0 text-[13px] text-pine hover:bg-transparent">
                     {copy.radarCta}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
