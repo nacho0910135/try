@@ -264,7 +264,7 @@ function SearchPageContent() {
   const [favoriteIds, setFavoriteIds] = useState([]);
   const [activeContextLayers, setActiveContextLayers] = useState([]);
   const [focusedContextPoint, setFocusedContextPoint] = useState(null);
-  const [mapPricingMode, setMapPricingMode] = useState("price");
+  const [mapMarketMode, setMapMarketMode] = useState("house-sale-price");
   const [retryNonce, setRetryNonce] = useState(0);
   const [autosaveStatus, setAutosaveStatus] = useState("idle");
   const [savedSearchMeta, setSavedSearchMeta] = useState({
@@ -1189,8 +1189,8 @@ function SearchPageContent() {
               onSelectDistrict={handleMapDistrictSelection}
               onBoundsChange={handleMapBoundsChange}
               onPolygonChange={handleMapPolygonChange}
-              pricingMode={mapPricingMode}
-              onPricingModeChange={setMapPricingMode}
+              marketMode={mapMarketMode}
+              onMarketModeChange={setMapMarketMode}
               minHeight={760}
             />
           </SectionErrorBoundary>

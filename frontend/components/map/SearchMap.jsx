@@ -55,6 +55,17 @@ const safeContextPoints = (layerIds = []) =>
     (point) => point && Number.isFinite(point.lng) && Number.isFinite(point.lat)
   );
 
+const getBusinessType = (property = {}) => property.operationType || property.businessType;
+
+const isHouseRentProperty = (property = {}) =>
+  getBusinessType(property) === "rent" && property.propertyType === "house";
+
+const isHouseSaleProperty = (property = {}) =>
+  getBusinessType(property) === "sale" && property.propertyType === "house";
+
+const isLandSaleProperty = (property = {}) =>
+  getBusinessType(property) === "sale" && property.propertyType === "lot";
+
 const isLandPriceComparableProperty = (property = {}) => {
   const businessType = property.operationType || property.businessType;
   const area = Number(property.lotArea || property.landArea || 0);
@@ -97,6 +108,33 @@ const getPricePerSquareMeter = (property = {}) => {
   return price / area;
 };
 
+const buildModeConfigs = (language) => ({
+  "house-rent-price": {
+    label: language === "en" ? "House rent" : "Alquiler casa",
+    summary: language === "en" ? "House rentals" : "Casas en alquiler",
+    matches: isHouseRentProperty,
+    getLabel: (property) => formatCompactCurrency(property.price, property.currency)
+  },
+  "house-sale-price": {
+    label: language === "en" ? "House sale" : "Compra casa",
+    summary: language === "en" ? "Houses for sale" : "Casas en venta",
+    matches: isHouseSaleProperty,
+    getLabel: (property) => formatCompactCurrency(property.price, property.currency)
+  },
+  "land-total-price": {
+    label: language === "en" ? "Land total" : "Terreno total",
+    summary: language === "en" ? "Land for sale" : "Terrenos en venta",
+    matches: isLandSaleProperty,
+    getLabel: (property) => formatCompactCurrency(property.price, property.currency)
+  },
+  "land-price-per-square-meter": {
+    label: language === "en" ? "Land / m2" : "Terreno / m2",
+    summary: language === "en" ? "Land price per m2" : "Terreno por m2",
+    matches: isLandPriceComparableProperty,
+    getLabel: (property) => `${formatCompactCurrency(getPricePerSquareMeter(property), property.currency)}/m2`
+  }
+});
+
 export function SearchMap({
   properties = [],
   selectedPropertyId,
@@ -109,8 +147,8 @@ export function SearchMap({
   onSelectContextPoint,
   onBoundsChange,
   onPolygonChange,
-  pricingMode = "price",
-  onPricingModeChange,
+  marketMode = "house-sale-price",
+  onMarketModeChange,
   minHeight = 740,
   className
 }) {
@@ -123,11 +161,10 @@ export function SearchMap({
   const drawRef = useRef(null);
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
   const provinceCode = getProvinceCode(selectedProvince);
+  const modeConfigs = useMemo(() => buildModeConfigs(language), [language]);
+  const activeModeConfig = modeConfigs[marketMode] || modeConfigs["house-sale-price"];
   const baseVisibleProperties = safeMapProperties(properties);
-  const visibleProperties =
-    pricingMode === "ppsm"
-      ? baseVisibleProperties.filter(isLandPriceComparableProperty)
-      : baseVisibleProperties;
+  const visibleProperties = baseVisibleProperties.filter(activeModeConfig.matches);
   const organicProperties = visibleProperties.filter((property) => !property.featured);
   const boostedProperties = visibleProperties.filter((property) => property.featured);
   const markerProperties = [...organicProperties, ...boostedProperties];
@@ -136,18 +173,17 @@ export function SearchMap({
     activeContextLayers.includes(layer.id)
   );
   const boostLabel = language === "en" ? "Featured" : "Destacada";
-  const pricingModeOptions = useMemo(
+  const marketModeOptions = useMemo(
     () => [
+      { value: "house-rent-price", label: modeConfigs["house-rent-price"].label },
+      { value: "house-sale-price", label: modeConfigs["house-sale-price"].label },
+      { value: "land-total-price", label: modeConfigs["land-total-price"].label },
       {
-        value: "price",
-        label: language === "en" ? "Price" : "Precio"
-      },
-      {
-        value: "ppsm",
-        label: language === "en" ? "Land / m2" : "Terreno / m2"
+        value: "land-price-per-square-meter",
+        label: modeConfigs["land-price-per-square-meter"].label
       }
     ],
-    [language]
+    [modeConfigs]
   );
 
   useEffect(() => {
@@ -255,17 +291,7 @@ export function SearchMap({
     );
   }
 
-  const getMarkerLabel = (property) => {
-    if (pricingMode === "ppsm") {
-      const pricePerSquareMeter = getPricePerSquareMeter(property);
-
-      if (pricePerSquareMeter > 0) {
-        return `${formatCompactCurrency(pricePerSquareMeter, property.currency)}/m2`;
-      }
-    }
-
-    return formatCompactCurrency(property.price, property.currency);
-  };
+  const getMarkerLabel = (property) => activeModeConfig.getLabel(property);
 
   const districtFillLayer = {
     id: "district-fills",
@@ -314,18 +340,20 @@ export function SearchMap({
             <MapPinned className="h-4 w-4 shrink-0 text-terracotta" />
             {selectedProvince || "Costa Rica"}
             <span className="text-ink/35">{"\u00b7"}</span>
+            {activeModeConfig.summary}
+            <span className="text-ink/35">{"\u00b7"}</span>
             {visibleProperties.length} {language === "en" ? "results" : "resultados"}
           </div>
         </div>
-        <div className="pointer-events-auto surface-soft inline-flex items-center gap-1 rounded-full p-1 shadow-soft">
-          {pricingModeOptions.map((option) => (
+        <div className="pointer-events-auto surface-soft inline-flex flex-wrap items-center gap-1 rounded-[24px] p-1 shadow-soft">
+          {marketModeOptions.map((option) => (
             <button
               key={option.value}
               type="button"
-              onClick={() => onPricingModeChange?.(option.value)}
+              onClick={() => onMarketModeChange?.(option.value)}
               className={cn(
                 "rounded-full px-3 py-1.5 text-[11px] font-semibold transition",
-                pricingMode === option.value
+                marketMode === option.value
                   ? "bg-pine text-white shadow-soft"
                   : "text-ink/58 hover:bg-white/78"
               )}
