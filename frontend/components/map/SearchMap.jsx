@@ -55,6 +55,21 @@ const safeContextPoints = (layerIds = []) =>
     (point) => point && Number.isFinite(point.lng) && Number.isFinite(point.lat)
   );
 
+const isLandPriceComparableProperty = (property = {}) => {
+  const businessType = property.operationType || property.businessType;
+  const area = Number(property.lotArea || property.landArea || 0);
+  const price = Number(property.price || 0);
+
+  return (
+    businessType === "sale" &&
+    property.propertyType === "lot" &&
+    Number.isFinite(area) &&
+    area > 0 &&
+    Number.isFinite(price) &&
+    price > 0
+  );
+};
+
 const getComparableArea = (property = {}) => {
   const propertyType = property.propertyType;
 
@@ -108,7 +123,11 @@ export function SearchMap({
   const drawRef = useRef(null);
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
   const provinceCode = getProvinceCode(selectedProvince);
-  const visibleProperties = safeMapProperties(properties);
+  const baseVisibleProperties = safeMapProperties(properties);
+  const visibleProperties =
+    pricingMode === "ppsm"
+      ? baseVisibleProperties.filter(isLandPriceComparableProperty)
+      : baseVisibleProperties;
   const organicProperties = visibleProperties.filter((property) => !property.featured);
   const boostedProperties = visibleProperties.filter((property) => property.featured);
   const markerProperties = [...organicProperties, ...boostedProperties];
@@ -125,7 +144,7 @@ export function SearchMap({
       },
       {
         value: "ppsm",
-        label: language === "en" ? "Price / m2" : "Precio / m2"
+        label: language === "en" ? "Land / m2" : "Terreno / m2"
       }
     ],
     [language]
