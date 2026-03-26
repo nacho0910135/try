@@ -470,26 +470,20 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.56fr)_minmax(0,1.44fr)]">
-            <div className="surface-soft h-fit p-3.5">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
-                {hoveredProvince ? copy.focusProvince : copy.selectedProvince}
+          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,1.58fr)]">
+            <div className="surface-soft h-fit p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
+                  {hoveredProvince ? copy.focusProvince : copy.selectedProvince}
+                </span>
+                {primaryMarketCurrency ? (
+                  <span className="inline-flex rounded-full border border-[#eccb8e] bg-[#fff4dc] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8f540d]">
+                    {primaryMarketCurrency}
+                  </span>
+                ) : null}
               </div>
-              <div className="mt-1.5 text-[26px] font-semibold leading-none text-ink">
-                {previewProvince}
-              </div>
-              <p className="mt-2 max-w-[20rem] text-[12px] leading-5 text-ink/62">
-                {copy.radarDescription}
-              </p>
-              <p className="mt-2 max-w-[20rem] text-[10px] font-medium uppercase tracking-[0.16em] text-ink/38">
-                {copy.hoverHint}
-              </p>
-              {primaryMarketCurrency ? (
-                <div className="mt-2.5 inline-flex rounded-full border border-[#eccb8e] bg-[#fff4dc] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f540d]">
-                  {copy.dominantCurrency}: {primaryMarketCurrency}
-                </div>
-              ) : null}
-              <div className="mt-2.5 flex flex-wrap gap-3">
+              <div className="mt-1.5 text-2xl font-semibold leading-none text-ink">{previewProvince}</div>
+              <div className="mt-2 flex flex-wrap gap-3">
                 <Link href={provincePath}>
                   <Button variant="ghost" className="px-0 py-0 text-[13px] text-pine hover:bg-transparent">
                     {copy.radarCta}
