@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, LayoutDashboard, LogOut, Shield, SlidersHorizontal } from "lucide-react";
+import {
+  Bell,
+  BellRing,
+  CalendarClock,
+  LayoutDashboard,
+  LogOut,
+  Radar,
+  Shield,
+  SlidersHorizontal
+} from "lucide-react";
 import { getDashboardSummary, logoutUser } from "@/lib/api";
 import { hasManagementAccess } from "@/lib/management-access";
 import { hasCommercialDashboardAccess } from "@/lib/user-access";
@@ -21,7 +30,13 @@ export function SiteHeader() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { t, language } = useLanguage();
-  const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false);
+  const [alertCenter, setAlertCenter] = useState({
+    newSearchMatches: 0,
+    dueLeadActionsCount: 0,
+    highlightedSearches: [],
+    dueLeadActions: []
+  });
+  const [isAlertPanelOpen, setIsAlertPanelOpen] = useState(false);
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const canAccessManagement = hasManagementAccess(user);
   const isSavedSearchRoute = activePathname.startsWith("/dashboard/saved-searches");
@@ -39,21 +54,37 @@ export function SiteHeader() {
     let cancelled = false;
 
     if (!user) {
-      setHasUnreadAlerts(false);
+      setAlertCenter({
+        newSearchMatches: 0,
+        dueLeadActionsCount: 0,
+        highlightedSearches: [],
+        dueLeadActions: []
+      });
+      setIsAlertPanelOpen(false);
       return undefined;
     }
 
     const loadAlertState = async () => {
       try {
         const data = await getDashboardSummary();
-        const unreadCount = Number(data?.summary?.alertCenter?.newSearchMatches || 0);
+        const nextAlertCenter = {
+          newSearchMatches: Number(data?.summary?.alertCenter?.newSearchMatches || 0),
+          dueLeadActionsCount: Number(data?.summary?.alertCenter?.dueLeadActionsCount || 0),
+          highlightedSearches: data?.summary?.alertCenter?.highlightedSearches || [],
+          dueLeadActions: data?.summary?.alertCenter?.dueLeadActions || []
+        };
 
         if (!cancelled) {
-          setHasUnreadAlerts(unreadCount > 0);
+          setAlertCenter(nextAlertCenter);
         }
       } catch (_error) {
         if (!cancelled) {
-          setHasUnreadAlerts(false);
+          setAlertCenter({
+            newSearchMatches: 0,
+            dueLeadActionsCount: 0,
+            highlightedSearches: [],
+            dueLeadActions: []
+          });
         }
       }
     };
@@ -64,6 +95,43 @@ export function SiteHeader() {
       cancelled = true;
     };
   }, [activePathname, user]);
+
+  const hasUnreadAlerts =
+    Number(alertCenter.newSearchMatches || 0) > 0 ||
+    Number(alertCenter.dueLeadActionsCount || 0) > 0;
+
+  const primaryAlertReason = useMemo(() => {
+    const firstSearch = alertCenter.highlightedSearches?.[0];
+    const firstLead = alertCenter.dueLeadActions?.[0];
+
+    if (firstSearch?.newMatches) {
+      return language === "en"
+        ? `${firstSearch.name} has ${firstSearch.newMatches} new matching listings.`
+        : `${firstSearch.name} tiene ${firstSearch.newMatches} coincidencias nuevas.`;
+    }
+
+    if (firstLead?.name || firstLead?.propertyTitle) {
+      return language === "en"
+        ? `${firstLead.name || "A lead"} needs follow-up on ${firstLead.propertyTitle || "a property"}.`
+        : `${firstLead.name || "Un lead"} requiere seguimiento en ${firstLead.propertyTitle || "una propiedad"}.`;
+    }
+
+    if (alertCenter.newSearchMatches) {
+      return language === "en"
+        ? `You have ${alertCenter.newSearchMatches} new search matches waiting.`
+        : `Tienes ${alertCenter.newSearchMatches} coincidencias nuevas esperando.`;
+    }
+
+    if (alertCenter.dueLeadActionsCount) {
+      return language === "en"
+        ? `You have ${alertCenter.dueLeadActionsCount} leads that should move today.`
+        : `Tienes ${alertCenter.dueLeadActionsCount} leads que conviene mover hoy.`;
+    }
+
+    return language === "en"
+      ? "No active alerts right now."
+      : "No hay alertas activas en este momento.";
+  }, [alertCenter, language]);
 
   const handleLogout = async () => {
     try {
@@ -122,22 +190,84 @@ export function SiteHeader() {
 
                 {user ? (
                   <div className="flex items-center gap-1 rounded-full border border-white/75 bg-white/56 p-1 shadow-[0_14px_34px_rgba(17,34,54,0.08)] backdrop-blur">
-                    <Link
-                      href="/dashboard/saved-searches"
-                      aria-label={language === "en" ? "Open alert bell" : "Abrir campanita"}
-                      title={language === "en" ? "Open alert bell" : "Abrir campanita"}
-                      className={cn(
-                        "relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/80 text-ink shadow-[0_12px_26px_rgba(17,34,54,0.08)] transition duration-200 hover:-translate-y-0.5",
-                        isSavedSearchRoute
-                          ? "bg-[linear-gradient(135deg,#112236,#25577f)] text-white"
-                          : "bg-white/88 hover:bg-white"
-                      )}
+                    <div
+                      className="relative"
+                      onMouseEnter={() => setIsAlertPanelOpen(true)}
+                      onMouseLeave={() => setIsAlertPanelOpen(false)}
                     >
-                      <Bell className="h-4 w-4" />
-                      {hasUnreadAlerts ? (
-                        <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-sand" />
+                      <button
+                        type="button"
+                        aria-label={language === "en" ? "Open alert bell" : "Abrir campanita"}
+                        title={language === "en" ? "Open alert bell" : "Abrir campanita"}
+                        aria-expanded={isAlertPanelOpen}
+                        onClick={() => setIsAlertPanelOpen((current) => !current)}
+                        className={cn(
+                          "relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/80 text-ink shadow-[0_12px_26px_rgba(17,34,54,0.08)] transition duration-200 hover:-translate-y-0.5",
+                          isSavedSearchRoute || isAlertPanelOpen
+                            ? "bg-[linear-gradient(135deg,#112236,#25577f)] text-white"
+                            : "bg-white/88 hover:bg-white"
+                        )}
+                      >
+                        <Bell className="h-4 w-4" />
+                        {hasUnreadAlerts ? (
+                          <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-sand" />
+                        ) : null}
+                      </button>
+
+                      {isAlertPanelOpen ? (
+                        <div className="absolute left-0 top-[calc(100%+12px)] z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-[24px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(247,240,231,0.88),rgba(237,244,248,0.9))] p-4 shadow-[0_24px_54px_rgba(17,34,54,0.18)] backdrop-blur-xl">
+                          <div className="flex items-start gap-3">
+                            <div className="rounded-2xl bg-lagoon/12 p-2.5 text-lagoon">
+                              <BellRing className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
+                                {language === "en" ? "Alert reason" : "Motivo de la alerta"}
+                              </div>
+                              <div className="mt-1 text-sm font-semibold leading-6 text-ink">
+                                {primaryAlertReason}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            <div className="rounded-[18px] border border-white/75 bg-white/88 px-3 py-3">
+                              <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-lagoon">
+                                <Radar className="h-3.5 w-3.5" />
+                                {language === "en" ? "Searches" : "Busquedas"}
+                              </div>
+                              <div className="mt-2 text-2xl font-semibold text-ink">
+                                {alertCenter.newSearchMatches || 0}
+                              </div>
+                            </div>
+                            <div className="rounded-[18px] border border-white/75 bg-white/88 px-3 py-3">
+                              <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-pine">
+                                <CalendarClock className="h-3.5 w-3.5" />
+                                {language === "en" ? "Leads" : "Leads"}
+                              </div>
+                              <div className="mt-2 text-2xl font-semibold text-ink">
+                                {alertCenter.dueLeadActionsCount || 0}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <Link
+                              href="/dashboard/saved-searches"
+                              className="inline-flex items-center rounded-full bg-lagoon px-3 py-2 text-xs font-semibold text-white"
+                            >
+                              {language === "en" ? "Open bell" : "Abrir campanita"}
+                            </Link>
+                            <Link
+                              href="/dashboard/leads"
+                              className="inline-flex items-center rounded-full border border-white/80 bg-white/88 px-3 py-2 text-xs font-semibold text-ink"
+                            >
+                              {language === "en" ? "Open leads" : "Abrir leads"}
+                            </Link>
+                          </div>
+                        </div>
                       ) : null}
-                    </Link>
+                    </div>
 
                     {canAccessDashboard ? (
                       <Link href="/dashboard" className="hidden sm:block">
