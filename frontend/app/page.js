@@ -468,22 +468,24 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-            <div className="surface-soft p-5">
+          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.66fr)_minmax(0,1.34fr)]">
+            <div className="surface-soft h-fit p-4">
               <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/42">
                 {hoveredProvince ? copy.focusProvince : copy.selectedProvince}
               </div>
-              <div className="mt-2 text-3xl font-semibold text-ink">{previewProvince}</div>
-              <p className="mt-3 max-w-sm text-sm leading-6 text-ink/62">{copy.radarDescription}</p>
-              <p className="mt-3 max-w-sm text-xs font-medium uppercase tracking-[0.18em] text-ink/38">
+              <div className="mt-2 text-2xl font-semibold text-ink">{previewProvince}</div>
+              <p className="mt-2.5 max-w-[24rem] text-[13px] leading-6 text-ink/62">
+                {copy.radarDescription}
+              </p>
+              <p className="mt-2.5 max-w-[24rem] text-[11px] font-medium uppercase tracking-[0.18em] text-ink/38">
                 {copy.hoverHint}
               </p>
               {primaryMarketCurrency ? (
-                <div className="mt-4 inline-flex rounded-full border border-[#eccb8e] bg-[#fff4dc] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8f540d]">
+                <div className="mt-3 inline-flex rounded-full border border-[#eccb8e] bg-[#fff4dc] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8f540d]">
                   {copy.dominantCurrency}: {primaryMarketCurrency}
                 </div>
               ) : null}
-              <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-3 flex flex-wrap gap-3">
                 <Link href={provincePath}>
                   <Button variant="ghost" className="px-0 py-0 text-sm text-pine hover:bg-transparent">
                     {copy.radarCta}
