@@ -127,6 +127,7 @@ export function SearchMap({
   const mapRef = useRef(null);
   const drawRef = useRef(null);
   const lastAutoFitSignatureRef = useRef("");
+  const skipNextMoveEndRef = useRef(false);
   const [districtGeoJson, setDistrictGeoJson] = useState(null);
   const provinceCode = getProvinceCode(selectedProvince);
   const visibleProperties = safeMapProperties(properties);
@@ -195,6 +196,7 @@ export function SearchMap({
     }
 
     try {
+      skipNextMoveEndRef.current = true;
       mapRef.current.getMap().fitBounds(
         [
           [state.minLng, state.minLat],
@@ -220,6 +222,7 @@ export function SearchMap({
     }
 
     try {
+      skipNextMoveEndRef.current = true;
       mapRef.current.getMap().flyTo({
         center: [focusedContextPoint.lng, focusedContextPoint.lat],
         zoom: 11.6,
@@ -251,6 +254,7 @@ export function SearchMap({
 
     try {
       if (visibleProperties.length === 1) {
+        skipNextMoveEndRef.current = true;
         map.flyTo({
           center: visibleProperties[0].location.coordinates,
           zoom: 12.6,
@@ -263,6 +267,7 @@ export function SearchMap({
           bounds.extend(property.location.coordinates);
         });
 
+        skipNextMoveEndRef.current = true;
         map.fitBounds(bounds, {
           padding: 56,
           duration: 700,
@@ -466,6 +471,11 @@ export function SearchMap({
           });
         }}
         onMoveEnd={(event) => {
+          if (skipNextMoveEndRef.current) {
+            skipNextMoveEndRef.current = false;
+            return;
+          }
+
           const map = event.target;
           const bounds = map?.getBounds?.();
 

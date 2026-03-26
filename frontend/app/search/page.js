@@ -218,6 +218,23 @@ const hasMeaningfulSearchState = (filters = {}) =>
     return value !== undefined && value !== null && value !== "" && value !== false;
   });
 
+const areBoundsEqual = (currentBounds, nextBounds) => {
+  if (!currentBounds && !nextBounds) {
+    return true;
+  }
+
+  if (!currentBounds || !nextBounds) {
+    return false;
+  }
+
+  return (
+    currentBounds.south === nextBounds.south &&
+    currentBounds.west === nextBounds.west &&
+    currentBounds.north === nextBounds.north &&
+    currentBounds.east === nextBounds.east
+  );
+};
+
 function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -420,7 +437,6 @@ function SearchPageContent() {
     if (!initializedRef.current) return;
 
     const requestId = ++mapRequestSequenceRef.current;
-    setMapProperties([]);
 
     const timeout = setTimeout(async () => {
       try {
@@ -845,6 +861,10 @@ function SearchPageContent() {
 
   const handleMapBoundsChange = useCallback(
     (bounds) => {
+      if (areBoundsEqual(filters.bounds, bounds)) {
+        return;
+      }
+
       setFocusedContextPoint(null);
       updateFilters({
         lat: undefined,
@@ -853,7 +873,7 @@ function SearchPageContent() {
         polygon: undefined
       });
     },
-    [updateFilters]
+    [filters.bounds, updateFilters]
   );
 
   const handleMapPolygonChange = useCallback(
