@@ -235,6 +235,13 @@ const areBoundsEqual = (currentBounds, nextBounds) => {
   );
 };
 
+const withoutViewportFilters = (filters = {}) => {
+  const nextFilters = { ...filters };
+  delete nextFilters.bounds;
+  delete nextFilters.polygon;
+  return nextFilters;
+};
+
 function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -397,6 +404,14 @@ function SearchPageContent() {
 
     const requestId = ++requestSequenceRef.current;
     const timeout = setTimeout(async () => {
+      const applySearchResult = (data, activePage = page) => {
+        setProperties((current) => (activePage === 1 ? data.items : [...current, ...data.items]));
+        if (activePage === 1) {
+          setPromotedProperties(data.promotedItems || []);
+        }
+        setPagination(data.pagination);
+      };
+
       try {
         setLoading(true);
         setMessage("");
@@ -406,15 +421,32 @@ function SearchPageContent() {
           return;
         }
 
-        setProperties((current) => (page === 1 ? data.items : [...current, ...data.items]));
-        if (page === 1) {
-          setPromotedProperties(data.promotedItems || []);
-        }
-        setPagination(data.pagination);
+        applySearchResult(data);
         router.replace(`/search?${serializePropertyQuery(filters)}`, { scroll: false });
       } catch (error) {
         if (requestId !== requestSequenceRef.current) {
           return;
+        }
+
+        const canRetryWithoutViewport =
+          page === 1 && (filters.bounds !== undefined || filters.polygon !== undefined);
+
+        if (canRetryWithoutViewport) {
+          try {
+            const fallbackFilters = withoutViewportFilters(filters);
+            const fallbackData = await getProperties({ ...fallbackFilters, page: 1, limit: 12 });
+
+            if (requestId !== requestSequenceRef.current) {
+              return;
+            }
+
+            applySearchResult(fallbackData, 1);
+            replaceFilters(fallbackFilters);
+            setMessage("");
+            return;
+          } catch (_fallbackError) {
+            // Fall through to the shared error state below.
+          }
         }
 
         if (page === 1) {
@@ -431,7 +463,7 @@ function SearchPageContent() {
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [filters, page, retryNonce, router, t]);
+  }, [filters, page, replaceFilters, retryNonce, router, t]);
 
   useEffect(() => {
     if (!initializedRef.current) return;
@@ -456,6 +488,31 @@ function SearchPageContent() {
       } catch (_error) {
         if (requestId !== mapRequestSequenceRef.current) {
           return;
+        }
+
+        const canRetryWithoutViewport =
+          filters.bounds !== undefined || filters.polygon !== undefined;
+
+        if (canRetryWithoutViewport) {
+          try {
+            const fallbackFilters = withoutViewportFilters(filters);
+            const fallbackData = await getProperties({
+              ...fallbackFilters,
+              page: 1,
+              limit: 50,
+              promotedLimit: 0,
+              surface: "map"
+            });
+
+            if (requestId !== mapRequestSequenceRef.current) {
+              return;
+            }
+
+            setMapProperties(fallbackData.items || []);
+            return;
+          } catch (_fallbackError) {
+            // Keep the shared empty-state fallback below.
+          }
         }
 
         setMapProperties([]);
