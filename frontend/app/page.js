@@ -424,14 +424,12 @@ export default function HomePage() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Link href={`/search?province=${encodeURIComponent(previewProvince)}`}>
-                  <Button variant="primary">
-                    {copy.explore}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
                 <Link href={publishHref}>
-                  <Button variant="secondary">{copy.publish}</Button>
+                  <Button
+                    className="border border-[#c8ddff] bg-[linear-gradient(135deg,#2f7dff,#5aa2ff)] text-white shadow-[0_18px_34px_rgba(47,125,255,0.24)] hover:bg-[linear-gradient(135deg,#266fe8,#4b96f4)]"
+                  >
+                    {copy.publish}
+                  </Button>
                 </Link>
               </div>
 
@@ -483,14 +481,6 @@ export default function HomePage() {
                 ) : null}
               </div>
               <div className="mt-1.5 text-2xl font-semibold leading-none text-ink">{previewProvince}</div>
-              <div className="mt-2 flex flex-wrap gap-3">
-                <Link href={provincePath}>
-                  <Button variant="ghost" className="px-0 py-0 text-[13px] text-pine hover:bg-transparent">
-                    {copy.radarCta}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
             </div>
 
             {provinceSummaryLoading && !hasMarketColumns && !provinceSummaryFailed ? (

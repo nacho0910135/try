@@ -22,8 +22,6 @@ export function SiteHeader() {
   const { t, language } = useLanguage();
   const [hasUnreadAlerts, setHasUnreadAlerts] = useState(false);
   const canAccessDashboard = hasCommercialDashboardAccess(user);
-  const publishHref = canAccessDashboard ? "/dashboard/properties/new" : "/login";
-  const publishLabel = language === "en" ? "Publish" : "Publicar";
   const isSavedSearchRoute = activePathname.startsWith("/dashboard/saved-searches");
   const isDashboardRoute = activePathname.startsWith("/dashboard");
   const navItems = [
@@ -191,12 +189,6 @@ export function SiteHeader() {
                   compact
                   className="hidden rounded-full border border-white/80 bg-white/82 px-3 py-2.5 text-ink shadow-[0_12px_28px_rgba(17,34,54,0.08)] hover:bg-white sm:inline-flex"
                 />
-
-                <Link href={publishHref}>
-                  <Button className="rounded-full px-3.5 py-2.5 text-xs shadow-[0_18px_34px_rgba(17,34,54,0.2)] sm:px-4.5 sm:py-3 sm:text-sm">
-                    {publishLabel}
-                  </Button>
-                </Link>
               </div>
             </div>
 
