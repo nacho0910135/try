@@ -170,6 +170,8 @@ export const getDashboardSummary = () => unwrap(api.get("/users/dashboard-summar
 export const getCommercialOverview = () => unwrap(api.get("/users/commercial-overview"));
 export const getManagementOverview = () => unwrap(api.get("/users/management-overview"));
 export const getManagementEmails = () => unwrap(api.get("/users/management-emails"));
+export const updateManagementSettings = (payload) =>
+  unwrap(api.patch("/users/management-settings", payload));
 export const updateMySubscription = (payload) =>
   unwrap(api.patch("/users/subscription", payload));
 export const requestUserVerification = (payload) =>

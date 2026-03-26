@@ -13,6 +13,10 @@ import { billingService } from "./billingService.js";
 import { enrichPropertyCollection } from "../utils/propertyInsights.js";
 import { ApiError } from "../utils/apiError.js";
 import { SHOWCASE_LISTING_SOURCE } from "../utils/publicPropertyVisibility.js";
+import {
+  getShowcaseSeedVisibility,
+  setShowcaseSeedVisibility
+} from "../utils/runtimeSettings.js";
 
 const leadStatusLabels = {
   new: "Nuevo",
@@ -473,6 +477,9 @@ export const userService = {
         cardOpens: Number(siteMetrics.cardOpens || 0),
         attributedBoostLeads: Number(siteMetrics.attributedBoostLeads || 0)
       },
+      settings: {
+        showcaseSeedVisible: getShowcaseSeedVisibility()
+      },
       dashboardSummary,
       commercialOverview: {
         summary: commercialOverview.summary,
@@ -506,6 +513,16 @@ export const userService = {
         isActive: Boolean(item.isActive),
         createdAt: item.createdAt || null
       }))
+    };
+  },
+
+  async updateManagementSettings(payload) {
+    const showcaseSeedVisible = await setShowcaseSeedVisibility(
+      Boolean(payload?.showcaseSeedVisible)
+    );
+
+    return {
+      showcaseSeedVisible
     };
   },
 

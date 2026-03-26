@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { Building2, Eye, Globe2, LayoutDashboard, LineChart, Mail, Radar, Settings2, Sparkles, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getManagementEmails, getManagementOverview } from "@/lib/api";
+import {
+  getManagementEmails,
+  getManagementOverview,
+  updateManagementSettings
+} from "@/lib/api";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -21,6 +25,8 @@ export default function ManagementPage() {
   const [emailsLoading, setEmailsLoading] = useState(false);
   const [emailsError, setEmailsError] = useState("");
   const [emailsData, setEmailsData] = useState(null);
+  const [showcaseSaving, setShowcaseSaving] = useState(false);
+  const [showcaseFeedback, setShowcaseFeedback] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +60,7 @@ export default function ManagementPage() {
   }, []);
 
   const platform = useMemo(() => overview?.platform || {}, [overview]);
+  const settings = useMemo(() => overview?.settings || {}, [overview]);
   const commercialOverview = useMemo(() => overview?.commercialOverview || {}, [overview]);
   const businessSummary = useMemo(() => commercialOverview?.summary || {}, [commercialOverview]);
   const adPerformance = useMemo(() => commercialOverview?.adPerformance || {}, [commercialOverview]);
@@ -146,6 +153,8 @@ export default function ManagementPage() {
     { href: "/analysis", label: "Analisis", description: "Revisar inteligencia del mercado." }
   ];
 
+  const showcaseSeedVisible = Boolean(settings.showcaseSeedVisible);
+
   const handleToggleEmails = async () => {
     if (emailPanelOpen) {
       setEmailPanelOpen(false);
@@ -167,6 +176,34 @@ export default function ManagementPage() {
       setEmailsError(nextError?.response?.data?.message || "No se pudo cargar la lista de correos.");
     } finally {
       setEmailsLoading(false);
+    }
+  };
+
+  const handleToggleShowcase = async () => {
+    try {
+      setShowcaseSaving(true);
+      setShowcaseFeedback("");
+      const data = await updateManagementSettings({
+        showcaseSeedVisible: !showcaseSeedVisible
+      });
+      const nextVisible = Boolean(data.settings?.showcaseSeedVisible);
+
+      setOverview((current) => ({
+        ...(current || {}),
+        settings: {
+          ...(current?.settings || {}),
+          showcaseSeedVisible: nextVisible
+        }
+      }));
+      setShowcaseFeedback(
+        nextVisible
+          ? "Showcase publico encendido correctamente."
+          : "Showcase publico apagado correctamente."
+      );
+    } catch (_error) {
+      setShowcaseFeedback("No se pudo actualizar el estado del showcase.");
+    } finally {
+      setShowcaseSaving(false);
     }
   };
 
@@ -320,6 +357,54 @@ export default function ManagementPage() {
                 </div>
                 <h2 className="mt-1 text-2xl font-semibold text-ink">Accesos rapidos</h2>
               </div>
+            </div>
+
+            <div className="mt-5 rounded-[22px] border border-white/70 bg-white/84 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/42">
+                    Showcase seed
+                  </div>
+                  <div className="mt-1 text-base font-semibold text-ink">
+                    Visibilidad publica del showcase
+                  </div>
+                  <div className="mt-1 text-sm text-ink/58">
+                    Enciende o apaga las propiedades seed sin tocar publicaciones reales.
+                  </div>
+                </div>
+                <Button
+                  variant={showcaseSeedVisible ? "accent" : "secondary"}
+                  className="min-w-[220px]"
+                  onClick={handleToggleShowcase}
+                  disabled={showcaseSaving}
+                >
+                  {showcaseSaving
+                    ? "Actualizando..."
+                    : showcaseSeedVisible
+                      ? "Apagar showcase publico"
+                      : "Encender showcase publico"}
+                </Button>
+              </div>
+
+              <div className="mt-4 rounded-[20px] border border-white/70 bg-white/92 px-4 py-3">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/42">
+                  Estado actual
+                </div>
+                <div className="mt-2 text-sm font-semibold text-ink">
+                  {showcaseSeedVisible ? "SHOW_SHOWCASE_SEED_PROPERTIES=true" : "SHOW_SHOWCASE_SEED_PROPERTIES=false"}
+                </div>
+                <div className="mt-1 text-sm text-ink/58">
+                  {showcaseSeedVisible
+                    ? "El showcase aparece en inicio, explorar y analitica publica."
+                    : "El showcase queda oculto del sitio publico y solo quedan publicaciones reales."}
+                </div>
+              </div>
+
+              {showcaseFeedback ? (
+                <div className="mt-3 rounded-[18px] border border-white/70 bg-white/92 px-4 py-3 text-sm text-ink/68">
+                  {showcaseFeedback}
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-5 rounded-[22px] border border-white/70 bg-white/84 p-4">

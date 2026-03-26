@@ -14,3 +14,9 @@ export const subscriptionUpdateSchema = z.object({
     billingCycle: z.enum(["monthly", "yearly"]).optional().default("monthly")
   })
 });
+
+export const managementSettingsSchema = z.object({
+  body: z.object({
+    showcaseSeedVisible: z.boolean()
+  })
+});
