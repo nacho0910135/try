@@ -382,7 +382,7 @@ export function SearchMap({
         mapboxAccessToken={token}
         mapLib={mapboxgl}
         mapStyle={mapStyle}
-        initialViewState={mapDefaultCenter}
+        initialViewState={{ ...mapDefaultCenter, zoom: 7.35 }}
         interactiveLayerIds={districtGeoJson ? ["district-fills"] : []}
         minZoom={5}
         renderWorldCopies={false}
