@@ -289,6 +289,32 @@ export const buildAlertPreview = async (savedSearch) => {
   };
 };
 
+const sortSavedSearchAlerts = (items = []) =>
+  [...items].sort((first, second) => {
+    const firstNew = Number(first.alertPreview?.newMatches || 0);
+    const secondNew = Number(second.alertPreview?.newMatches || 0);
+
+    if (secondNew !== firstNew) {
+      return secondNew - firstNew;
+    }
+
+    const firstPriceDrops = Number(first.alertPreview?.priceDropMatchesCount || 0);
+    const secondPriceDrops = Number(second.alertPreview?.priceDropMatchesCount || 0);
+
+    if (secondPriceDrops !== firstPriceDrops) {
+      return secondPriceDrops - firstPriceDrops;
+    }
+
+    const firstAlertsEnabled = first.alertsEnabled ? 1 : 0;
+    const secondAlertsEnabled = second.alertsEnabled ? 1 : 0;
+
+    if (secondAlertsEnabled !== firstAlertsEnabled) {
+      return secondAlertsEnabled - firstAlertsEnabled;
+    }
+
+    return new Date(second.updatedAt || second.createdAt || 0) - new Date(first.updatedAt || first.createdAt || 0);
+  });
+
 export const savedSearchService = {
   async list(user) {
     const items = await SavedSearch.find({ user: user._id }).sort({ createdAt: -1 }).lean();
@@ -300,7 +326,7 @@ export const savedSearchService = {
       }))
     );
 
-    return enriched;
+    return sortSavedSearchAlerts(enriched);
   },
 
   async create(user, payload) {

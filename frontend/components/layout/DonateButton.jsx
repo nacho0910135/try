@@ -29,7 +29,7 @@ export function DonateButton({ className = "", compact = false }) {
 
   return (
     <Button
-      variant="secondary"
+      variant="success"
       onClick={handleDonate}
       disabled={loading}
       className={`${compact ? "px-3 py-2 text-xs sm:px-3.5" : ""} ${className}`.trim()}
