@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -30,14 +30,12 @@ export function SiteHeader() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { t, language } = useLanguage();
-  const alertPanelRef = useRef(null);
   const [alertCenter, setAlertCenter] = useState({
     newSearchMatches: 0,
     dueLeadActionsCount: 0,
     highlightedSearches: [],
     dueLeadActions: []
   });
-  const [isAlertPanelPinned, setIsAlertPanelPinned] = useState(false);
   const [isAlertPanelHovered, setIsAlertPanelHovered] = useState(false);
   const canAccessDashboard = hasCommercialDashboardAccess(user);
   const canAccessManagement = hasManagementAccess(user);
@@ -62,7 +60,6 @@ export function SiteHeader() {
         highlightedSearches: [],
         dueLeadActions: []
       });
-      setIsAlertPanelPinned(false);
       setIsAlertPanelHovered(false);
       return undefined;
     }
@@ -173,28 +170,7 @@ export function SiteHeader() {
     };
   }, [alertCenter, language]);
 
-  const isAlertPanelOpen = isAlertPanelPinned || isAlertPanelHovered;
-
-  useEffect(() => {
-    if (!isAlertPanelPinned) {
-      return undefined;
-    }
-
-    const handlePointerDown = (event) => {
-      if (alertPanelRef.current?.contains(event.target)) {
-        return;
-      }
-
-      setIsAlertPanelPinned(false);
-      setIsAlertPanelHovered(false);
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [isAlertPanelPinned]);
+  const isAlertPanelOpen = isAlertPanelHovered;
 
   const handleLogout = async () => {
     try {
@@ -211,7 +187,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 pt-3 sm:pt-4">
       <div className="app-shell">
-        <div className="relative overflow-hidden rounded-[28px] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(255,249,244,0.82)_42%,rgba(237,244,248,0.82)_100%)] shadow-[0_22px_54px_rgba(17,34,54,0.12)] backdrop-blur-xl">
+        <div className="relative overflow-visible rounded-[28px] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(255,249,244,0.82)_42%,rgba(237,244,248,0.82)_100%)] shadow-[0_22px_54px_rgba(17,34,54,0.12)] backdrop-blur-xl">
           <div className="pointer-events-none absolute -left-12 top-0 h-28 w-28 rounded-full bg-lagoon/12 blur-3xl" />
           <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-terracotta/12 blur-3xl" />
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(17,34,54,0.16),transparent)]" />
@@ -254,7 +230,6 @@ export function SiteHeader() {
                 {user ? (
                   <div className="flex items-center gap-1 rounded-full border border-white/75 bg-white/56 p-1 shadow-[0_14px_34px_rgba(17,34,54,0.08)] backdrop-blur">
                     <div
-                      ref={alertPanelRef}
                       className="relative"
                       onMouseEnter={() => setIsAlertPanelHovered(true)}
                       onMouseLeave={() => setIsAlertPanelHovered(false)}
@@ -264,7 +239,7 @@ export function SiteHeader() {
                         aria-label={language === "en" ? "Open alert bell" : "Abrir campanita"}
                         title={language === "en" ? "Open alert bell" : "Abrir campanita"}
                         aria-expanded={isAlertPanelOpen}
-                        onClick={() => setIsAlertPanelPinned((current) => !current)}
+                        onClick={() => router.push("/dashboard/saved-searches")}
                         className={cn(
                           "relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/80 text-ink shadow-[0_12px_26px_rgba(17,34,54,0.08)] transition duration-200 hover:-translate-y-0.5",
                           isSavedSearchRoute || isAlertPanelOpen
@@ -279,7 +254,7 @@ export function SiteHeader() {
                       </button>
 
                       {isAlertPanelOpen ? (
-                        <div className="absolute left-0 top-[calc(100%+12px)] z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-[24px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(247,240,231,0.88),rgba(237,244,248,0.9))] p-4 shadow-[0_24px_54px_rgba(17,34,54,0.18)] backdrop-blur-xl">
+                        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-[360px] max-w-[calc(100vw-2rem)] rounded-[24px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(247,240,231,0.88),rgba(237,244,248,0.9))] p-4 shadow-[0_24px_54px_rgba(17,34,54,0.18)] backdrop-blur-xl">
                           <div className="flex items-start gap-3">
                             <div className="rounded-2xl bg-lagoon/12 p-2.5 text-lagoon">
                               <BellRing className="h-4 w-4" />
@@ -318,14 +293,12 @@ export function SiteHeader() {
                           <div className="mt-4 flex flex-wrap gap-2">
                             <Link
                               href="/dashboard/saved-searches"
-                              onClick={() => setIsAlertPanelPinned(false)}
                               className="inline-flex items-center rounded-full bg-lagoon px-3 py-2 text-xs font-semibold text-white"
                             >
                               {language === "en" ? "Open bell" : "Abrir campanita"}
                             </Link>
                             <Link
                               href="/dashboard/leads"
-                              onClick={() => setIsAlertPanelPinned(false)}
                               className="inline-flex items-center rounded-full border border-white/80 bg-white/88 px-3 py-2 text-xs font-semibold text-ink"
                             >
                               {language === "en" ? "Open leads" : "Abrir leads"}
