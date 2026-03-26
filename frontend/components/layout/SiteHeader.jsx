@@ -355,9 +355,9 @@ export function SiteHeader() {
                     ) : null}
 
                     <Button
-                      variant="ghost"
+                      variant="danger"
                       onClick={handleLogout}
-                      className="rounded-full border border-white/80 bg-white/72 px-3 py-2.5 hover:bg-white sm:px-4"
+                      className="rounded-full px-3 py-2.5 sm:px-4"
                     >
                       <LogOut className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">{t("nav.logout")}</span>
