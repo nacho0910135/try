@@ -12,6 +12,7 @@
     "dev:frontend": "npm run dev --workspace frontend",
     "seed": "npm run seed --workspace backend",
     "seed:samples": "npm run seed:samples --workspace backend",
+    "seed:realistic-500": "npm run seed:realistic-500 --workspace backend",
     "alerts:send": "npm run alerts:send --workspace backend",
     "backup:mongo": "node scripts/mongo-backup.mjs",
     "check:launch": "node scripts/validate-production-config.mjs",

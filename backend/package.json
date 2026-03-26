@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "seed": "node src/seeds/seed.js",
     "seed:samples": "node src/seeds/seedSamples.js",
+    "seed:realistic-500": "node src/seeds/seedRealistic500.js",
     "alerts:send": "node src/jobs/sendSavedSearchAlerts.js",
     "lint": "node --check src/server.js"
   },
